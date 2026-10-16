@@ -56,6 +56,25 @@ Those spans form a substory: copied out in the order the plot gives them, they r
 1. **Words within a span.** A model's span matches a labelled span when they are at p80 as defined for [examples](#2-examples-of-the-concepts).
 2. **Spans within the plot.** The model's sequence of spans matches the labelled plot's when at most 20% of the labelled spans have no matching span in the model's plot, at most 20% of the model's spans have no matching span in the labelled plot, and the matched spans come in the same order. For a 10-span labelled plot, at most 2 spans may differ each way.
 
+### How the results are reported
+
+A run reports, for each task type, the true positives, false positives and false negatives, and the precision, recall and F1 computed from them:
+
+- **Precision** = TP / (TP + FP) — of what the model said, how much was right.
+- **Recall** = TP / (TP + FN) — of what is labelled, how much the model found.
+- **F1** = 2·TP / (2·TP + FP + FN) — one number that balances the two.
+
+Accuracy is not reported. It needs true negatives — what the model rightly did not say — and those cannot be counted: there is no fixed list of non-concepts in a story.
+
+The totals add up the counts across all stories and compute the metrics from those sums. Below the totals, the same table for each story, with its own metrics. For example (the numbers are illustrative):
+
+```
+task              TP  FP  FN  precision  recall    F1
+salient concepts  12   3   5       0.80    0.71  0.75
+examples          40  18  22       0.69    0.65  0.67
+plots              4   1   2       0.80    0.67  0.73
+```
+
 ## Running the benchmark
 
 > **What works today:** running the salient-information task on a Claude model, or on a model of your own, from Python. Every other case below is described but **not implemented yet**. The plot task is not implemented, because the `.author` format does not yet say how plots are annotated. Scoring is not implemented either, so a run gives you the model's replies, not a score.
@@ -85,7 +104,7 @@ A run takes a directory of `.author` files. Every story in it that has salient c
 
 ### What a run gives you
 
-`fabula_bench.evaluate` returns one `Answer` per story and task: the story's path, the task (`"salient-information"`), and the model's reply as text.
+`fabula_bench.evaluate` returns one `Answer` per story and task: the story's path, the task (`"salient-information"`), and the model's reply as text. Once scoring is implemented, a run will report its results as described in [How the results are reported](#how-the-results-are-reported).
 
 ### A Claude model
 
