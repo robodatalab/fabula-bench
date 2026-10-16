@@ -1,0 +1,19 @@
+{
+  "templates": {
+    "disclaimer": {
+      "title": "",
+      "file": "disclaimer.md"
+    },
+    "about": {
+      "file": "about.md",
+      "kdp": "",
+      "website": "",
+      "substack": "",
+      "portrait": ""
+    },
+    "title-page": {
+      "author": "",
+      "publisher": ""
+    }
+  }
+}
