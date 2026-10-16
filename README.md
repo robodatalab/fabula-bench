@@ -9,6 +9,53 @@ fabula-bench measures how well language models understand fiction. It tests two 
 
 The benchmark is built on bespoke short stories. Most focus on one, two or three salient concepts; some simpler ones carry plots.
 
+## The tasks and how they are measured
+
+The model under test is given three tasks. Each is measured by counting true positives, false positives and false negatives against the labelled stories.
+
+### 1. Salient concepts
+
+The model reads the story and enumerates all its salient concepts, each with a brief explanation.
+
+An answered concept is compared with the labelled concepts using embedding cosine similarity and n-gram similarity, to make sure the two speak of similar things.
+
+- **True positive** — the concept's description matches a labelled concept's.
+- **False positive** — the model invented a concept that is not in the labels.
+- **False negative** — the model missed a labelled concept.
+
+### 2. Examples of the concepts
+
+The model identifies the places in the story that correspond to its concepts — the concepts' examples.
+
+- **True positive** — a major (p80) overlap of a labelled example and the model's example.
+- **False positive** — the model's example does not overlap a labelled one, or overlaps it only partially (below p80).
+- **False negative** — the model missed an example that is in the labelled set.
+
+**What p80 means.** For a labelled example of *n* words, the model's example overlaps it at p80 when at most 20% of the label's words are missing from the model's example, and at most 20% of the model's example's words are not in the label. Words are compared in order, ignoring case and punctuation: a word counts as shared only when it appears in both examples in the same order. For a 10-word labelled example, at most 2 words may differ each way.
+
+Labelled example: *It is a beautiful day here in New York City*
+
+| The model's example | Missing from it | Not in the label | p80 |
+|---|---|---|---|
+| A beautiful day here in New York City | It, is | — | yes |
+| A beautiful day here in New York City for now. | It, is | for, now | yes |
+| It is a beautiful day in New York | here, City | — | yes |
+| A 100-word paragraph that contains the whole sentence | — | 90 words | no |
+
+### 3. Plots
+
+A plot is a special class of salient concept and shares its properties: a name and a description. Unlike a salient concept, it does not list examples of where it occurs. It lists, in order, the text spans that form it.
+
+Those spans form a substory: copied out in the order the plot gives them, they read as a complete story — with stylistic or grammatical errors, but readable.
+
+- **True positive** — the plot's description matches a labelled plot's (semantic similarity and n-gram similarity), and p80 of its sequence of spans matches the labelled plot's.
+- **False positives and false negatives** follow as they do for salient concepts.
+
+**What p80 means for a plot.** A plot holds two sequences: the sequence of its spans, and within each span, the sequence of its words. p80 is the same rule at both levels — the elements of the two sequences may differ by at most 20% each way, in order:
+
+1. **Words within a span.** A model's span matches a labelled span when they are at p80 as defined for [examples](#2-examples-of-the-concepts).
+2. **Spans within the plot.** The model's sequence of spans matches the labelled plot's when at most 20% of the labelled spans have no matching span in the model's plot, at most 20% of the model's spans have no matching span in the labelled plot, and the matched spans come in the same order. For a 10-span labelled plot, at most 2 spans may differ each way.
+
 ## Running the benchmark
 
 > **What works today:** running the salient-information task on a Claude model, or on a model of your own, from Python. Every other case below is described but **not implemented yet**. The plot task is not implemented, because the `.author` format does not yet say how plots are annotated. Scoring is not implemented either, so a run gives you the model's replies, not a score.
@@ -128,6 +175,6 @@ If your model is only weights on disk, either serve it with one of those servers
 
 That needs `cortexgrid-infer` installed, and so Python 3.11 and torch, and a connection to the cluster's head over the tailnet with `CORTEXGRID_HEAD_URL` set. cortexgrid's client reports no token counts.
 
-### An agent of your own
+###  User's local model
 
 *Not implemented yet.* An agent — your own code around a model — will run in its own Docker container and serve a small HTTP API. The benchmark will send it one story's prose at a time and collect its replies. The agent's code never shares a container with the annotations, so nothing it runs can read them.
