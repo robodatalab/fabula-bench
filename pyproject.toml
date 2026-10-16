@@ -22,7 +22,7 @@ cortexgrid = ["cortexgrid-infer>=0.3.12; python_version < '3.12'"]
 fabula-bench = "fabula_bench.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = ["parameterized>=0.9", "pytest>=8"]
 
 [build-system]
 requires = ["hatchling"]

@@ -77,7 +77,7 @@ plots              4   1   2       0.80    0.67  0.73
 
 ## Running the benchmark
 
-> **What works today:** running the salient-information task on a Claude model, or on a model of your own, from Python. Every other case below is described but **not implemented yet**. The plot task is not implemented, because the `.author` format does not yet say how plots are annotated. Scoring is not implemented either, so a run gives you the model's replies, not a score.
+> **What works today:** asking a Claude model, or a model of your own, all three tasks from Python, and reading its answers into the same shape as the labels. Every other case below is described but **not implemented yet**. Scoring is not implemented either, so a run gives you the model's answers beside the labels, not a score.
 
 Find your case:
 
@@ -100,11 +100,11 @@ uv sync
 
 ### The stories
 
-A run takes a directory of `.author` files. Every story in it that has salient concepts annotated is asked the salient-information task. The model is given the story's prose and nothing else: the annotations never reach it.
+A run takes a directory of `.author` files. A story with salient concepts labelled (`salient-concept` cells) is asked for its salient concepts and their examples — tasks 1 and 2, in one answer. A story with plots labelled (`plot` cells, written like a salient concept but with their spans in the plot's order) is asked for its plots — task 3. The model is given the story's prose and nothing else: the labels never reach it. It answers in JSON, quoting examples and spans word for word.
 
 ### What a run gives you
 
-`fabula_bench.evaluate` returns one `Answer` per story and task: the story's path, the task (`"salient-information"`), and the model's reply as text. Once scoring is implemented, a run will report its results as described in [How the results are reported](#how-the-results-are-reported).
+`fabula_bench.evaluate` returns one `StoryAnswers` per story: the story's path, its labels, the concepts the model answered (each with a title, description and examples), the plots it answered (each with a title, description and spans), the model's replies as written, and any problems reading them. A reply that is not the JSON asked for gives no answers and says why in `problems`. Once scoring is implemented, a run will report its results as described in [How the results are reported](#how-the-results-are-reported).
 
 ### A Claude model
 
