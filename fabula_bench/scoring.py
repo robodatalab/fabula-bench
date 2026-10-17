@@ -110,13 +110,20 @@ def totals(scores: Sequence[StoryScores]) -> dict[str, Counts]:
 
 
 def report(scores: Sequence[StoryScores]) -> str:
-    """The totals, and below them the same table for each story."""
+    """The table of each task's counts added up across all stories."""
     summed = totals(scores)
     total_table = _table(summed)
-    sections = [f"All stories\n{total_table}"]
+    reported = f"All stories\n{total_table}"
+    return reported
+
+
+def report_by_story(scores: Sequence[StoryScores]) -> str:
+    """The same table for each story, under the story's name."""
+    sections: list[str] = []
     for story_scores in scores:
         story_table = _table(story_scores.counts)
-        sections.append(f"{story_scores.story.name}\n{story_table}")
+        section = f"{story_scores.story.name}\n{story_table}"
+        sections.append(section)
     reported = "\n\n".join(sections)
     return reported
 

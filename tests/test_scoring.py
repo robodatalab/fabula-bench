@@ -12,6 +12,7 @@ from fabula_bench.scoring import (
     MeaningSimilarity,
     StoryScores,
     report,
+    report_by_story,
     score,
     totals,
     trigram_similarity,
@@ -169,7 +170,7 @@ class PlotScores(unittest.TestCase):
 
 
 class Report(unittest.TestCase):
-    def test_adds_the_counts_up_across_stories_and_shows_every_story(self) -> None:
+    def test_shows_the_counts_added_up_across_stories_and_no_story_alone(self) -> None:
         door = AnsweredConcept("The door", "The front door she keeps watching.", ())
         first = _story_scores(concepts=(door,))
         second = StoryScores(Path("bell.author"), first.counts)
@@ -179,5 +180,16 @@ class Report(unittest.TestCase):
 
         self.assertEqual(summed[CONCEPTS], Counts(2, 0, 2))
         self.assertIn("All stories", reported)
+        self.assertNotIn("door.author", reported)
+        self.assertNotIn("bell.author", reported)
+
+    def test_by_story_shows_every_story_and_no_totals(self) -> None:
+        door = AnsweredConcept("The door", "The front door she keeps watching.", ())
+        first = _story_scores(concepts=(door,))
+        second = StoryScores(Path("bell.author"), first.counts)
+
+        reported = report_by_story([first, second])
+
         self.assertIn("door.author", reported)
         self.assertIn("bell.author", reported)
+        self.assertNotIn("All stories", reported)

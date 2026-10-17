@@ -68,7 +68,7 @@ A run reports, for each task type, the true positives, false positives and false
 
 Accuracy is not reported. It needs true negatives — what the model rightly did not say — and those cannot be counted: there is no fixed list of non-concepts in a story.
 
-The totals add up the counts across all stories and compute the metrics from those sums. Below the totals, the same table for each story, with its own metrics. For example (the numbers are illustrative):
+The totals add up the counts across all stories and compute the metrics from those sums; they are what a run prints. The same table for each story, with its own metrics, is written to `results.log`. For example (the numbers are illustrative):
 
 ```
 task              TP  FP  FN  precision  recall    F1
@@ -108,12 +108,14 @@ A run takes a directory of `.author` files. A story with salient concepts labell
 
 `fabula_bench.evaluate` returns one `StoryAnswers` per story: the story's path, its labels, the concepts the model answered (each with a title, description and examples), the plots it answered (each with a title, description and spans), the model's replies as written, and any problems reading them. A reply that is not the JSON asked for gives no answers and says why in `problems`.
 
-`fabula_bench.scoring.score` counts the answers against the labels, and `report` prints the tables described in [How the results are reported](#how-the-results-are-reported). Scoring needs the embedding model, which vramen runs under a memory quota you give it. `make claude` does all of it:
+`fabula_bench.scoring.score` counts the answers against the labels; `report` gives the totals and `report_by_story` the table for each story, as described in [How the results are reported](#how-the-results-are-reported). Scoring needs the embedding model, which vramen runs under a memory quota you give it. `make claude` does all of it:
 
 ```python
+from pathlib import Path
+
 from vramen import InferenceModelResourceManager
 from fabula_bench.embeddings import EMBEDDING_MODEL_MEMORY_GB, DescriptionEmbedder
-from fabula_bench.scoring import report, score
+from fabula_bench.scoring import report, report_by_story, score
 
 manager = InferenceModelResourceManager(quota_gb=EMBEDDING_MODEL_MEMORY_GB)
 try:
@@ -121,6 +123,7 @@ try:
 finally:
     manager.shutdown()
 print(report(scores))
+Path("results.log").write_text(report_by_story(scores) + "\n", encoding="utf-8")
 ```
 
 ### A Claude model
