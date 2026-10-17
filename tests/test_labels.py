@@ -19,7 +19,9 @@ def _document(*cells: Cell) -> storydoc.Document:
 
 class Concepts(unittest.TestCase):
     def test_are_read_with_their_description_and_examples(self) -> None:
-        concept = Cell(storydoc.SALIENT_CONCEPT, "What she saw.", {"title": "Door", "words": "0-3, 6-7"})
+        concept = Cell(
+            storydoc.SALIENT_CONCEPT, "What she saw.", {"title": "Door", "words": "0-3, 6-7"}
+        )
 
         labels = labels_of(_document(concept))
 

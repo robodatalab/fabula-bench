@@ -11,7 +11,9 @@ PARAGRAPH_HOLDING_THE_EXAMPLE = f"{FILLER} {LABELLED_EXAMPLE} {FILLER}"
 
 # Ten spans with no words in common, so that only their order and their number
 # decide whether two plots match.
-LABELLED_PLOT = [" ".join(f"span{index}word{letter}" for letter in "abcdefgh") for index in range(10)]
+LABELLED_PLOT = [
+    " ".join(f"span{index}word{letter}" for letter in "abcdefgh") for index in range(10)
+]
 
 
 class WordsOf(unittest.TestCase):
@@ -30,8 +32,16 @@ class SpansMatch(unittest.TestCase):
     @parameterized.expand(
         [
             ("two_words_missing", "A beautiful day here in New York City", True),
-            ("two_words_missing_and_two_added", "A beautiful day here in New York City for now.", True),
-            ("two_words_missing_from_the_middle_and_the_end", "It is a beautiful day in New York", True),
+            (
+                "two_words_missing_and_two_added",
+                "A beautiful day here in New York City for now.",
+                True,
+            ),
+            (
+                "two_words_missing_from_the_middle_and_the_end",
+                "It is a beautiful day in New York",
+                True,
+            ),
             ("three_words_missing", "A beautiful day here in New York", False),
             ("the_example_inside_a_paragraph", PARAGRAPH_HOLDING_THE_EXAMPLE, False),
             ("the_same_words_out_of_order", "City York New in here day beautiful a is It", False),

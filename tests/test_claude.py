@@ -24,7 +24,9 @@ class _AnthropicClient:
     """Stands in for `anthropic.Anthropic`: answers every request with `content`,
     or with the text of the conversation's last turn when `content` is None."""
 
-    def __init__(self, content: list[SimpleNamespace] | None = None, stop_reason: str = "end_turn") -> None:
+    def __init__(
+        self, content: list[SimpleNamespace] | None = None, stop_reason: str = "end_turn"
+    ) -> None:
         self._content = content
         self._stop_reason = stop_reason
         self.requests: list[dict[str, Any]] = []
@@ -36,7 +38,9 @@ class _AnthropicClient:
         echoed = [SimpleNamespace(type="text", text=last_turn)]
         content = echoed if self._content is None else self._content
         stop_details = SimpleNamespace(category="cyber") if self._stop_reason == "refusal" else None
-        message = SimpleNamespace(stop_reason=self._stop_reason, stop_details=stop_details, content=content)
+        message = SimpleNamespace(
+            stop_reason=self._stop_reason, stop_details=stop_details, content=content
+        )
         return _Stream(message)
 
 

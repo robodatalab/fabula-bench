@@ -15,7 +15,15 @@ CONCEPT = Cell(storydoc.SALIENT_CONCEPT, "What she saw.", {"title": "Door", "wor
 PLOT_CELL = Cell(PLOT, "The bell, then the door.", {"title": "Arrival", "words": "4-7, 0-3"})
 
 CONCEPTS_REPLY = json.dumps(
-    {"concepts": [{"title": "The door", "description": "What she sees.", "examples": ["She saw the door."]}]}
+    {
+        "concepts": [
+            {
+                "title": "The door",
+                "description": "What she sees.",
+                "examples": ["She saw the door."],
+            }
+        ]
+    }
 )
 PLOTS_REPLY = json.dumps(
     {"plots": [{"title": "Arrival", "description": "A bell.", "spans": ["He heard the bell."]}]}
@@ -26,7 +34,9 @@ class _ScriptedModel(Model):
     """Replies to a question for concepts with `concepts_reply`, and to one for
     plots with `plots_reply`, and keeps every conversation it was given."""
 
-    def __init__(self, concepts_reply: str = CONCEPTS_REPLY, plots_reply: str = PLOTS_REPLY) -> None:
+    def __init__(
+        self, concepts_reply: str = CONCEPTS_REPLY, plots_reply: str = PLOTS_REPLY
+    ) -> None:
         self.concepts_reply = concepts_reply
         self.plots_reply = plots_reply
         self.conversations: list[Sequence[Turn]] = []
@@ -34,7 +44,9 @@ class _ScriptedModel(Model):
     def generate(self, conversations: Sequence[Sequence[Turn]]) -> list[str]:
         self.conversations.extend(conversations)
         replies = [
-            self.plots_reply if "plots of the story" in conversation[0].text else self.concepts_reply
+            self.plots_reply
+            if "plots of the story" in conversation[0].text
+            else self.concepts_reply
             for conversation in conversations
         ]
         return replies
@@ -111,7 +123,11 @@ class Evaluate(unittest.TestCase):
         reply = json.dumps(
             {
                 "concepts": [
-                    {"title": "The door", "description": "What she sees.", "examples": ["She saw the door."]},
+                    {
+                        "title": "The door",
+                        "description": "What she sees.",
+                        "examples": ["She saw the door."],
+                    },
                     {"title": "The bell"},
                 ]
             }
