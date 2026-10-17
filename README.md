@@ -23,9 +23,11 @@ An answered concept is compared with the labelled concepts using embedding cosin
 - **False positive** — the model invented a concept that is not in the labels.
 - **False negative** — the model missed a labelled concept.
 
+In this first draft, a description matches when the concept's title and description, taken together, reach both thresholds against a labelled concept's: an embedding cosine similarity of at least 0.6, with `Qwen/Qwen3-Embedding-0.6B` run by vramen, and a character-trigram overlap (Jaccard) of at least 0.1. Both thresholds are provisional until they are calibrated. Pairing is one-to-one, best-scoring pairs first, so a concept answered twice is one true positive and one false positive.
+
 ### 2. Examples of the concepts
 
-The model identifies the places in the story that correspond to its concepts — the concepts' examples.
+The model identifies the places in the story that correspond to its concepts — the concepts' examples. A concept's examples are compared with the examples of the labelled concept it matched. The examples of an answered concept that matched nothing are false positives; the examples of a labelled concept nothing matched are false negatives.
 
 - **True positive** — a major (p80) overlap of a labelled example and the model's example.
 - **False positive** — the model's example does not overlap a labelled one, or overlaps it only partially (below p80).
@@ -77,7 +79,7 @@ plots              4   1   2       0.80    0.67  0.73
 
 ## Running the benchmark
 
-> **What works today:** asking a Claude model, or a model of your own, all three tasks from Python, and reading its answers into the same shape as the labels. Every other case below is described but **not implemented yet**. Scoring is not implemented either, so a run gives you the model's answers beside the labels, not a score.
+> **What works today:** asking a Claude model, or a model of your own, all three tasks from Python, and scoring its answers as described above. Scoring is a first draft: the thresholds for matching descriptions are provisional until they are calibrated. Every other case below is described but **not implemented yet**.
 
 Find your case:
 
@@ -104,7 +106,22 @@ A run takes a directory of `.author` files. A story with salient concepts labell
 
 ### What a run gives you
 
-`fabula_bench.evaluate` returns one `StoryAnswers` per story: the story's path, its labels, the concepts the model answered (each with a title, description and examples), the plots it answered (each with a title, description and spans), the model's replies as written, and any problems reading them. A reply that is not the JSON asked for gives no answers and says why in `problems`. Once scoring is implemented, a run will report its results as described in [How the results are reported](#how-the-results-are-reported).
+`fabula_bench.evaluate` returns one `StoryAnswers` per story: the story's path, its labels, the concepts the model answered (each with a title, description and examples), the plots it answered (each with a title, description and spans), the model's replies as written, and any problems reading them. A reply that is not the JSON asked for gives no answers and says why in `problems`.
+
+`fabula_bench.scoring.score` counts the answers against the labels, and `report` prints the tables described in [How the results are reported](#how-the-results-are-reported). Scoring needs the embedding model, which vramen runs under a memory quota you give it. `make claude` does all of it:
+
+```python
+from vramen import InferenceModelResourceManager
+from fabula_bench.embeddings import EMBEDDING_MODEL_MEMORY_GB, DescriptionEmbedder
+from fabula_bench.scoring import report, score
+
+manager = InferenceModelResourceManager(quota_gb=EMBEDDING_MODEL_MEMORY_GB)
+try:
+    scores = score(answers, DescriptionEmbedder(manager))
+finally:
+    manager.shutdown()
+print(report(scores))
+```
 
 ### A Claude model
 
