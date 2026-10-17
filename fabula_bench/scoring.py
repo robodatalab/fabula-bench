@@ -21,6 +21,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, TypeVar
 
+from tqdm import tqdm
+
 from fabula_bench.benchmark import AnsweredConcept, AnsweredPlot, StoryAnswers
 from fabula_bench.labels import LabelledConcept, LabelledPlot
 from fabula_bench.p80 import plot_spans_match, spans_match
@@ -93,7 +95,8 @@ class StoryScores:
 
 def score(answers: Sequence[StoryAnswers], meaning: MeaningSimilarity) -> list[StoryScores]:
     """Each story's answers counted against its labels, task by task."""
-    scores = [_story_scores(story_answers, meaning) for story_answers in answers]
+    stories = tqdm(answers, desc="Scoring", unit="story")
+    scores = [_story_scores(story_answers, meaning) for story_answers in stories]
     return scores
 
 

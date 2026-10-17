@@ -8,10 +8,12 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 import anthropic
+from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 from fabula_bench.models.base import Model, Turn
 
@@ -41,9 +43,18 @@ class Claude(Model):
         self._client = anthropic.Anthropic() if client is None else client
 
     def generate(self, conversations: Sequence[Sequence[Turn]]) -> list[str | None]:
-        with ThreadPoolExecutor(max_workers=self._concurrency) as pool:
-            replying = pool.map(self._reply_to, conversations)
-            replies = list(replying)
+        question_count = len(conversations)
+        description = f"{self._model} answering"
+        # Warnings logged while the bar is drawn are written above it, not into it.
+        with (
+            logging_redirect_tqdm(),
+            tqdm(total=question_count, desc=description, unit="question") as progress,
+            ThreadPoolExecutor(max_workers=self._concurrency) as pool,
+        ):
+            replying = [pool.submit(self._reply_to, conversation) for conversation in conversations]
+            for _ in as_completed(replying):
+                progress.update()
+            replies = [answering.result() for answering in replying]
         return replies
 
     def _reply_to(self, conversation: Sequence[Turn]) -> str | None:

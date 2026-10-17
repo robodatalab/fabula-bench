@@ -1122,6 +1122,7 @@ dependencies = [
     { name = "httpx" },
     { name = "openai" },
     { name = "pydantic" },
+    { name = "tqdm" },
     { name = "vramen" },
 ]
 
@@ -1144,6 +1145,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28" },
     { name = "openai", specifier = ">=1.40" },
     { name = "pydantic", specifier = ">=2.7" },
+    { name = "tqdm", specifier = ">=4.66" },
     { name = "vramen", specifier = ">=0.2.3" },
 ]
 provides-extras = ["cortexgrid"]
