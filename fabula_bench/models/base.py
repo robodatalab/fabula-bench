@@ -30,8 +30,10 @@ class Model(abc.ABC):
     """A model the benchmark can run: subclass it to run your own."""
 
     @abc.abstractmethod
-    def generate(self, conversations: Sequence[Sequence[Turn]]) -> list[str]:
-        """The model's reply to each conversation, in the same order.
+    def generate(self, conversations: Sequence[Sequence[Turn]]) -> list[str | None]:
+        """The model's reply to each conversation, in the same order, or None
+        for a conversation it could not answer — after logging why, so that one
+        failure does not stop the run.
 
         The conversations come as a batch so that a model running on its own
         hardware can generate for several at once."""

@@ -35,13 +35,13 @@ class _ScriptedModel(Model):
     plots with `plots_reply`, and keeps every conversation it was given."""
 
     def __init__(
-        self, concepts_reply: str = CONCEPTS_REPLY, plots_reply: str = PLOTS_REPLY
+        self, concepts_reply: str | None = CONCEPTS_REPLY, plots_reply: str | None = PLOTS_REPLY
     ) -> None:
         self.concepts_reply = concepts_reply
         self.plots_reply = plots_reply
         self.conversations: list[Sequence[Turn]] = []
 
-    def generate(self, conversations: Sequence[Sequence[Turn]]) -> list[str]:
+    def generate(self, conversations: Sequence[Sequence[Turn]]) -> list[str | None]:
         self.conversations.extend(conversations)
         replies = [
             self.plots_reply
@@ -112,11 +112,26 @@ class Evaluate(unittest.TestCase):
     def test_keeps_a_reply_it_cannot_read_and_says_why(self) -> None:
         self._write_story("door", CONCEPT)
 
-        (story_answers,) = evaluate(_ScriptedModel(concepts_reply="I'd rather not."), self.stories)
+        with self.assertLogs("fabula_bench.benchmark", level="WARNING") as logged:
+            (story_answers,) = evaluate(
+                _ScriptedModel(concepts_reply="I'd rather not."), self.stories
+            )
 
         self.assertEqual(story_answers.concepts, ())
         self.assertEqual(story_answers.replies, ("I'd rather not.",))
         self.assertEqual(story_answers.problems, ("the concepts reply holds no JSON object",))
+        self.assertIn("door.author: the concepts reply holds no JSON object", logged.output[0])
+
+    def test_goes_on_past_a_question_the_model_gave_no_reply_to(self) -> None:
+        self._write_story("door", CONCEPT, PLOT_CELL)
+
+        with self.assertLogs("fabula_bench.benchmark", level="WARNING") as logged:
+            (story_answers,) = evaluate(_ScriptedModel(concepts_reply=None), self.stories)
+
+        self.assertEqual(story_answers.concepts, ())
+        self.assertEqual(story_answers.plots[0].title, "Arrival")
+        self.assertEqual(story_answers.problems, ("the model gave no concepts reply",))
+        self.assertIn("door.author: the model gave no concepts reply", logged.output[0])
 
     def test_leaves_out_an_entry_not_in_the_asked_shape(self) -> None:
         self._write_story("door", CONCEPT)

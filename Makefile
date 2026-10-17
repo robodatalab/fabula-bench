@@ -19,9 +19,6 @@ try:
 finally:
     manager.shutdown()
 print(report(scores))
-for story_answers in answers:
-    for problem in story_answers.problems:
-        print(f"{story_answers.story.name}: {problem}")
 endef
 export RUN_ON_CLAUDE
 

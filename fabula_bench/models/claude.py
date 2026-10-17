@@ -6,6 +6,7 @@ Credentials resolve the way the SDK resolves them: `ANTHROPIC_API_KEY`, then
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
@@ -13,6 +14,8 @@ from typing import Any
 import anthropic
 
 from fabula_bench.models.base import Model, Turn
+
+_log = logging.getLogger(__name__)
 
 # Room for a long answer after the model has thought. The request is streamed,
 # so a large cap cannot run into an HTTP timeout.
@@ -37,25 +40,30 @@ class Claude(Model):
         self._concurrency = concurrency
         self._client = anthropic.Anthropic() if client is None else client
 
-    def generate(self, conversations: Sequence[Sequence[Turn]]) -> list[str]:
+    def generate(self, conversations: Sequence[Sequence[Turn]]) -> list[str | None]:
         with ThreadPoolExecutor(max_workers=self._concurrency) as pool:
             replying = pool.map(self._reply_to, conversations)
             replies = list(replying)
         return replies
 
-    def _reply_to(self, conversation: Sequence[Turn]) -> str:
+    def _reply_to(self, conversation: Sequence[Turn]) -> str | None:
         messages: list[Any] = [{"role": turn.role, "content": turn.text} for turn in conversation]
         # No server-side fallback, deliberately: a refusal answered by another
         # model would be recorded as this model's answer.
-        with self._client.messages.stream(
-            model=self._model,
-            max_tokens=self._max_tokens,
-            messages=messages,
-        ) as stream:
-            message = stream.get_final_message()
+        try:
+            with self._client.messages.stream(
+                model=self._model,
+                max_tokens=self._max_tokens,
+                messages=messages,
+            ) as stream:
+                message = stream.get_final_message()
+        except anthropic.APIError as error:
+            _log.warning("%s could not answer: %s", self._model, error)
+            return None
         if message.stop_reason == "refusal":
             category = None if message.stop_details is None else message.stop_details.category
-            raise RuntimeError(f"{self._model} refused to answer ({category})")
+            _log.warning("%s refused to answer (%s)", self._model, category)
+            return None
         texts = [block.text for block in message.content if block.type == "text"]
         reply = "".join(texts)
         return reply

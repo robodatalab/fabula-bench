@@ -2,6 +2,8 @@ import unittest
 from types import SimpleNamespace
 from typing import Any
 
+import anthropic
+
 from fabula_bench.models.base import Turn
 from fabula_bench.models.claude import Claude
 
@@ -22,18 +24,25 @@ class _Stream:
 
 class _AnthropicClient:
     """Stands in for `anthropic.Anthropic`: answers every request with `content`,
-    or with the text of the conversation's last turn when `content` is None."""
+    or with the text of the conversation's last turn when `content` is None, or
+    raises `error` when there is one."""
 
     def __init__(
-        self, content: list[SimpleNamespace] | None = None, stop_reason: str = "end_turn"
+        self,
+        content: list[SimpleNamespace] | None = None,
+        stop_reason: str = "end_turn",
+        error: Exception | None = None,
     ) -> None:
         self._content = content
         self._stop_reason = stop_reason
+        self._error = error
         self.requests: list[dict[str, Any]] = []
         self.messages = SimpleNamespace(stream=self._stream)
 
     def _stream(self, **request: Any) -> _Stream:
         self.requests.append(request)
+        if self._error is not None:
+            raise self._error
         last_turn = request["messages"][-1]["content"]
         echoed = [SimpleNamespace(type="text", text=last_turn)]
         content = echoed if self._content is None else self._content
@@ -80,8 +89,21 @@ class Generate(unittest.TestCase):
         expected = [f"Story {index}" for index in range(10)]
         self.assertEqual(replies, expected)
 
-    def test_stops_with_an_error_when_the_model_refuses(self) -> None:
+    def test_logs_a_refusal_and_gives_no_reply_for_it(self) -> None:
         claude = Claude("claude-opus-5-5", client=_AnthropicClient(stop_reason="refusal"))
 
-        with self.assertRaisesRegex(RuntimeError, "refused to answer \\(cyber\\)"):
-            claude.generate([CONVERSATION])
+        with self.assertLogs("fabula_bench.models.claude", level="WARNING") as logged:
+            replies = claude.generate([CONVERSATION])
+
+        self.assertEqual(replies, [None])
+        self.assertIn("refused to answer (cyber)", logged.output[0])
+
+    def test_logs_an_api_error_and_gives_no_reply_for_it(self) -> None:
+        unreachable = anthropic.APIConnectionError(request=None)  # type: ignore[arg-type]
+        claude = Claude("claude-opus-5-5", client=_AnthropicClient(error=unreachable))
+
+        with self.assertLogs("fabula_bench.models.claude", level="WARNING") as logged:
+            replies = claude.generate([CONVERSATION, CONVERSATION])
+
+        self.assertEqual(replies, [None, None])
+        self.assertIn("could not answer: Connection error.", logged.output[0])

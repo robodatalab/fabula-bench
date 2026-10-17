@@ -135,11 +135,11 @@ claude = Claude("claude-opus-5-5")
 answers = fabula_bench.evaluate(claude, Path("stories"))
 ```
 
-`Claude` takes any model id the Anthropic API accepts. Credentials resolve as the Anthropic SDK resolves them: `ANTHROPIC_API_KEY`, then `ANTHROPIC_AUTH_TOKEN`, then an `ant auth login` profile. It sends up to four stories at once (`concurrency=`) and gives each reply up to 64,000 tokens (`max_tokens=`). If the model refuses a story, the run stops with an error naming the refusal.
+`Claude` takes any model id the Anthropic API accepts. Credentials resolve as the Anthropic SDK resolves them: `ANTHROPIC_API_KEY`, then `ANTHROPIC_AUTH_TOKEN`, then an `ant auth login` profile. It sends up to four stories at once (`concurrency=`) and gives each reply up to 64,000 tokens (`max_tokens=`). If the model refuses a question, or the API fails on it, the failure is logged and the run goes on: that question has no answer, so its labels count as missed.
 
 ### A model you are developing
 
-You do not need to serve your model or put it behind an API. Subclass `fabula_bench.Model` and implement one method, `generate`. It receives a batch of conversations and returns one reply per conversation, in the same order. The benchmark does everything else: which stories to ask, the prompt, and collecting the replies.
+You do not need to serve your model or put it behind an API. Subclass `fabula_bench.Model` and implement one method, `generate`. It receives a batch of conversations and returns one reply per conversation, in the same order — or `None` for a conversation your model could not answer, after logging why, so that one failure does not stop the run. The benchmark does everything else: which stories to ask, the prompt, and collecting the replies.
 
 ```python
 from pathlib import Path

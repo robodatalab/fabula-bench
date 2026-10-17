@@ -9,6 +9,7 @@ asked for its plots — task 3. Scoring is not written yet.
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,8 @@ from typing import Any
 from fabula_bench import storydoc
 from fabula_bench.labels import StoryLabels, labels_of
 from fabula_bench.models.base import Model, Turn
+
+_log = logging.getLogger(__name__)
 
 CONCEPTS_PROMPT = """<story>
 {story}
@@ -132,28 +135,45 @@ def _story_answers(
     story: Path,
     labels: StoryLabels,
     story_index: int,
-    reply_to_each_question: dict[tuple[int, str], str],
+    reply_to_each_question: dict[tuple[int, str], str | None],
 ) -> StoryAnswers:
-    concepts_reply = reply_to_each_question.get((story_index, CONCEPTS))
-    plots_reply = reply_to_each_question.get((story_index, PLOTS))
     replies: list[str] = []
     problems: list[str] = []
     concepts: tuple[AnsweredConcept, ...] = ()
     plots: tuple[AnsweredPlot, ...] = ()
-    if concepts_reply is not None:
-        replies.append(concepts_reply)
-        answered_concepts = _answered_entries(concepts_reply, CONCEPTS, "examples", problems)
+    concepts_question = (story_index, CONCEPTS)
+    if concepts_question in reply_to_each_question:
+        concepts_reply = reply_to_each_question[concepts_question]
+        answered_concepts = _entries_of_the_reply(
+            concepts_reply, CONCEPTS, "examples", replies, problems
+        )
         concepts_in_the_reply = [AnsweredConcept(*entry) for entry in answered_concepts]
         concepts = tuple(concepts_in_the_reply)
-    if plots_reply is not None:
-        replies.append(plots_reply)
-        answered_plots = _answered_entries(plots_reply, PLOTS, "spans", problems)
+    plots_question = (story_index, PLOTS)
+    if plots_question in reply_to_each_question:
+        plots_reply = reply_to_each_question[plots_question]
+        answered_plots = _entries_of_the_reply(plots_reply, PLOTS, "spans", replies, problems)
         plots_in_the_reply = [AnsweredPlot(*entry) for entry in answered_plots]
         plots = tuple(plots_in_the_reply)
+    for problem in problems:
+        _log.warning("%s: %s", story.name, problem)
     all_replies = tuple(replies)
     all_problems = tuple(problems)
     story_answers = StoryAnswers(story, labels, concepts, plots, all_replies, all_problems)
     return story_answers
+
+
+def _entries_of_the_reply(
+    reply: str | None, list_name: str, quotes_name: str, replies: list[str], problems: list[str]
+) -> list[tuple[str, str, tuple[str, ...]]]:
+    """The entries `reply` holds, with the reply kept in `replies`; none, said
+    in `problems`, when the model gave no reply."""
+    if reply is None:
+        problems.append(f"the model gave no {list_name} reply")
+        return []
+    replies.append(reply)
+    entries = _answered_entries(reply, list_name, quotes_name, problems)
+    return entries
 
 
 def _answered_entries(
