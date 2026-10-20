@@ -14,9 +14,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from fabula_bench import storydoc
 from fabula_bench.labels import StoryLabels, labels_of
 from fabula_bench.models.base import Model, Turn
+from fabula_bench.storydoc.iterators.prose_cells_iterator import ProseCellsIterator
+from fabula_bench.storydoc.storydoc import EXTENSION, Document
 
 _log = logging.getLogger(__name__)
 
@@ -82,9 +83,9 @@ def evaluate(model: Model, stories: Path) -> list[StoryAnswers]:
     has salient concepts labelled, and for its plots when it has plots labelled;
     only then can the answer be scored. All the questions go to the model in one
     batch."""
-    found = stories.rglob(f"*{storydoc.EXTENSION}")
+    found = stories.rglob(f"*{EXTENSION}")
     story_paths = sorted(found)
-    documents = [storydoc.Document.load(path) for path in story_paths]
+    documents = [Document.load(path) for path in story_paths]
     labels_of_each_story = [labels_of(document) for document in documents]
     questions: list[tuple[int, str]] = []
     conversations: list[list[Turn]] = []
@@ -115,11 +116,11 @@ def evaluate(model: Model, stories: Path) -> list[StoryAnswers]:
     return answers
 
 
-def _prose_of(document: storydoc.Document) -> str:
+def _prose_of(document: Document) -> str:
     # The story as a reader of the book sees it: its prose, without the labels,
     # which live in cells of their own.
-    markdown_cells = document.markdown_cells()
-    prose_of_each_cell = [cell.source for cell in markdown_cells]
+    prose_cells = ProseCellsIterator(document)
+    prose_of_each_cell = [cell.source for cell in prose_cells]
     prose = "\n\n".join(prose_of_each_cell)
     return prose
 

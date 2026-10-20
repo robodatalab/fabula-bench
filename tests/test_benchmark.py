@@ -4,15 +4,24 @@ import unittest
 from collections.abc import Sequence
 from pathlib import Path
 
-from fabula_bench import storydoc
 from fabula_bench.benchmark import AnsweredConcept, AnsweredPlot, evaluate
-from fabula_bench.labels import PLOT
 from fabula_bench.models.base import Model, Turn
-from fabula_bench.storydoc import Cell
+from fabula_bench.storydoc.cells.cell import Cell
+from fabula_bench.storydoc.cells.markdown_cell import MarkdownCell
+from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotNode
+from fabula_bench.storydoc.cells.salient_concept_cell import SalientConceptCell
+from fabula_bench.storydoc.cells.story_word_range import StoryWordRange
+from fabula_bench.storydoc.storydoc import EXTENSION, Document
 
 PROSE = "She saw the door. He heard the bell."
-CONCEPT = Cell(storydoc.SALIENT_CONCEPT, "What she saw.", {"title": "Door", "words": "0-3"})
-PLOT_CELL = Cell(PLOT, "The bell, then the door.", {"title": "Arrival", "words": "4-7, 0-3"})
+CONCEPT = SalientConceptCell(
+    title="Door", story_word_ranges=[StoryWordRange(0, 3)], source="What she saw."
+)
+PLOT_CELL = PlotCell(
+    title="Arrival",
+    nodes=[PlotNode("n1", StoryWordRange(4, 7)), PlotNode("n2", StoryWordRange(0, 3))],
+    source="The bell, then the door.",
+)
 
 CONCEPTS_REPLY = json.dumps(
     {
@@ -59,9 +68,10 @@ class Evaluate(unittest.TestCase):
         self.stories = Path(directory.name)
 
     def _write_story(self, name: str, *labels: Cell) -> Path:
-        story_path = self.stories / f"{name}{storydoc.EXTENSION}"
-        prose = storydoc.markdown(PROSE)
-        storydoc.save(story_path, [prose, *labels])
+        story_path = self.stories / f"{name}{EXTENSION}"
+        prose = MarkdownCell(PROSE)
+        document = Document.from_cells([prose, *labels], story_path)
+        document.save()
         return story_path
 
     def test_gives_the_model_the_prose_and_none_of_the_labels(self) -> None:
