@@ -14,118 +14,124 @@
 
 ## Low-level plot
 
-1.1. A probe finds an irregular shape embedded under Mars's surface
+1.1. [earth] A probe finds an irregular shape embedded under Mars's surface
 
-1.2. Excavation team is sent, robots are lowered down and begin excavating
+1.2. [mars] Excavation team is sent, robots are lowered down and begin excavating
 
-1.3. Excavation uncovers the object made out of rare materials, resembling a stone sculpture. 
+1.3. [mars] Excavation uncovers the object made out of rare materials, resembling a stone sculpture. 
 
-1.4. Samples are sent to orbit, to a laboratory ship. Scientists begin studying the object.
+1.4. [orbit] Samples are sent to orbit, to a laboratory ship. Scientists begin studying the object.
 
-2.1. The object is an organism embedded in the rock. It was monitoring the probe's movement and its scan, and the arrival of the excavation team.
+2.1. [mars] The object is an organism embedded in the rock. It was monitoring the probe's movement and its scan, and the arrival of the excavation team.
 
-2.2. The excavation begins, and the organism grows concern. But it's not until the excavators pierce its exoskeleton, hurting it, that is sends a distress call.
+2.2. [mars] The excavation begins, and the organism grows concern. But it's not until the excavators pierce its exoskeleton, hurting it, that is sends a distress call.
 
-2.3. The communication is FTL, he is asked what is the nautre of emergency. The organism says he was discovered and attacked. He is told to stay put and that help is on the way.
+2.3. [mars] The communication is FTL, he is asked what is the nautre of emergency. The organism says he was discovered and attacked. He is told to stay put and that help is on the way.
 
-3.1. Alien ships emerge on a far orbit around Mars. Earth ships spot them immediately. 
+3.1. [orbit] Alien ships emerge on a far orbit around Mars. Earth ships spot them immediately. 
 
-3.2. Earth sends orders to protect the discovery. The mission consists of the lab ship and one weakly armed escort. 
+3.2. [orbit] Earth sends orders to protect the discovery. The mission consists of the lab ship and one weakly armed escort. 
 
-3.3. Ships are approaching, they are completely foreign and no one on the earth ships knows how to even interpret if they are powering up weapons or not. hails are sent, but to no effect.
+3.3. [orbit] Ships are approaching, they are completely foreign and no one on the earth ships knows how to even interpret if they are powering up weapons or not. hails are sent, but to no effect.
 
-3.4. Scientists on the lab ship are scrambling in attempt to understand anything about the alien ships. They suspect they are here for the artifact, and they are trying to correlate what they found with the sensor readings. The mineral scans agree, the origin seems the same, but that doesn't say anything about communication.
+3.4. [orbit] Scientists on the lab ship are scrambling in attempt to understand anything about the alien ships. They suspect they are here for the artifact, and they are trying to correlate what they found with the sensor readings. The mineral scans agree, the origin seems the same, but that doesn't say anything about communication.
 
-3.5. All the while the excavation efforts are not stoping, the scientists wanting to find out more about the fleet that approaches by studying the object buried on Mars.
+3.5. [mars] All the while the excavation efforts are not stoping, the scientists wanting to find out more about the fleet that approaches by studying the object buried on Mars.
 
-4.1. The object communicates with the fleet that he is in need of dire assistance.
+4.1. [mars] The object communicates with the fleet that he is in need of dire assistance.
 
-4.2. The fleet observes the efforts and identifies the ships in orbit, classifying them as belionging to the same tribe as the entities attacking the object.
+4.2. [orbit] The fleet observes the efforts and identifies the ships in orbit, classifying them as belionging to the same tribe as the entities attacking the object.
 
-4.3. They fire on the ships in orbit, decimating them.
+4.3. [orbit] They fire on the ships in orbit, decimating them.
 
-4.4. They automated excavators stop.
+4.4. [mars] They automated excavators stop.
 
-4.5. Earth notices the disapeparance of the ships, and assumes they have just been attacked in an act of war.
+4.5. [earth] Earth notices the disapeparance of the ships, and assumes they have just been attacked in an act of war.
 
 <!-- cell: plot id="eb95bb84-666a-442c-973f-8364ea6080d9" title="How the war begun (high-level)" nodes="3838abc8-e2d5-4465-ada4-0313f8faea8b:7-15, 8bacfa2c-64dd-4b0f-8f9f-03e0ed76db4b:17-41, 4c507036-d7ec-4475-8c0a-79f127995ae5:43-55, 6bffc590-9df0-436b-91c2-d813cd467b2a:57-58" edges="7f257336-180f-4415-83cd-a39c836692cc:3838abc8-e2d5-4465-ada4-0313f8faea8b>8bacfa2c-64dd-4b0f-8f9f-03e0ed76db4b, 81685398-0c74-40cf-9302-b2abc0ee5037:8bacfa2c-64dd-4b0f-8f9f-03e0ed76db4b>4c507036-d7ec-4475-8c0a-79f127995ae5, 7f6fb523-1508-477f-bdad-a9dea03c43c2:4c507036-d7ec-4475-8c0a-79f127995ae5>6bffc590-9df0-436b-91c2-d813cd467b2a" -->
 
 How the alien race attacked Earth and why.
 
-<!-- cell: plot id="96b07979-7be6-4ce4-a6a4-fdb269f81466" title="How the war begun (low-level)" nodes="78f58d5c-7cbf-4703-b827-ac1e99484c51:62-71, 17407ff9-1ee0-48f6-9715-975d604056a3:73-83, 981dcaa2-1eec-4154-8f4f-691a8f6331e1:85-97, 026c4034-fdcd-4e06-a98b-02e1b975f6bc:99-112, 18fa90e9-d869-4af2-96f6-671e4141a51a:114-138, 1c1b9e2c-f93d-44d7-80c3-65a252c56c43:140-164, caaf77c9-54c7-4651-b27f-7b83af728116:166-199, 85a84899-678c-4bf5-a781-3c0929af8d4f:201-214, 902418fc-9e01-4c58-ba91-4da58e89d652:216-234, 2e8b2bb3-7a25-4f36-8bef-ec34721d75d2:236-269, 715999ae-42f2-4440-bc79-7fff0e43a5a2:271-323, 5d44d092-b857-4bd9-ae54-7cada30f2265:325-352, 42ddb454-8d5c-4712-ba8b-c1189c79bbc0:354-367, 45801474-bce9-4977-8b09-04568814c95d:369-393, dd589b4e-4c7a-4f4f-a9cb-404ec06ee196:395-403, 4b149bc0-f217-4ec1-a863-78ae85da52ba:405-408, 27e2080d-a10b-4c1e-a22f-f4bb52ee34b7:410-428" edges="8c1e507b-7ce0-4319-a470-d7db8470c2ab:78f58d5c-7cbf-4703-b827-ac1e99484c51>17407ff9-1ee0-48f6-9715-975d604056a3, 86e0c370-b499-448c-b32d-cbba25ee73bf:17407ff9-1ee0-48f6-9715-975d604056a3>981dcaa2-1eec-4154-8f4f-691a8f6331e1, 068c1b1c-69c1-4f29-b25e-e8bf05869287:981dcaa2-1eec-4154-8f4f-691a8f6331e1>026c4034-fdcd-4e06-a98b-02e1b975f6bc, a0d5f4a7-6bc0-4c39-baed-c52acb26a702:18fa90e9-d869-4af2-96f6-671e4141a51a>1c1b9e2c-f93d-44d7-80c3-65a252c56c43, 645bc048-2064-4d91-964f-1287cf09cfe5:1c1b9e2c-f93d-44d7-80c3-65a252c56c43>caaf77c9-54c7-4651-b27f-7b83af728116, 43cfa2dc-1c49-4629-918c-9e6c3c4d39ca:85a84899-678c-4bf5-a781-3c0929af8d4f>902418fc-9e01-4c58-ba91-4da58e89d652, 3429c43a-2bc8-4d47-9543-4a120028fac9:902418fc-9e01-4c58-ba91-4da58e89d652>2e8b2bb3-7a25-4f36-8bef-ec34721d75d2, 1819178c-df4a-4eb6-a648-f3d093f4ae79:2e8b2bb3-7a25-4f36-8bef-ec34721d75d2>715999ae-42f2-4440-bc79-7fff0e43a5a2, 9e195f4d-061f-41d5-aa19-8a436ea47aca:715999ae-42f2-4440-bc79-7fff0e43a5a2>5d44d092-b857-4bd9-ae54-7cada30f2265, 062d2ff2-c158-4457-9e8b-82138eede9e5:42ddb454-8d5c-4712-ba8b-c1189c79bbc0>45801474-bce9-4977-8b09-04568814c95d, aef24e87-32b6-45e9-b952-5b5a3c140425:45801474-bce9-4977-8b09-04568814c95d>dd589b4e-4c7a-4f4f-a9cb-404ec06ee196, d77fec95-e699-4225-99d7-80a20b962c1a:dd589b4e-4c7a-4f4f-a9cb-404ec06ee196>4b149bc0-f217-4ec1-a863-78ae85da52ba, 848d2734-d949-4487-8221-e0f393a4f777:4b149bc0-f217-4ec1-a863-78ae85da52ba>27e2080d-a10b-4c1e-a22f-f4bb52ee34b7, ae990dc0-412d-4a61-b053-a7efedcbe994:026c4034-fdcd-4e06-a98b-02e1b975f6bc>18fa90e9-d869-4af2-96f6-671e4141a51a, baf5d260-62b0-48b8-91d6-2fc57dce264c:caaf77c9-54c7-4651-b27f-7b83af728116>85a84899-678c-4bf5-a781-3c0929af8d4f, f350041c-4bf5-4924-98dc-681e0e3f11a9:5d44d092-b857-4bd9-ae54-7cada30f2265>42ddb454-8d5c-4712-ba8b-c1189c79bbc0" -->
+<!-- cell: plot id="96b07979-7be6-4ce4-a6a4-fdb269f81466" title="How the war begun (low-level)" nodes="78f58d5c-7cbf-4703-b827-ac1e99484c51:61-72, 17407ff9-1ee0-48f6-9715-975d604056a3:73-85, 981dcaa2-1eec-4154-8f4f-691a8f6331e1:86-100, 026c4034-fdcd-4e06-a98b-02e1b975f6bc:101-116, 18fa90e9-d869-4af2-96f6-671e4141a51a:117-143, 1c1b9e2c-f93d-44d7-80c3-65a252c56c43:144-170, caaf77c9-54c7-4651-b27f-7b83af728116:171-206, 85a84899-678c-4bf5-a781-3c0929af8d4f:207-222, 902418fc-9e01-4c58-ba91-4da58e89d652:223-243, 2e8b2bb3-7a25-4f36-8bef-ec34721d75d2:244-279, 715999ae-42f2-4440-bc79-7fff0e43a5a2:280-334, 5d44d092-b857-4bd9-ae54-7cada30f2265:335-364, 42ddb454-8d5c-4712-ba8b-c1189c79bbc0:365-380, 45801474-bce9-4977-8b09-04568814c95d:381-407, dd589b4e-4c7a-4f4f-a9cb-404ec06ee196:408-418, 4b149bc0-f217-4ec1-a863-78ae85da52ba:419-424, 27e2080d-a10b-4c1e-a22f-f4bb52ee34b7:425-445" edges="8c1e507b-7ce0-4319-a470-d7db8470c2ab:78f58d5c-7cbf-4703-b827-ac1e99484c51>17407ff9-1ee0-48f6-9715-975d604056a3, 86e0c370-b499-448c-b32d-cbba25ee73bf:17407ff9-1ee0-48f6-9715-975d604056a3>981dcaa2-1eec-4154-8f4f-691a8f6331e1, 068c1b1c-69c1-4f29-b25e-e8bf05869287:981dcaa2-1eec-4154-8f4f-691a8f6331e1>026c4034-fdcd-4e06-a98b-02e1b975f6bc, a0d5f4a7-6bc0-4c39-baed-c52acb26a702:18fa90e9-d869-4af2-96f6-671e4141a51a>1c1b9e2c-f93d-44d7-80c3-65a252c56c43, 645bc048-2064-4d91-964f-1287cf09cfe5:1c1b9e2c-f93d-44d7-80c3-65a252c56c43>caaf77c9-54c7-4651-b27f-7b83af728116, 43cfa2dc-1c49-4629-918c-9e6c3c4d39ca:85a84899-678c-4bf5-a781-3c0929af8d4f>902418fc-9e01-4c58-ba91-4da58e89d652, 3429c43a-2bc8-4d47-9543-4a120028fac9:902418fc-9e01-4c58-ba91-4da58e89d652>2e8b2bb3-7a25-4f36-8bef-ec34721d75d2, 1819178c-df4a-4eb6-a648-f3d093f4ae79:2e8b2bb3-7a25-4f36-8bef-ec34721d75d2>715999ae-42f2-4440-bc79-7fff0e43a5a2, 9e195f4d-061f-41d5-aa19-8a436ea47aca:715999ae-42f2-4440-bc79-7fff0e43a5a2>5d44d092-b857-4bd9-ae54-7cada30f2265, 062d2ff2-c158-4457-9e8b-82138eede9e5:42ddb454-8d5c-4712-ba8b-c1189c79bbc0>45801474-bce9-4977-8b09-04568814c95d, aef24e87-32b6-45e9-b952-5b5a3c140425:45801474-bce9-4977-8b09-04568814c95d>dd589b4e-4c7a-4f4f-a9cb-404ec06ee196, d77fec95-e699-4225-99d7-80a20b962c1a:dd589b4e-4c7a-4f4f-a9cb-404ec06ee196>4b149bc0-f217-4ec1-a863-78ae85da52ba, 848d2734-d949-4487-8221-e0f393a4f777:4b149bc0-f217-4ec1-a863-78ae85da52ba>27e2080d-a10b-4c1e-a22f-f4bb52ee34b7, ae990dc0-412d-4a61-b053-a7efedcbe994:026c4034-fdcd-4e06-a98b-02e1b975f6bc>18fa90e9-d869-4af2-96f6-671e4141a51a, baf5d260-62b0-48b8-91d6-2fc57dce264c:caaf77c9-54c7-4651-b27f-7b83af728116>85a84899-678c-4bf5-a781-3c0929af8d4f, f350041c-4bf5-4924-98dc-681e0e3f11a9:5d44d092-b857-4bd9-ae54-7cada30f2265>42ddb454-8d5c-4712-ba8b-c1189c79bbc0" -->
 
 The discovery of an alien object on Mars. The alien object on Mars alerts its race of it being attacked and requests assistance. The alien fleet arrives at Mars to help defend their fellow. The aliens fire on the ships in Mars orbit, preventing further damage to their fellow on Mars.
 
-<!-- cell: markdown id="f86493b2-6e58-490b-b78d-990a288bcfe9" -->
+<!-- cell: markdown id="1395a7f0-9154-4766-8333-681a0e2fe965" -->
 
-# Why the object was on Mars
+# Captain Varn and her daughter
 
 ## High-level plot
 
-1. An alien traveller's ship breaks down while it is passing through our solar system.
+1. Captain Varn leaves her daughter on Earth to command the corvette that escorts the mission to Mars.
 
-2. The ship crashes on Mars, and the traveller survives.
+2. At Mars, Varn and her daughter keep talking, and Varn tells her of her doubts about the excavation.
 
-3. It buries itself in the rock to protect itself, calls home for help, and waits for its people to come and get it.
+3. When the alien fleet arrives, Varn fears it will go on to Earth.
 
-4. A human probe notices the fresh crater and comes to look.
+4. Varn believes her daughter will have no chance unless someone stands in the fleet's way. She says goodbye to her daughter, puts her corvette in the fleet's path, and dies.
 
 ## Low-level plot
 
-1.1. The traveller is flying alone between two of its race's worlds, and its route passes through our solar system.
+1.1. [earth] Captain Varn watches the news with her daughter: a probe has found something under the surface of Mars.
 
-1.2. Near the outer planets, the ship's engine fails, and the ship starts to fall toward the inner planets.
+1.2. [earth] Varn is given command of the corvette that will escort the mission to Mars, and tells her daughter she has to leave.
 
-1.3. The traveller steers toward the nearest solid world it can reach: Mars.
+1.3. [earth] Varn says goodbye to her daughter and promises to talk to her every day.
 
-2.1. The ship hits Mars and breaks apart, leaving a fresh crater.
+1.4. [orbit] Varn's corvette arrives at Mars with the laboratory ship, as the first samples come up from the excavation.
 
-2.2. The traveller survives because its body is covered in a hard shell of minerals from its home world.
+2.1. [orbit] Varn calls her daughter. Her daughter says she misses her, and Varn says she misses her too.
 
-2.3. The ship is destroyed, and the traveller has no way to leave Mars.
+2.2. [orbit] Varn watches the excavators dig deeper, and tells her daughter that no one knows what the object is, yet the digging goes on.
 
-3.1. The traveller digs into the rock under the crater, to shelter from the cold and the radiation.
+2.3. [earth] Varn's daughter asks whether the object is dangerous, and Varn tells her not to worry.
 
-3.2. It calls its people over its faster-than-light link and tells them it has crashed.
+3.1. [orbit] Varn sees alien ships appear on her corvette's screens, far out around Mars.
 
-3.3. Its people tell it that a ship will come for it, but the nearest one is far away, so it must wait.
+3.2. [orbit] Varn is ordered to protect the discovery, and knows her one weakly armed corvette cannot stop a fleet.
 
-3.4. The traveller stays still in the rock to save its strength, and waits.
+3.3. [orbit] Varn hails the alien ships again and again, and gets no answer.
 
-4.1. A human satellite orbiting Mars photographs a crater that was not there before.
+3.4. [orbit] Varn asks the scientists on the laboratory ship what the aliens want, and they cannot tell her.
 
-4.2. Scientists on Earth send a probe to look at the new crater.
+3.5. [orbit] Varn tells her daughter about the ships, and that she is afraid they will go on to Earth.
 
-4.3. The traveller watches the probe land and scan the rock above it, and does not know what it is.
+4.1. [orbit] Varn believes that unless someone stands in the fleet's way, her daughter will have no chance on Earth. She sends her daughter a last message to say goodbye.
 
-<!-- cell: plot id="46e44044-eaf4-4813-bbcb-524c73d9c6ac" title="Why the object was on Mars (high-level)" nodes="bf17e389-6bcb-4378-b31b-2f7e7556932e:438-451, 8a7e0f35-5bfc-421a-9eb9-d4d250e71d17:453-461, b556f930-3608-41f8-b03f-0e2ef2eef2a9:463-485, 96d9a8dc-6634-4281-9458-b5e35f0dcbdc:487-497" edges="6aa6bfbb-4a77-4d2f-b496-a39b46c77c31:bf17e389-6bcb-4378-b31b-2f7e7556932e>8a7e0f35-5bfc-421a-9eb9-d4d250e71d17, deb4bd90-cd30-4503-887b-324ce823f325:8a7e0f35-5bfc-421a-9eb9-d4d250e71d17>b556f930-3608-41f8-b03f-0e2ef2eef2a9, f0ce6d7e-ca86-40a4-a21a-1d005ba275de:b556f930-3608-41f8-b03f-0e2ef2eef2a9>96d9a8dc-6634-4281-9458-b5e35f0dcbdc" -->
+4.2. [orbit] Varn moves her corvette into the fleet's path to buy her daughter time.
 
-How an alien traveller came to be buried on Mars.
+4.3. [orbit] The fleet fires, and Varn's corvette is destroyed.
 
-<!-- cell: plot id="4aa4611e-e84a-4217-a3a0-e624f9c8207c" title="Why the object was on Mars (low-level)" nodes="d38d6101-47d6-4760-8364-079636d3f523:501-519, e85d9ddd-d671-4b85-90b5-30b7d4758cc0:521-538, cb2011c5-9273-44dc-b360-fd7b624c2ba9:540-551, 34a87055-ce99-4780-969b-5b1e7c0ed701:553-563, 04234b62-1988-4413-823e-abb6b08253fa:565-582, 51869a83-2aa2-4729-980c-83698d8683f8:584-596, 12732446-249c-47cd-a099-69f1328e6cbb:598-614, cca1297f-5b21-47d8-b31c-f494bd742d5e:616-629, 60f7909e-6f99-46e7-95ed-e93cf87110ad:631-652, 223f3e71-1efc-4f2d-93d7-0f9c9926bc6f:654-666, 2ab6d58d-8efc-4e92-840d-68bc8c16a9bd:682-693, 8954d87d-c142-4886-9c3a-b60058e3bbc9:62-71, 854a8ec4-20b8-4a9e-95a5-473aca6f0751:73-83" edges="09cfdbbe-a602-40b4-b677-1708182388d8:d38d6101-47d6-4760-8364-079636d3f523>e85d9ddd-d671-4b85-90b5-30b7d4758cc0, d943c41c-51e5-478a-8903-2797d186f800:e85d9ddd-d671-4b85-90b5-30b7d4758cc0>cb2011c5-9273-44dc-b360-fd7b624c2ba9, 9409aa01-2dd8-4a2d-8294-0001fc1f769d:34a87055-ce99-4780-969b-5b1e7c0ed701>04234b62-1988-4413-823e-abb6b08253fa, 74ab260e-836a-45a0-b599-0c34f3148991:04234b62-1988-4413-823e-abb6b08253fa>51869a83-2aa2-4729-980c-83698d8683f8, b44d3510-1fff-4e48-b7a3-427ee1b25e35:12732446-249c-47cd-a099-69f1328e6cbb>cca1297f-5b21-47d8-b31c-f494bd742d5e, 9c35a38a-e2fe-4505-93f7-bdd9b20e3ff5:cca1297f-5b21-47d8-b31c-f494bd742d5e>60f7909e-6f99-46e7-95ed-e93cf87110ad, 2f73ea77-7450-49e8-b686-4e284628628c:60f7909e-6f99-46e7-95ed-e93cf87110ad>223f3e71-1efc-4f2d-93d7-0f9c9926bc6f, 21152573-bedd-4daf-939a-1ce669ca797f:cb2011c5-9273-44dc-b360-fd7b624c2ba9>34a87055-ce99-4780-969b-5b1e7c0ed701, 98be20f1-1cb9-4cfe-bf4b-390de0561180:51869a83-2aa2-4729-980c-83698d8683f8>12732446-249c-47cd-a099-69f1328e6cbb, 0f64964f-844c-42b5-84df-61ffe6c10b5d:223f3e71-1efc-4f2d-93d7-0f9c9926bc6f>8954d87d-c142-4886-9c3a-b60058e3bbc9, 75807d73-1977-49fd-94f6-4a37ecddf5ca:8954d87d-c142-4886-9c3a-b60058e3bbc9>2ab6d58d-8efc-4e92-840d-68bc8c16a9bd, 53761465-3e37-4497-8431-19688ab09682:2ab6d58d-8efc-4e92-840d-68bc8c16a9bd>854a8ec4-20b8-4a9e-95a5-473aca6f0751" -->
+4.5. [earth] Varn's daughter receives her mother's last message.
 
-The traveller's ship fails on its way through our solar system. The ship crashes on Mars and the traveller survives. The traveller hides in the rock and calls home. Humans notice the crater and send a probe.
+<!-- cell: plot id="dca7728d-3313-43e2-9dc1-2878b99cc3c0" title="Captain Varn and her daughter (high-level)" nodes="e424b0c8-2808-4d87-97ef-eed1b1c4a740:454-470, f614d64f-2b40-4248-8567-48efef1f5e37:472-489, b91c62c9-7fe5-43e9-9df5-129ad57da9db:491-503, 9cacf434-9ae3-4b5a-8439-9a2cce0b73ec:505-534" edges="4dff3ba5-f9d0-45ab-b6ba-b80033e2e88c:e424b0c8-2808-4d87-97ef-eed1b1c4a740>f614d64f-2b40-4248-8567-48efef1f5e37, 66dbf0c0-3005-44f7-add7-45561f9e25a1:f614d64f-2b40-4248-8567-48efef1f5e37>b91c62c9-7fe5-43e9-9df5-129ad57da9db, bf8971a3-660a-46b4-b7a9-96a9055f1821:b91c62c9-7fe5-43e9-9df5-129ad57da9db>9cacf434-9ae3-4b5a-8439-9a2cce0b73ec" -->
 
-<!-- cell: salient-concept id="8e8a6674-478c-419d-896c-90a260f85822" title="The traveller" words="050b7c47-f1d5-4cc9-be63-4f6dc4483660:17-29, 8a55b6b4-4676-4603-9027-9bd910fa6191:114-138, 3879704f-4731-49d0-9f0e-f680a210613e:140-164, 35e606b6-0b30-45aa-9de4-0e05d32a8cb5:179-186, 4872a531-a30f-434c-8343-9a8ca19e666f:453-461, da85a88b-5916-4a7f-a528-54dd680e4b18:463-485, 9d6aff30-a938-4c92-9006-611c124fe5e2:501-519, a339357e-3b3a-4347-b526-40f19904f238:565-582, f1c0d07d-a094-4bfa-b9fe-c2492fc1d807:584-596, 2ec5e2ea-5d65-4b89-91aa-62f844459daa:654-666, 7f14101d-6039-491e-b2aa-c90007cd6465:695-713" -->
+How Captain Varn gave her life to buy her daughter time.
+
+<!-- cell: plot id="0ba0da30-1107-4920-9637-b37bca145789" title="Captain Varn and her daughter (low-level)" nodes="ac450db2-4e30-4b8c-a299-e0539c1c3c03:537-556, ebbc016a-d49f-45aa-831f-e7c201d7aa88:557-580, a5c674da-08a1-425f-ae73-65bf32505dd4:581-596, e238dfd0-3bbb-47a2-8bf8-21a752bc8011:597-616, 9a791f4c-d54c-48fb-8088-e963ebc5491c:617-635, ba8d58bd-bebc-4c41-9151-045bcaa70a72:636-660, 154d142c-cf04-4e91-82dc-747f85dda7f5:661-677, 7ed2958a-b4ef-485d-b6fd-8255e0c48205:678-692, 8487e6b3-9c20-42c7-8870-30d14c184033:693-712, 2ef7ac99-d328-497e-96ce-e24d6f241b41:713-726, 49c17798-07f4-48b0-a4c0-9af31d6834a4:727-745, cbf88628-c1dd-46bf-8f11-0efe989a85eb:746-765, cd191fae-6fab-4947-8e0b-2151da3c3de6:766-795, c77e468d-2b09-4523-b12d-73afd2ff8acc:796-810, a87ad0c3-efc8-49c8-a44e-6fb6735835a2:811-820, 5bb2c34b-d3e7-468e-bded-bd4a7dfed052:821-829" edges="be9f3907-80db-4266-aeab-13658c114004:ac450db2-4e30-4b8c-a299-e0539c1c3c03>ebbc016a-d49f-45aa-831f-e7c201d7aa88, 680cb49c-61ec-493c-b7b5-b0f7ae98966d:ebbc016a-d49f-45aa-831f-e7c201d7aa88>a5c674da-08a1-425f-ae73-65bf32505dd4, e3150870-e21b-437c-b2fb-3ab3cc490da3:a5c674da-08a1-425f-ae73-65bf32505dd4>e238dfd0-3bbb-47a2-8bf8-21a752bc8011, 0ec1d0f9-3e65-4dff-aa9a-37705671ef4a:e238dfd0-3bbb-47a2-8bf8-21a752bc8011>9a791f4c-d54c-48fb-8088-e963ebc5491c, 349dabc1-77c0-449a-9e5e-911211da5275:9a791f4c-d54c-48fb-8088-e963ebc5491c>ba8d58bd-bebc-4c41-9151-045bcaa70a72, ed793d2c-da3b-4c3d-9a84-8589b810cdb3:ba8d58bd-bebc-4c41-9151-045bcaa70a72>154d142c-cf04-4e91-82dc-747f85dda7f5, fe5e35f6-7834-45d5-8f7d-9b6aaba94004:154d142c-cf04-4e91-82dc-747f85dda7f5>7ed2958a-b4ef-485d-b6fd-8255e0c48205, de9fc47e-0ec5-4f0e-aa5d-860d0a8c1f5c:7ed2958a-b4ef-485d-b6fd-8255e0c48205>8487e6b3-9c20-42c7-8870-30d14c184033, e94e87ee-f5ee-44e2-976c-6812dcb6e900:8487e6b3-9c20-42c7-8870-30d14c184033>2ef7ac99-d328-497e-96ce-e24d6f241b41, a972c2b1-bbae-42d9-bd35-bb2c055f228a:2ef7ac99-d328-497e-96ce-e24d6f241b41>49c17798-07f4-48b0-a4c0-9af31d6834a4, 26909aba-22e1-4369-b492-02c3d9b1a947:49c17798-07f4-48b0-a4c0-9af31d6834a4>cbf88628-c1dd-46bf-8f11-0efe989a85eb, 8a3009bc-03b8-420c-b153-83549cb831a3:cbf88628-c1dd-46bf-8f11-0efe989a85eb>cd191fae-6fab-4947-8e0b-2151da3c3de6, 557b09dd-bb68-47f2-9735-d514f01c7d81:cd191fae-6fab-4947-8e0b-2151da3c3de6>c77e468d-2b09-4523-b12d-73afd2ff8acc, 503fbf1d-dbc3-483a-b1e8-8d59845b525b:c77e468d-2b09-4523-b12d-73afd2ff8acc>a87ad0c3-efc8-49c8-a44e-6fb6735835a2, dafc956e-ebbe-4420-827a-0586753e8e49:a87ad0c3-efc8-49c8-a44e-6fb6735835a2>5bb2c34b-d3e7-468e-bded-bd4a7dfed052" -->
+
+Captain Varn leaves her daughter to escort the mission to Mars, keeps talking to her, and dies standing in the alien fleet's way.
+
+<!-- cell: salient-concept id="8e8a6674-478c-419d-896c-90a260f85822" title="The traveller" words="050b7c47-f1d5-4cc9-be63-4f6dc4483660:17-29, 8a55b6b4-4676-4603-9027-9bd910fa6191:119-143, 3879704f-4731-49d0-9f0e-f680a210613e:146-170, 35e606b6-0b30-45aa-9de4-0e05d32a8cb5:186-193" -->
 
 A lone alien stranded on Mars after a crash, who only wants to survive until its people come for it. Hurt by beings it cannot understand, it calls for help.
 
-<!-- cell: salient-concept id="5f9cd3d4-c51b-4dc6-bdc7-776861df77da" title="The alien race" words="07d7df7a-142f-49bd-8b74-195d2cf2156d:30-41, 4cbe19e8-cad8-480e-a0c8-9fed365054c5:187-199, b04e6690-be33-4edc-9167-3f4f88de4afc:369-393, ca4dd131-6d60-4eb5-94e6-66a6b74930bd:395-403, b4bacdaf-49e9-414e-a19b-3f6e9ac2f072:631-652" -->
+<!-- cell: salient-concept id="5f9cd3d4-c51b-4dc6-bdc7-776861df77da" title="The alien race" words="07d7df7a-142f-49bd-8b74-195d2cf2156d:30-41, 4cbe19e8-cad8-480e-a0c8-9fed365054c5:194-206, b04e6690-be33-4edc-9167-3f4f88de4afc:383-407, ca4dd131-6d60-4eb5-94e6-66a6b74930bd:410-418" -->
 
 A people who come for one of their own, and treat whoever is hurting it as the enemy.
 
-<!-- cell: salient-concept id="c1bf1836-9a18-4db7-8df5-798d9b55fb73" title="Humanity" words="803e7f0f-3f7d-400b-8d23-a7ad1ee72e84:7-15, 0085edeb-7752-4c6a-89a8-97c8e0b69bb1:85-97, 931f009e-f61c-4da1-8a3c-cf27c0c4508e:99-112, a9fe2a9f-ea80-415c-8288-b465ac70392e:216-222, 17eaf369-53a9-40bc-9979-329c1dc15d35:325-352, e9a97711-44b1-4bc8-afbd-96ebbd53ee58:410-428, f32f9edc-865e-4ca2-a883-4282dfa2b992:682-693" -->
+<!-- cell: salient-concept id="c1bf1836-9a18-4db7-8df5-798d9b55fb73" title="Humanity" words="803e7f0f-3f7d-400b-8d23-a7ad1ee72e84:7-15, 0085edeb-7752-4c6a-89a8-97c8e0b69bb1:88-100, 931f009e-f61c-4da1-8a3c-cf27c0c4508e:103-116, a9fe2a9f-ea80-415c-8288-b465ac70392e:225-231, 17eaf369-53a9-40bc-9979-329c1dc15d35:337-364, e9a97711-44b1-4bc8-afbd-96ebbd53ee58:427-445" -->
 
 The side that hurts a living being without knowing it is alive, and then takes its people's arrival and strike for an attack.
 
-<!-- cell: salient-concept id="832fea15-0d66-42e4-9299-35ef692642ee" title="The faster-than-light link" words="569dda37-7121-4712-9a0d-458a9673949a:166-178, a9f49cfd-bd85-4b39-b31f-bb5fecbac173:354-367, 6fa77257-6047-4989-a3cd-c11b5bccfe51:472-475, cc6220cb-9197-404f-affe-2b6137e4325e:616-629" -->
+<!-- cell: salient-concept id="832fea15-0d66-42e4-9299-35ef692642ee" title="The faster-than-light link" words="569dda37-7121-4712-9a0d-458a9673949a:173-185, a9f49cfd-bd85-4b39-b31f-bb5fecbac173:367-380" -->
 
 The traveller's only way to reach its people. Through it a stranding becomes a rescue, and an injury becomes a call to war.
 
-<!-- cell: salient-concept id="581dedf1-c744-401f-85cb-26bc4bcb5532" title="Misunderstanding" words="740df94b-2aae-4663-9ba2-ff2792d8e26d:43-55, fdb3c91d-d018-4dc4-ab55-205746aecc8b:236-269, 8ff4d31c-27b8-4c48-91a9-97855bc1f273:308-323, 49537012-4c24-49f4-8f84-9e951585e187:380-393, 3f9ba1f4-9b3d-4f20-bc87-4f1c3b317dd1:418-428, 12a1da30-78cc-4958-941b-3cb3188066af:707-713" -->
+<!-- cell: salient-concept id="581dedf1-c744-401f-85cb-26bc4bcb5532" title="Misunderstanding" words="740df94b-2aae-4663-9ba2-ff2792d8e26d:43-55, fdb3c91d-d018-4dc4-ab55-205746aecc8b:246-279, 8ff4d31c-27b8-4c48-91a9-97855bc1f273:319-334, 49537012-4c24-49f4-8f84-9e951585e187:394-407, 3f9ba1f4-9b3d-4f20-bc87-4f1c3b317dd1:435-445" -->
 
 Neither side can read the other, so each takes the other's actions for an attack.
 
-<!-- cell: salient-concept id="2d8238ef-1765-48e7-b778-8d463b3d27df" title="War" words="d6c12376-13d3-4f79-9051-b363f68cf421:57-58, e0bef313-726c-4e9d-9674-1e23498ef86f:395-403, be31be95-c2dd-4501-b60e-a996d264d128:423-428" -->
+<!-- cell: salient-concept id="2d8238ef-1765-48e7-b778-8d463b3d27df" title="War" words="d6c12376-13d3-4f79-9051-b363f68cf421:57-58, e0bef313-726c-4e9d-9674-1e23498ef86f:410-418, be31be95-c2dd-4501-b60e-a996d264d128:440-445" -->
 
 How a war begins that no one meant to start.
