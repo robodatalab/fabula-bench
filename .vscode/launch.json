@@ -8,7 +8,7 @@
             "name": "story_player",
             "type": "debugpy",
             "request": "launch",
-            "module": "fabula_bench.story_player",
+            "module": "fabula_bench.story_player.story_player",
             "console": "integratedTerminal",
             "justMyCode": false
         }
