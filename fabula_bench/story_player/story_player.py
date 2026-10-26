@@ -1,6 +1,9 @@
 import re
 from pathlib import Path
 
+from vramen import InferenceModelResourceManager
+
+from fabula_bench.story_player.scene_descriptor import DESCRIPTION_MODEL_MEMORY_GB, SceneDescriptor
 from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotEdge, PlotNode
 from fabula_bench.storydoc.iterators.story_words_iterator import StoryWordsIterator
 from fabula_bench.storydoc.storydoc import Document
@@ -63,25 +66,28 @@ class StoryPlayer:
         self._current_node = self.followed_plot.get_node_by_id(edge.to_node_id)
 
 
-def main() -> None:
+def main(manager: InferenceModelResourceManager) -> None:
     story = Document.load(Path("fabula_bench/stories/hostage.author"))
     player = StoryPlayer(story)
     story_text = StoryWordsIterator(story)
 
+    scene_descriptor = SceneDescriptor(manager)
     while True:
         current_nodes, outgoing_edges, finished = player.get_current_scene()
         if finished:
             break
-        print("Nodes:")
-        for node_idx, current_node in enumerate(current_nodes):
-            current_text = story_text.text(current_node.story_word_range)
-            print(f"{node_idx + 1}. {current_text}")
-
-        print("\nOptions:")
-        for edge_idx, edge in enumerate(outgoing_edges):
+        scene_texts = [story_text.text(current_node.story_word_range) for current_node in current_nodes]
+        option_texts = []
+        for edge in outgoing_edges:
             edge_plot = player.get_plot_of_edge(edge)
             next_node = edge_plot.get_node_by_id(edge.to_node_id)
             next_text = story_text.text(next_node.story_word_range)
+            option_texts.append(next_text)
+        description = scene_descriptor.describe(scene_texts, option_texts)
+        print(description)
+
+        print("\nOptions:")
+        for edge_idx, next_text in enumerate(option_texts):
             print(f"  {edge_idx + 1}: {next_text}")
 
         edge_idx = -1
@@ -95,5 +101,10 @@ def main() -> None:
         print("\n\n----------------\n")
 
 
+
 if __name__ == "__main__":
-    main()
+    res_mgr = InferenceModelResourceManager(quota_gb=DESCRIPTION_MODEL_MEMORY_GB)
+    try:
+        main(res_mgr)
+    finally:
+        res_mgr.shutdown()
