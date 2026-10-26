@@ -39,6 +39,12 @@ class PlotCell(Cell):
     at: tuple[int, int] | None = field(default=None, compare=False)
     _unique_id: str = field(default_factory=lambda: str(uuid4()))
 
+    def get_node_by_id(self, node_id: str) -> PlotNode:
+        for node in self.nodes:
+            if node.node_id == node_id:
+                return node
+        raise KeyError(node_id)
+
     def with_source(self, source: str) -> PlotCell:
         return replace(self, source=source)
 
