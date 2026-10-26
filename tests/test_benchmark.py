@@ -9,13 +9,18 @@ from fabula_bench.models.base import Model, Turn
 from fabula_bench.storydoc.cells.cell import Cell
 from fabula_bench.storydoc.cells.markdown_cell import MarkdownCell
 from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotNode
-from fabula_bench.storydoc.cells.salient_concept_cell import SalientConceptCell
+from fabula_bench.storydoc.cells.salient_concept_cell import (
+    SalientConceptCell,
+    SalientConceptReference,
+)
 from fabula_bench.storydoc.cells.story_word_range import StoryWordRange
 from fabula_bench.storydoc.storydoc import EXTENSION, Document
 
 PROSE = "She saw the door. He heard the bell."
 CONCEPT = SalientConceptCell(
-    title="Door", story_word_ranges=[StoryWordRange(0, 3)], source="What she saw."
+    title="Door",
+    references=[SalientConceptReference("r1", StoryWordRange(0, 3))],
+    source="What she saw.",
 )
 PLOT_CELL = PlotCell(
     title="Arrival",

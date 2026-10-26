@@ -51,7 +51,7 @@ def labels_of(document: Document) -> StoryLabels:
 
 
 def _labelled_concept(cell: SalientConceptCell, story_words: StoryWordsIterator) -> LabelledConcept:
-    examples = [story_words.text(story_word_range) for story_word_range in cell.story_word_ranges]
+    examples = [story_words.text(reference.story_word_range) for reference in cell.references]
     examples_in_order = tuple(examples)
     concept = LabelledConcept(cell.title, cell.source, examples_in_order)
     return concept

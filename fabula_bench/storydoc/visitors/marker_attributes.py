@@ -12,8 +12,10 @@ from fabula_bench.storydoc.cells.note_cell import NoteCell
 from fabula_bench.storydoc.cells.part_cell import PartCell
 from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotEdge, PlotNode
 from fabula_bench.storydoc.cells.recap_cell import RecapCell
-from fabula_bench.storydoc.cells.salient_concept_cell import SalientConceptCell
-from fabula_bench.storydoc.cells.story_word_range import StoryWordRange
+from fabula_bench.storydoc.cells.salient_concept_cell import (
+    SalientConceptCell,
+    SalientConceptReference,
+)
 from fabula_bench.storydoc.cells.table_of_contents_cell import TableOfContentsCell
 from fabula_bench.storydoc.cells.title_page_cell import TitlePageCell
 from fabula_bench.storydoc.cells.unknown_cell import UnknownCell
@@ -43,7 +45,7 @@ SUBSTACK = "substack"
 PORTRAIT = "portrait"
 DOCUMENTS = "documents"
 
-STORY_WORD_RANGES = "words"
+SALIENT_CONCEPT_REFERENCES = "words"
 
 PLOT_NODES = "nodes"
 PLOT_EDGES = "edges"
@@ -55,10 +57,13 @@ def _without_the_ones_nothing_is_said_about(
     return {name: value for name, value in attributes.items() if value != ""}
 
 
-def _written_story_word_ranges(story_word_ranges: list[StoryWordRange]) -> str:
+def _written_salient_concept_references(
+    references: list[SalientConceptReference],
+) -> str:
     return ", ".join(
-        f"{story_word_range.first_word}-{story_word_range.last_word}"
-        for story_word_range in story_word_ranges
+        f"{reference.reference_id}:{reference.story_word_range.first_word}"
+        f"-{reference.story_word_range.last_word}"
+        for reference in references
     )
 
 
@@ -135,9 +140,9 @@ class MarkerAttributes(CellVisitor[dict[str, str]]):
         return _without_the_ones_nothing_is_said_about({DOCUMENTS: cell.documents})
 
     def visit_salient_concept(self, cell: SalientConceptCell) -> dict[str, str]:
-        story_word_ranges = _written_story_word_ranges(cell.story_word_ranges)
+        references = _written_salient_concept_references(cell.references)
         return _without_the_ones_nothing_is_said_about(
-            {TITLE: cell.title, STORY_WORD_RANGES: story_word_ranges}
+            {TITLE: cell.title, SALIENT_CONCEPT_REFERENCES: references}
         )
 
     def visit_plot(self, cell: PlotCell) -> dict[str, str]:

@@ -5,7 +5,10 @@ from fabula_bench.labels import LabelledConcept, labels_of
 from fabula_bench.storydoc.cells.cell import Cell
 from fabula_bench.storydoc.cells.markdown_cell import MarkdownCell
 from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotNode
-from fabula_bench.storydoc.cells.salient_concept_cell import SalientConceptCell
+from fabula_bench.storydoc.cells.salient_concept_cell import (
+    SalientConceptCell,
+    SalientConceptReference,
+)
 from fabula_bench.storydoc.cells.story_word_range import StoryWordRange
 from fabula_bench.storydoc.storydoc import EXTENSION, Document
 
@@ -24,7 +27,10 @@ class Concepts(unittest.TestCase):
     def test_are_read_with_their_description_and_examples(self) -> None:
         concept = SalientConceptCell(
             title="Door",
-            story_word_ranges=[StoryWordRange(0, 3), StoryWordRange(6, 7)],
+            references=[
+                SalientConceptReference("r1", StoryWordRange(0, 3)),
+                SalientConceptReference("r2", StoryWordRange(6, 7)),
+            ],
             source="What she saw.",
         )
 
@@ -51,7 +57,9 @@ class Plots(unittest.TestCase):
 
     def test_are_none_in_a_story_that_labels_none(self) -> None:
         concept = SalientConceptCell(
-            title="Door", story_word_ranges=[StoryWordRange(0, 3)], source="What she saw."
+            title="Door",
+            references=[SalientConceptReference("r1", StoryWordRange(0, 3))],
+            source="What she saw.",
         )
 
         labels = labels_of(_document(concept))
