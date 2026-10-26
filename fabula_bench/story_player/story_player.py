@@ -72,19 +72,30 @@ def main(manager: InferenceModelResourceManager) -> None:
     story_text = StoryWordsIterator(story)
 
     scene_descriptor = SceneDescriptor(manager)
+    previous_where = None
+    previous_scene_texts = None
     while True:
         current_nodes, outgoing_edges, finished = player.get_current_scene()
         if finished:
             break
         scene_texts = [story_text.text(current_node.story_word_range) for current_node in current_nodes]
+        scene_tags = [player.get_tag(current_node, story_text) for current_node in current_nodes]
+        scene_places = [tag[1] for tag in scene_tags if tag is not None]
+        # The scene's nodes meet where the most specific of their places is.
+        place = max(scene_places, key=len)
+        where = ", ".join(place)
         option_texts = []
         for edge in outgoing_edges:
             edge_plot = player.get_plot_of_edge(edge)
             next_node = edge_plot.get_node_by_id(edge.to_node_id)
             next_text = story_text.text(next_node.story_word_range)
             option_texts.append(next_text)
-        description = scene_descriptor.describe(scene_texts, option_texts)
+        description = scene_descriptor.describe(
+            where, scene_texts, option_texts, previous_where, previous_scene_texts
+        )
         print(description)
+        previous_where = where
+        previous_scene_texts = scene_texts
 
         print("\nOptions:")
         for edge_idx, next_text in enumerate(option_texts):
