@@ -51,6 +51,12 @@ def main() -> None:
         player.step(selected_edge)
         print("\n\n----------------\n")
 
+    print("\nExposure to salient concepts:")
+    for concept in player.exposure_tracker.concepts:
+        seen_references = player.exposure_tracker.get_seen_references(concept)
+        exposure = player.exposure_tracker.get_exposure(concept)
+        print(f"  {concept.title}: {exposure:.0%} ({len(seen_references)} of {len(concept.references)} references)")
+
 
 
 if __name__ == "__main__":

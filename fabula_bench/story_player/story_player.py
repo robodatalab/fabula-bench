@@ -1,5 +1,6 @@
 import re
 
+from fabula_bench.story_player.exposure_tracker import ExposureTracker
 from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotEdge, PlotNode
 from fabula_bench.storydoc.iterators.story_words_iterator import StoryWordsIterator
 from fabula_bench.storydoc.storydoc import Document
@@ -15,8 +16,11 @@ class StoryPlayer:
         self._plots = [cell for cell in doc.cells if isinstance(cell, PlotCell)]
         self.followed_plot = self._plots[1]
         self._current_node = self.followed_plot.nodes[0]
+        self.exposure_tracker = ExposureTracker(doc)
 
     def get_current_scene(self) -> tuple[list[PlotNode], list[PlotEdge], bool]:
+        """The nodes of the current scene, the edges leaving them, and whether the
+        story has finished. The scene's nodes count as seen by the exposure tracker."""
         story_text = StoryWordsIterator(self._doc)
         current_tag = self.get_tag(self._current_node, story_text)
         current_nodes = [self._current_node]
@@ -32,6 +36,7 @@ class StoryPlayer:
                     current_nodes.append(node)
                     outgoing_edges += [edge for edge in plot.edges if edge.from_node_id == node.node_id]
         finished = not outgoing_edges
+        self.exposure_tracker.see(current_nodes)
         return (current_nodes, outgoing_edges, finished)
 
     def get_tag(self, node: PlotNode, story_text: StoryWordsIterator) -> tuple[str, list[str]] | None:
