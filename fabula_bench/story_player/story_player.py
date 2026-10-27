@@ -1,9 +1,7 @@
 import re
 from pathlib import Path
 
-from vramen import InferenceModelResourceManager
-
-from fabula_bench.story_player.scene_descriptor import DESCRIPTION_MODEL_MEMORY_GB, SceneDescriptor
+from fabula_bench.story_player.scene_descriptor import SceneDescriptor
 from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotEdge, PlotNode
 from fabula_bench.storydoc.iterators.story_words_iterator import StoryWordsIterator
 from fabula_bench.storydoc.storydoc import Document
@@ -66,12 +64,12 @@ class StoryPlayer:
         self._current_node = self.followed_plot.get_node_by_id(edge.to_node_id)
 
 
-def main(manager: InferenceModelResourceManager) -> None:
+def main() -> None:
     story = Document.load(Path("fabula_bench/stories/hostage.author"))
     player = StoryPlayer(story)
     story_text = StoryWordsIterator(story)
 
-    scene_descriptor = SceneDescriptor(manager)
+    scene_descriptor = SceneDescriptor()
     previous_where = None
     previous_scene_texts = None
     while True:
@@ -90,7 +88,7 @@ def main(manager: InferenceModelResourceManager) -> None:
             next_node = edge_plot.get_node_by_id(edge.to_node_id)
             next_text = story_text.text(next_node.story_word_range)
             option_texts.append(next_text)
-        description = scene_descriptor.describe(
+        description, endings = scene_descriptor.describe(
             where, scene_texts, option_texts, previous_where, previous_scene_texts
         )
         print(description)
@@ -98,8 +96,8 @@ def main(manager: InferenceModelResourceManager) -> None:
         previous_scene_texts = scene_texts
 
         print("\nOptions:")
-        for edge_idx, next_text in enumerate(option_texts):
-            print(f"  {edge_idx + 1}: {next_text}")
+        for edge_idx, ending in enumerate(endings):
+            print(f"  {edge_idx + 1}: {ending}")
 
         edge_idx = -1
         try:
@@ -114,8 +112,4 @@ def main(manager: InferenceModelResourceManager) -> None:
 
 
 if __name__ == "__main__":
-    res_mgr = InferenceModelResourceManager(quota_gb=DESCRIPTION_MODEL_MEMORY_GB)
-    try:
-        main(res_mgr)
-    finally:
-        res_mgr.shutdown()
+    main()
