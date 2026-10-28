@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from fabula_bench.models.claude_model import ClaudeModel
-from fabula_bench.storydoc.storydoc import Document
+from authordoc.storydoc import Document
 from story_generator.scene_writer import SceneWriter
 from story_generator.story import with_the_story
 

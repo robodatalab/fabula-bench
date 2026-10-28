@@ -7,7 +7,7 @@ from collections.abc import Sequence
 
 from fabula_bench.benchmark_document import get_place
 from fabula_bench.players.agent_player import CompletionModel
-from fabula_bench.storydoc.cells.plot_cell import PlotNode
+from authordoc.cells.plot_cell import PlotNode
 
 SCENE_INSTRUCTIONS = """You write one scene of an interactive story, the way a text adventure such as Zork shows a location: whoever reads it may have come to it from anywhere in the story, so it stands on its own. It says nothing of what happened before it, and nothing of what may happen after it.
 

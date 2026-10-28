@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from fabula_bench.storydoc.cells.plot_cell import PlotCell
-from fabula_bench.storydoc.cells.salient_concept_cell import SalientConceptCell
-from fabula_bench.storydoc.iterators.story_words_iterator import StoryWordsIterator
-from fabula_bench.storydoc.storydoc import Document
+from authordoc.cells.plot_cell import PlotCell
+from authordoc.cells.salient_concept_cell import SalientConceptCell
+from authordoc.iterators.story_words_iterator import StoryWordsIterator
+from authordoc.storydoc import Document
 
 
 @dataclass(frozen=True)

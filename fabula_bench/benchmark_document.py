@@ -6,7 +6,7 @@ the most specific, as in "earth, Varn's house". Events at the same moment, in
 places one of which contains the other, form one scene.
 """
 
-from fabula_bench.storydoc.cells.plot_cell import PlotNode
+from authordoc.cells.plot_cell import PlotNode
 
 
 def get_tag(node: PlotNode) -> tuple[str, list[str]] | None:

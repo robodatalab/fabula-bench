@@ -16,8 +16,8 @@ from typing import Any
 
 from fabula_bench.labels import StoryLabels, labels_of
 from fabula_bench.models.base import Model, Turn
-from fabula_bench.storydoc.iterators.prose_cells_iterator import ProseCellsIterator
-from fabula_bench.storydoc.storydoc import EXTENSION, Document
+from authordoc.iterators.prose_cells_iterator import ProseCellsIterator
+from authordoc.storydoc import EXTENSION, Document
 
 _log = logging.getLogger(__name__)
 

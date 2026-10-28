@@ -6,12 +6,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import replace
 
-from fabula_bench.storydoc.cells.cell import Cell
-from fabula_bench.storydoc.cells.markdown_cell import MarkdownCell
-from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotNode
-from fabula_bench.storydoc.cells.story_word_range import StoryWordRange
-from fabula_bench.storydoc.iterators.story_words_iterator import StoryWordsIterator
-from fabula_bench.storydoc.storydoc import Document
+from authordoc.cells.cell import Cell
+from authordoc.cells.markdown_cell import MarkdownCell
+from authordoc.cells.plot_cell import PlotCell, PlotNode
+from authordoc.cells.story_word_range import StoryWordRange
+from authordoc.iterators.story_words_iterator import StoryWordsIterator
+from authordoc.storydoc import Document
 from story_generator.scene_writer import SceneWriter
 from story_generator.scenes import scenes_of
 

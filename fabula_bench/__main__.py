@@ -7,7 +7,7 @@ from fabula_bench.embeddings import EMBEDDING_MODEL_MEMORY_GB, DescriptionEmbedd
 from fabula_bench.scoring import StoryScores, report, report_by_story, score_concepts
 from fabula_bench.story_player.scene_descriptor import DESCRIPTION_MODEL, DESCRIPTION_MODEL_MEMORY_GB
 from fabula_bench.story_player.story_player import play_story
-from fabula_bench.storydoc.storydoc import Document
+from authordoc.storydoc import Document
 
 STORY = Path("fabula_bench/stories/hostage.author")
 

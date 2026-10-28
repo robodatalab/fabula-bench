@@ -4,8 +4,8 @@ happen."""
 from __future__ import annotations
 
 from fabula_bench.benchmark_document import get_tag, tags_meet
-from fabula_bench.storydoc.cells.plot_cell import PlotNode
-from fabula_bench.storydoc.storydoc import Document
+from authordoc.cells.plot_cell import PlotNode
+from authordoc.storydoc import Document
 
 
 def scenes_of(document: Document) -> list[list[PlotNode]]:

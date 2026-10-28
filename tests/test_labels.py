@@ -2,15 +2,15 @@ import unittest
 from pathlib import Path
 
 from fabula_bench.labels import LabelledConcept, labels_of
-from fabula_bench.storydoc.cells.cell import Cell
-from fabula_bench.storydoc.cells.markdown_cell import MarkdownCell
-from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotNode
-from fabula_bench.storydoc.cells.salient_concept_cell import (
+from authordoc.cells.cell import Cell
+from authordoc.cells.markdown_cell import MarkdownCell
+from authordoc.cells.plot_cell import PlotCell, PlotNode
+from authordoc.cells.salient_concept_cell import (
     SalientConceptCell,
     SalientConceptReference,
 )
-from fabula_bench.storydoc.cells.story_word_range import StoryWordRange
-from fabula_bench.storydoc.storydoc import EXTENSION, Document
+from authordoc.cells.story_word_range import StoryWordRange
+from authordoc.storydoc import EXTENSION, Document
 
 STORIES = Path(__file__).parents[1] / "fabula_bench" / "stories"
 

@@ -297,6 +297,15 @@ wheels = [
 ]
 
 [[package]]
+name = "authordoc"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3d/37/e5c6e910d1697d8cc295c4afd3f23d83e48d1bf4bac7a9568b7d7b1680fd/authordoc-0.1.2.tar.gz", hash = "sha256:431925459c3d8b316b7c32b3cb09c7a23bf5773befd5ae32c964802f08b96229", size = 64439, upload-time = "2026-10-28T18:19:48.254Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/eb/55/9b0dddb0d1dbdd35d4f5f44013f6891527c72f3fa1b7808c61457604639e/authordoc-0.1.2-py3-none-any.whl", hash = "sha256:5fee426ec4269b36b1de47901a34393f45a43e41788959f7481d4a72be8e2d50", size = 32834, upload-time = "2026-10-28T18:19:47.089Z" },
+]
+
+[[package]]
 name = "bcrypt"
 version = "5.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1118,6 +1127,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
+    { name = "authordoc" },
     { name = "google-genai" },
     { name = "httpx" },
     { name = "openai" },
@@ -1140,6 +1150,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic", specifier = ">=1,<2" },
+    { name = "authordoc", specifier = ">=0.1.2" },
     { name = "cortexgrid-infer", marker = "python_full_version < '3.12' and extra == 'cortexgrid'", specifier = ">=0.3.12" },
     { name = "google-genai", specifier = ">=1.0" },
     { name = "httpx", specifier = ">=0.28" },

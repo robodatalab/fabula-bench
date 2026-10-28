@@ -4,10 +4,10 @@ from fabula_bench.benchmark_document import get_place, get_tag, tags_meet
 from fabula_bench.players.agent_player import AgentPlayer, CompletionModel
 from fabula_bench.story_player.exposure_tracker import ExposureTracker
 from fabula_bench.story_player.scene_descriptor import SceneDescriptor
-from fabula_bench.storydoc.cells.plot_cell import PlotEdge, PlotNode
-from fabula_bench.storydoc.cells.salient_concept_cell import SalientConceptCell
-from fabula_bench.storydoc.iterators.story_words_iterator import StoryWordsIterator
-from fabula_bench.storydoc.storydoc import Document
+from authordoc.cells.plot_cell import PlotEdge, PlotNode
+from authordoc.cells.salient_concept_cell import SalientConceptCell
+from authordoc.iterators.story_words_iterator import StoryWordsIterator
+from authordoc.storydoc import Document
 
 STORY_ENDS = "The story ends here."
 

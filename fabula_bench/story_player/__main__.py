@@ -6,7 +6,7 @@ from fabula_bench.story_player.exposure_tracker import ExposureTracker
 from fabula_bench.players.human_player import HumanPlayer
 from fabula_bench.story_player.scene_descriptor import DESCRIPTION_MODEL, DESCRIPTION_MODEL_MEMORY_GB, SceneDescriptor
 from fabula_bench.story_player.story_player import StoryPlayer
-from fabula_bench.storydoc.storydoc import Document
+from authordoc.storydoc import Document
 
 
 def main(manager: InferenceModelResourceManager) -> None:

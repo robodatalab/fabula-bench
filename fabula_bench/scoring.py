@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
-from fabula_bench.storydoc.cells.salient_concept_cell import SalientConceptCell
+from authordoc.cells.salient_concept_cell import SalientConceptCell
 
 TRIGRAM_LENGTH = 3
 

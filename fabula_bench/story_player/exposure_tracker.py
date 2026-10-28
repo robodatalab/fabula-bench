@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 
-from fabula_bench.storydoc.cells.plot_cell import PlotNode
-from fabula_bench.storydoc.cells.salient_concept_cell import SalientConceptCell, SalientConceptReference
-from fabula_bench.storydoc.storydoc import Document
+from authordoc.cells.plot_cell import PlotNode
+from authordoc.cells.salient_concept_cell import SalientConceptCell, SalientConceptReference
+from authordoc.storydoc import Document
 
 
 class ExposureTracker:
