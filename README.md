@@ -9,27 +9,13 @@ fabula-bench tests whether a model understands what it reads: whether it can mod
 The model plays an interactive story, and the stories are vast. One interactive story holds many full-fledged plots that mesh in a single world: a starship captain who gives her life for her daughter, the daughter left behind on Earth, a watcher on the Moon, but also a detective on Earth looking into a killing, a lawyer fighting a case, a boy who has fallen in love. Every scene ends with an unfinished sentence and a choice of endings, which lead on in the story being read or across into another one.
 
 - **Following.** A model that does not understand what it reads jumps from scene to scene, and so from story to story. A model that understands follows the story it started reading, and when it strays from it by mistake, it tries to get back to it.
-- **Reporting.** When the play ends, a model that understood reports the concepts it found, and how it understood them.
+- **Scoring.** When the play ends, we can see how closely the agent stuck to one, preferred plot, and how well it grasped the concepts that plot was based on.
 
 ### How a story is built
 
 The plots of an interactive story form a densely interconnected graph. We build it by writing many individual plots, each a story in its own right, then finding the places where they can come into contact and adjusting their events so that the plots intersect there. On top of those, some edges between scenes belong to no plot at all: they are there to mislead. The scenes, and the choices that end them, are generated last.
 
 The more plots one interactive story holds, and the more misleading edges, the easier it is for an agent to be derailed from the story it follows, and so the more it shows when an agent keeps to it.
-
-## How it is scored
-
-Each concept is annotated on the passages of the story that show it. Concepts are of two kinds: the general themes a story is built on, such as motherhood or war, and the concepts specific to the story that keep a reader wanting to learn more, such as a strange object found buried under Mars.
-
-For now, the model is asked about every concept the play showed, in full or in part, by the concept's title. For each one:
-
-- **exposure** is the share of the concept's passages the model saw;
-- **similarity** is how alike the model's explanation is to the concept's description, measured twice: by the cosine of their embeddings, and by their character trigrams;
-- **score** is similarity × (1 − exposure), so explaining a concept from a glimpse of it counts for more than explaining one seen in full.
-
-The benchmark reports the mean and the standard deviation of the scores, for each similarity, over every concept asked.
-
-This scoring is still being worked out. The aim is to measure how closely the model kept to the story it started reading, and whether it found its way back when it strayed, and whether the concepts it reports, unprompted, align with the story it followed. How to score its own account of what it understood is an open question.
 
 ## Running it
 
@@ -75,6 +61,6 @@ After the play, the agent was asked to explain each salient concept it had come 
 
 ### 2026-10-28: Understanding, not summarization (current)
 
-The north star [above](#north-star): an interactive story holds many full-fledged stories meshed in one world, with misleading edges among them, and an agent that understands follows the story it started, finds its way back when it strays, and in the end reports, unprompted, the concepts it found and how it understood them.
+The north star [above](#north-star): an interactive story holds many full-fledged stories meshed in one world, with misleading edges among them, and an agent that understands follows the story it started and finds its way back when it strays. We score how closely it stuck to one preferred plot, and how well it grasped the concepts that plot was based on; how exactly is still up in the air.
 
 **Why.** Asking the agent to explain concepts by their titles tested nothing a static text could not: a model given the whole story could answer just as well, so it measured summarization. The first full run also showed the model reading titles as names to look up in the text ("The word 'War' never actually appears in the story"). What playing adds is choice, and choice shows understanding: an agent that understands follows the story it is reading, and one that does not jumps between stories. A story packs many plots, and misleading edges, because the more there are, the easier it is for an agent to get derailed and stop following the plot it started.
