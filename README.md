@@ -17,6 +17,27 @@ The plots of an interactive story form a densely interconnected graph. We build 
 
 The more plots one interactive story holds, and the more misleading edges, the easier it is for an agent to be derailed from the story it follows, and so the more it shows when an agent keeps to it.
 
+### Plan
+
+**More plots in one world.** New stories, each in its own `.author` file, set in the world of `hostage.author` and on its clock, so that they can be meshed with it and with one another.
+
+- [ ] A world sheet: the shared clock and places, a one-line premise for each new story, and where each story touches `hostage.author` and the others.
+- [ ] A courtroom drama.
+- [ ] A detective story.
+- [ ] A romance.
+- [ ] A political drama: factions fighting over the extraction of resources in space.
+- [ ] Decide how separate `.author` files are meshed into one world, and mesh them.
+- [ ] Decide how a misleading edge, one that belongs to no plot, is written, and add misleading edges.
+- [ ] Generate the scenes and choices of the meshed world, and annotate the salient concepts on them again, `hostage.author`'s included.
+- [ ] Decide where in the world a play starts.
+
+**Scoring.** We still measure exposure, and add the trajectory: which events the play visited, and whether, and how closely, they follow a plot.
+
+- [ ] Record the events every play visits, in order.
+- [ ] Measure how closely the visited events align with each plot: how many of the plot's events the play visited, in the plot's order, and how often the play left the plot and came back to it.
+- [ ] Decide how to score the agent's grasp of the concepts of the plot it followed.
+- [ ] Save the trajectory and its alignment with every run.
+
 ## Running it
 
 You need [uv](https://docs.astral.sh/uv/) and an Anthropic API key in a `.env` file at the root of the repository (`ANTHROPIC_API_KEY=...`). The embedding model runs locally, through vramen.
