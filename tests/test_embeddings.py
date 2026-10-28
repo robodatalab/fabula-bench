@@ -2,6 +2,7 @@
 
 import unittest
 
+import torch
 from vramen import InferenceModelResourceManager
 
 from fabula_bench.embeddings import EMBEDDING_MODEL_MEMORY_GB, DescriptionEmbedder
@@ -11,6 +12,8 @@ PARAPHRASE = "A visitor nobody was waiting for knocks at the door and never show
 UNRELATED = "A widowed rancher faces down a cattle baron who has dammed the creek."
 
 
+# vramen loads every model onto Apple's GPU, so the real model runs only where there is one.
+@unittest.skipUnless(torch.backends.mps.is_available(), "vramen runs models only on Apple's MPS")
 class CosineSimilarities(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
