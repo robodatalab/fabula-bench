@@ -3,17 +3,25 @@ past tense, what happens where it is now, carrying on from what happened just
 before, and leaves the next sentence open, with endings that lead towards what could
 happen next without telling it, so that whoever plays finishes it as the narrator.
 
-The narrator is Claude.
+The narrator is a local model that vramen serves.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 
-from fabula_bench.models.base import Turn
-from fabula_bench.models.claude import Claude
+from vramen import CausalModel
 
-DESCRIPTION_MODEL = "claude-opus-5-5"
+DESCRIPTION_MODEL = "Qwen/Qwen3-8B"
+
+# What the model takes resident, declared against vramen's quota.
+DESCRIPTION_MODEL_MEMORY_GB = 17.0
+
+# Room for a description of a paragraph or two.
+MAX_NEW_TOKENS = 512
+
+# Room for the opening or the ending of one sentence.
+MAX_SENTENCE_PART_TOKENS = 64
 
 INSTRUCTIONS = """You are the narrator of a story, and its only witness. You never take part in what happens and never mention yourself, and you can be wherever an event takes place.
 
@@ -90,8 +98,8 @@ while over the road, in the cinema, Alice and Mark's film was nearing its end.
 
 
 class SceneDescriptor:
-    def __init__(self) -> None:
-        self._narrator = Claude(DESCRIPTION_MODEL)
+    def __init__(self, narrator: CausalModel) -> None:
+        self._narrator = narrator
 
     def describe(
         self,
@@ -126,26 +134,15 @@ class SceneDescriptor:
             f"What happened just before:\n{before}\n\n"
             f"What is happening:\n{scene}"
         )
-        scene_description = self._complete(INSTRUCTIONS, request)
+        scene_description = self._narrator.complete(INSTRUCTIONS, request, MAX_NEW_TOKENS)
         options = "\n".join(option_texts)
         opening_request = f"The scene:\n{scene_description}\n\nWhat could happen next:\n{options}"
-        opening = self._complete(OPENING_INSTRUCTIONS, opening_request)
+        opening = self._narrator.complete(OPENING_INSTRUCTIONS, opening_request, MAX_SENTENCE_PART_TOKENS)
         endings = []
         for option_text in option_texts:
             ending_request = f"The opening:\n{opening}\n\nWhat could happen next:\n{option_text}"
-            ending = self._complete(ENDING_INSTRUCTIONS, ending_request)
+            ending = self._narrator.complete(ENDING_INSTRUCTIONS, ending_request, MAX_SENTENCE_PART_TOKENS)
             endings.append(ending)
         description = f"{scene_description} {opening} _____ [fill the gap]:"
         return (description, endings)
 
-    def _complete(self, instructions: str, request: str) -> str:
-        """The narrator's reply to the request, following the instructions.
-
-        `Model` has no system role, so the instructions open the request."""
-        prompt = f"{instructions}\n\n{request}"
-        conversation = [Turn("user", prompt)]
-        replies = self._narrator.generate([conversation])
-        reply = replies[0]
-        if reply is None:
-            raise RuntimeError(f"{DESCRIPTION_MODEL} did not answer")
-        return reply
