@@ -8,24 +8,12 @@ requires-python = ">=3.11"
 dependencies = [
     "anthropic>=1,<2",
     "authordoc>=0.1.2",
-    "google-genai>=1.0",
-    "httpx>=0.28",
-    "openai>=1.40",
-    "pydantic>=2.7",
     "tqdm>=4.66",
     "vramen>=0.2.3",
 ]
 
-[project.optional-dependencies]
-# Models deployed on a cortexgrid cluster. cortexgrid-infer runs on Python 3.11
-# only, and brings torch with it, so it stays out of the default install.
-cortexgrid = ["cortexgrid-infer>=0.3.12; python_version < '3.12'"]
-
-[project.scripts]
-fabula-bench = "fabula_bench.cli:main"
-
 [dependency-groups]
-dev = ["parameterized>=0.9", "pytest>=8"]
+dev = ["pytest>=8"]
 
 [build-system]
 requires = ["hatchling"]
