@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol
 
+from tqdm import tqdm
+
 if TYPE_CHECKING:
     from fabula_bench.story_player.story_player import StoryPlayer
 
@@ -44,24 +46,27 @@ class AgentPlayer:
         env.reset()
         description, continuations = env.get_current_scene()
         self.transcript = []
-        while continuations:
-            numbered = [f"{number}. {continuation}" for number, continuation in enumerate(continuations, start=1)]
-            choices = "\n".join(numbered)
-            self.transcript.append(f"{description}\n\n{choices}")
-            play_so_far = "\n\n".join(self.transcript)
-            action_str = self._model.complete(PLAY_INSTRUCTIONS, play_so_far, MAX_NEW_TOKENS)
+        # A play is as long as the path the model takes, so the scenes are counted, with no total.
+        with tqdm(desc="scenes played", unit="scene") as scenes_played:
+            while continuations:
+                numbered = [f"{number}. {continuation}" for number, continuation in enumerate(continuations, start=1)]
+                choices = "\n".join(numbered)
+                self.transcript.append(f"{description}\n\n{choices}")
+                play_so_far = "\n\n".join(self.transcript)
+                action_str = self._model.complete(PLAY_INSTRUCTIONS, play_so_far, MAX_NEW_TOKENS)
 
-            action_int = -1
-            try:
-                action_int = int(action_str)
-            except ValueError:
-                break
-            if not 1 <= action_int <= len(continuations):
-                break
+                action_int = -1
+                try:
+                    action_int = int(action_str)
+                except ValueError:
+                    break
+                if not 1 <= action_int <= len(continuations):
+                    break
 
-            self.transcript.append(f"Chosen: {action_int}")
-            env.step(action_int - 1)
-            description, continuations = env.get_current_scene()
+                self.transcript.append(f"Chosen: {action_int}")
+                env.step(action_int - 1)
+                description, continuations = env.get_current_scene()
+                scenes_played.update(1)
         self.transcript.append(description)
 
     def ask(self, question: str) -> str:

@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 from fabula_bench.benchmark_document import get_choices, get_scene_text, get_tag, tags_meet
 from fabula_bench.players.agent_player import AgentPlayer, CompletionModel
 from fabula_bench.story_player.exposure_tracker import ExposureTracker
@@ -93,7 +95,8 @@ def play_story(story: Document, evaluated_model: CompletionModel) -> tuple[list[
     ]
     exposures = [salient_concepts_tracker.get_exposure(concept) for concept in concepts]
     explanations = []
-    for concept in concepts:
+    concepts_asked = tqdm(concepts, desc="concepts asked", unit="concept")
+    for concept in concepts_asked:
         question = QUESTION.format(title=concept.title)
         explanation = agent.ask(question)
         explanations.append(explanation)
