@@ -10,7 +10,7 @@ from fabula_bench.storydoc.cells.image_cell import ImageCell
 from fabula_bench.storydoc.cells.markdown_cell import MarkdownCell
 from fabula_bench.storydoc.cells.note_cell import NoteCell
 from fabula_bench.storydoc.cells.part_cell import PartCell
-from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotEdge, PlotNode
+from fabula_bench.storydoc.cells.plot_cell import PlotCell, PlotEdge
 from fabula_bench.storydoc.cells.recap_cell import RecapCell
 from fabula_bench.storydoc.cells.salient_concept_cell import (
     SalientConceptCell,
@@ -64,14 +64,6 @@ def _written_salient_concept_references(
         f"{reference.reference_id}:{reference.story_word_range.first_word}"
         f"-{reference.story_word_range.last_word}"
         for reference in references
-    )
-
-
-def _written_plot_nodes(nodes: list[PlotNode]) -> str:
-    return ", ".join(
-        f"{node.node_id}:{node.story_word_range.first_word}"
-        f"-{node.story_word_range.last_word}"
-        for node in nodes
     )
 
 
@@ -145,11 +137,11 @@ class MarkerAttributes(CellVisitor[dict[str, str]]):
             {TITLE: cell.title, SALIENT_CONCEPT_REFERENCES: references}
         )
 
+    # A plot's events are its body; its marker says only its title and edges.
     def visit_plot(self, cell: PlotCell) -> dict[str, str]:
-        nodes = _written_plot_nodes(cell.nodes)
         edges = _written_plot_edges(cell.edges)
         return _without_the_ones_nothing_is_said_about(
-            {TITLE: cell.title, PLOT_NODES: nodes, PLOT_EDGES: edges}
+            {TITLE: cell.title, PLOT_EDGES: edges}
         )
 
     def visit_unknown(self, cell: UnknownCell) -> dict[str, str]:

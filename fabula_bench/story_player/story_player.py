@@ -55,10 +55,10 @@ class StoryPlayer:
             edge_plot = self._doc.get_plot_of_edge(edge)
             next_node = edge_plot.get_node_by_id(edge.to_node_id)
             next_nodes.append(next_node)
-        where = get_place(self._doc, current_nodes)
+        where = get_place(current_nodes)
         scene_texts = self._get_texts(current_nodes)
         option_texts = self._get_texts(next_nodes)
-        previous_where = get_place(self._doc, self._previous_nodes) if self._previous_nodes else None
+        previous_where = get_place(self._previous_nodes) if self._previous_nodes else None
         previous_scene_texts = self._get_texts(self._previous_nodes) if self._previous_nodes else None
         description, continuations = self._scene_descriptor.describe(
             where, scene_texts, option_texts, previous_where, previous_scene_texts
@@ -68,8 +68,7 @@ class StoryPlayer:
     def _get_current_scene_nodes(self) -> tuple[list[PlotNode], list[PlotEdge]]:
         """The nodes of the current scene — the current node, and every node of the
         other plots whose event meets it — and the edges leaving them."""
-        story_text = StoryWordsIterator(self._doc)
-        current_tag = get_tag(self._current_node, story_text)
+        current_tag = get_tag(self._current_node)
         current_nodes = [self._current_node]
         outgoing_edges = [
             edge for edge in self._followed_plot.edges if edge.from_node_id == self._current_node.node_id
@@ -78,7 +77,7 @@ class StoryPlayer:
             if plot is self._followed_plot:
                 continue
             for node in plot.nodes:
-                tag = get_tag(node, story_text)
+                tag = get_tag(node)
                 if tags_meet(tag, current_tag):
                     current_nodes.append(node)
                     outgoing_edges += [edge for edge in plot.edges if edge.from_node_id == node.node_id]
