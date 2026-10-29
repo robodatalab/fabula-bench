@@ -1,4 +1,4 @@
 {
     "python.testing.unittestEnabled": true,
-    "python.testing.unittestArgs": ["-s", "tests/python"]
+    "python.testing.unittestArgs": ["-s", "tests/"]
 }
