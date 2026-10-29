@@ -19,6 +19,14 @@
             "module": "fabula_bench",
             "console": "integratedTerminal",
             "justMyCode": false
+        },
+        {
+            "name": "story_generator",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "story_generator",
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }

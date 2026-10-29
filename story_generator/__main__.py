@@ -1,9 +1,10 @@
 """Writes a story with its author, stage by stage, in a terminal.
 
-Run as `python -m story_generator path/to/story.author`, with the Anthropic API
-key in the environment. Stopped in a stage, run it again to resume at that
-stage. `--back-to "<stage>"` goes back to a stage, and runs it, and every stage
-that depends on it, again.
+Run as `python -m story_generator`, with the Anthropic API key in the
+environment; it asks for the story's .author file, and creates it if there is
+none. Stopped in a stage, run it again on the same file to resume at that stage.
+`--back-to "<stage>"` goes back to a stage, and runs it, and every stage that
+depends on it, again.
 """
 
 from __future__ import annotations
@@ -21,11 +22,12 @@ WRITING_MODEL = "claude-opus-5-5"
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Write a story with its author, stage by stage.")
-    parser.add_argument("story", type=Path, help="the story's .author file")
     parser.add_argument("--back-to", help="the stage to go back to")
     arguments = parser.parse_args()
 
-    story: Path = arguments.story
+    answer = input("The story's .author file, to create or to resume: ")
+    name = answer.strip()
+    story = Path(name)
     # A new story starts as an empty file.
     if not story.exists():
         story.write_text("", encoding="utf-8")

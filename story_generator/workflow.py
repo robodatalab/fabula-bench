@@ -9,9 +9,10 @@ The concepts depend on the low-level plots alone, beside the branch that writes
 the scenes; the annotations need both branches. The author works through one
 stage at a time, so the two branches run one after the other.
 
-After every stage, the workflow checkpoints which stages are finished, in a file
-beside the story: stopped in a stage, it resumes at that stage. Going back to a
-stage runs it again, and every stage that depends on it, and no other.
+After every stage, the workflow checkpoints which stages are finished, one a
+line, in a cell of its own last in the story, of a kind the format does not
+know and keeps as it is: stopped in a stage, it resumes at that stage. Going
+back to a stage runs it again, and every stage that depends on it, and no other.
 
 While a stage runs, whatever is logged under this package goes to the
 workflow's handler as that stage's; the workflow logs when the stage starts, and
@@ -21,10 +22,11 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from contextlib import contextmanager
-import json
 import logging
 from pathlib import Path
 
+from authordoc.cells.unknown_cell import UnknownCell
+from authordoc.storydoc import Document
 from fabula_bench.players.agent_player import CompletionModel
 from story_generator.stage import AuthorStopped, Stage
 from story_generator.stage_visitor import StageVisitor
@@ -43,11 +45,22 @@ CONCEPTS_BRANCH = ["concepts"]
 JOIN = ["annotations"]
 PARTS = (TRUNK, SCENES_BRANCH, CONCEPTS_BRANCH, JOIN)
 
+# The kind of the cell the workflow checkpoints in.
+CHECKPOINT = "workflow-checkpoint"
+
+
+def get_checkpoint(document: Document) -> UnknownCell | None:
+    """The cell the workflow checkpoints in; None before its first checkpoint."""
+    checkpoint = next(
+        (cell for cell in document.cells if isinstance(cell, UnknownCell) and cell.kind == CHECKPOINT),
+        None,
+    )
+    return checkpoint
+
 
 class Workflow:
     def __init__(self, story: Path, model: CompletionModel, renderer: StageVisitor, handler: logging.Handler) -> None:
         self._story = story
-        self._checkpoint_path = story.with_suffix(".workflow.json")
         self._renderer = renderer
         self._handler = handler
         self.stages: dict[str, Stage] = {
@@ -63,10 +76,11 @@ class Workflow:
 
     def finished(self) -> list[str]:
         """The stages finished so far, as last checkpointed."""
-        if not self._checkpoint_path.exists():
+        document = Document.load(self._story)
+        checkpoint = get_checkpoint(document)
+        if checkpoint is None:
             return []
-        written = self._checkpoint_path.read_text(encoding="utf-8")
-        finished: list[str] = json.loads(written)
+        finished = checkpoint.source.splitlines()
         return finished
 
     def run(self, going_back_to: str | None = None) -> None:
@@ -95,9 +109,16 @@ class Workflow:
                 self._checkpoint(finished)
 
     def _checkpoint(self, finished: list[str]) -> None:
-        """Writes down which stages are finished, beside the story."""
-        written = json.dumps(finished, indent=2)
-        self._checkpoint_path.write_text(written, encoding="utf-8")
+        """Writes down which stages are finished, in the story's last cell: a stage
+        may have added cells after the one checkpointed in before."""
+        document = Document.load(self._story)
+        held = get_checkpoint(document)
+        source = "\n".join(finished)
+        checkpoint = UnknownCell(CHECKPOINT, source=source) if held is None else held.with_source(source)
+        others = [cell for cell in document.cells if cell.unique_id != checkpoint.unique_id]
+        cells = [*others, checkpoint]
+        written = Document.from_cells(cells, document.path)
+        self._story.write_text(written.text, encoding="utf-8")
 
 
 def _depending_on(stage: str) -> list[str]:
