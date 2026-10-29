@@ -25,7 +25,7 @@ The more plots one interactive story holds, and the more misleading edges, the e
 - [x] A romance.
 - [x] A detective story.
 - [x] A courtroom drama.
-- [ ] The salient concepts each new story's plots pursue, general and story-specific.
+- [x] The salient concepts each new story's plots pursue, general and story-specific.
 - [x] Find the places where the plots can come into contact, and adjust their events so that the plots intersect there.
 - [x] Mesh the stories into one world: an interactive story is a single `.author` document, so every plot is in `space_opera.author`.
 - [ ] Decide how a misleading edge, one that belongs to no plot, is written, and add misleading edges.
