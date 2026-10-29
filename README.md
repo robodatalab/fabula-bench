@@ -30,8 +30,14 @@ The more plots one interactive story holds, and the more misleading edges, the e
 - [x] Mesh the stories into one world: an interactive story is a single `.author` document, so every plot is in `space_opera.author`.
 - [ ] Decide how a misleading edge, one that belongs to no plot, is written, and add misleading edges.
 - [ ] Add connections, scenes that lead into another plot at or near its beginning. Unlike misleading edges, they are meant to be followed.
-- [ ] Generate the scenes and choices of the meshed world, and annotate the salient concepts on them again, `space_opera.author`'s included.
+- [x] Generate the scenes and choices of the meshed world.
+- [ ] Annotate the salient concepts on the meshed world's scenes, `space_opera.author`'s included.
 - [x] Start a play at the beginning of a chosen plot: the story player takes the plot's index among the story's plots, so that the agent can be run from every plot in turn. The high-level plots are notes that outline the plots, so every plot cell is one a play can start from.
+
+**Authoring tool.** The way we write a story, from the author's plot ideas to its plots, concepts, scenes and choices, each step reviewed and revised by the author, as code in `story_generator`, with a text interface. It is a test of a feature for the authorship editor.
+
+- [x] Design it: a workflow of stages, each run once the stages it depends on are done, each reviewed and revised by the author until accepted, drawn by a renderer that visits it, and reopened when the author goes back; the workflow's progress saved beside the story, so that it can be stopped and resumed.
+- [ ] Build it, with a rudimentary text interface.
 
 **Scoring.** We still measure exposure, and add the trajectory: which events the play visited, and whether, and how closely, they follow a plot.
 
