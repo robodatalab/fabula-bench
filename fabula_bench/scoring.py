@@ -60,9 +60,11 @@ class ConceptScore:
 
 @dataclass(frozen=True)
 class StoryScores:
-    """One story's concept scores, and what went wrong while it was played and asked."""
+    """The concept scores of one play of a story, from the plot it started from,
+    and what went wrong while it was played and asked."""
 
     story: Path
+    plot: str
     concepts: tuple[ConceptScore, ...]
     problems: tuple[str, ...]
 
@@ -129,7 +131,7 @@ def report_by_story(scores: Sequence[StoryScores]) -> str:
             f"{'concept':<32}{'exposure':>9}{'cosine':>8}{'trigrams':>9}"
             f"{'cosine score':>14}{'trigram score':>15}"
         )
-        rows = [story_scores.story.name, header]
+        rows = [f"{story_scores.story.name}, from {story_scores.plot}", header]
         for concept in story_scores.concepts:
             row = (
                 f"{concept.title[:31]:<32}{concept.exposure:>9.0%}{concept.cosine:>8.3f}"

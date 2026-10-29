@@ -16,18 +16,20 @@ a few sentences."""
 
 
 class StoryPlayer:
-    """Plays a story scene by scene: `get_current_scene` tells the current scene
-    and its continuations, and `step` follows one of them."""
+    """Plays a story scene by scene, from the beginning of the plot at
+    `plot_index` among the story's plots: `get_current_scene` tells the current
+    scene and its continuations, and `step` follows one of them."""
 
-    def __init__(self, doc: Document, exposure_tracker: ExposureTracker) -> None:
+    def __init__(self, doc: Document, exposure_tracker: ExposureTracker, plot_index: int) -> None:
         self._doc = doc
         self._exposure_tracker = exposure_tracker
+        self._plot_index = plot_index
         self.reset()
 
     def reset(self) -> None:
-        """Start the story over."""
+        """Start the story over, at the beginning of the plot the play starts from."""
         plots = self._doc.plots()
-        self._followed_plot = plots[1]
+        self._followed_plot = plots[self._plot_index]
         self._current_node = self._followed_plot.nodes[0]
 
     def step(self, action: int) -> None:
@@ -80,13 +82,14 @@ class StoryPlayer:
         return scene_cell
 
 
-def play_story(story: Document, evaluated_model: CompletionModel) -> tuple[list[SalientConceptCell], list[float], list[str]]:
+def play_story(story: Document, evaluated_model: CompletionModel, plot_index: int) -> tuple[list[SalientConceptCell], list[float], list[str]]:
     """The evaluated model plays the story, scene by scene as the story tells it,
-    then explains every salient concept the play showed it, asked by the
-    concept's title. Returns those concepts, how much of each the play showed,
-    and the model's explanations, in the same order."""
+    from the beginning of the plot at `plot_index` among the story's plots, then
+    explains every salient concept the play showed it, asked by the concept's
+    title. Returns those concepts, how much of each the play showed, and the
+    model's explanations, in the same order."""
     salient_concepts_tracker = ExposureTracker(story)
-    player = StoryPlayer(story, salient_concepts_tracker)
+    player = StoryPlayer(story, salient_concepts_tracker, plot_index)
     agent = AgentPlayer(evaluated_model)
     agent.play(player)
 

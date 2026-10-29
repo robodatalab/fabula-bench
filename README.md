@@ -19,19 +19,19 @@ The more plots one interactive story holds, and the more misleading edges, the e
 
 ### Plan
 
-**More plots in one world.** New stories, each in its own `.author` file, set in the world of `space_opera.author` and on its clock, so that they can be meshed with it and with one another.
+**More plots in one world.** New stories set in the world of `space_opera.author` and on its clock, so that they mesh with it and with one another.
 
-- [x] A political drama: factions fighting over the extraction of resources in space (`political_drama.author`).
-- [x] A romance (`romance.author`).
-- [x] A detective story (`detective_story.author`).
-- [x] A courtroom drama (`courtroom_drama.author`).
+- [x] A political drama: factions fighting over the extraction of resources in space.
+- [x] A romance.
+- [x] A detective story.
+- [x] A courtroom drama.
 - [ ] The salient concepts each new story's plots pursue, general and story-specific.
 - [x] Find the places where the plots can come into contact, and adjust their events so that the plots intersect there.
-- [ ] Decide how separate `.author` files are meshed into one world, and mesh them.
+- [x] Mesh the stories into one world: an interactive story is a single `.author` document, so every plot is in `space_opera.author`.
 - [ ] Decide how a misleading edge, one that belongs to no plot, is written, and add misleading edges.
 - [ ] Add connections, scenes that lead into another plot at or near its beginning. Unlike misleading edges, they are meant to be followed.
 - [ ] Generate the scenes and choices of the meshed world, and annotate the salient concepts on them again, `space_opera.author`'s included.
-- [ ] Start a play at the beginning of a chosen plot: the story player takes the plot's index, and a function tells how many plots an interactive story has, so that the agent can be run from every plot in turn.
+- [x] Start a play at the beginning of a chosen plot: the story player takes the plot's index among the story's plots, so that the agent can be run from every plot in turn. The high-level plots are notes that outline the plots, so every plot cell is one a play can start from.
 
 **Scoring.** We still measure exposure, and add the trajectory: which events the play visited, and whether, and how closely, they follow a plot.
 
@@ -49,9 +49,9 @@ You need [uv](https://docs.astral.sh/uv/) and an Anthropic API key in a `.env` f
 uv run --env-file .env python -m fabula_bench
 ```
 
-Claude Opus 5.5 plays `fabula_bench/stories/space_opera.author`; both are set at the top of `fabula_bench/__main__.py`. Progress bars count the scenes played and the concepts asked. The results — the final scores, every concept's exposure, similarities and score, and the model's explanations — are printed and saved to `runs/<when the run started>.txt`.
+Claude Opus 5.5 plays `fabula_bench/stories/space_opera.author` once from the beginning of each of its plots; both are set at the top of `fabula_bench/__main__.py`. Progress bars count the scenes played and the concepts asked. The results — the final scores, and for every play the plot it started from, every concept's exposure, similarities and score, and the model's explanations — are printed and saved to `runs/<when the run started>.txt`.
 
-To play a story yourself:
+To play a story yourself, from the plot you choose:
 
 ```
 uv run python -m fabula_bench.story_player

@@ -23,12 +23,15 @@ def main(manager: InferenceModelResourceManager) -> None:
     evaluated_model = ClaudeModel(EVALUATED_MODEL)
     embedder = DescriptionEmbedder(manager)
 
-    concepts, exposures, explanations = play_story(story, evaluated_model)
-    concept_scores = score_concepts(concepts, exposures, explanations, embedder)
-
-    scored_concepts = tuple(concept_scores)
-    story_scores = StoryScores(STORY, scored_concepts, ())
-    scores = [story_scores]
+    # One play from the beginning of every plot of the story.
+    scores = []
+    plots = story.plots()
+    for plot_index, plot in enumerate(plots):
+        concepts, exposures, explanations = play_story(story, evaluated_model, plot_index)
+        concept_scores = score_concepts(concepts, exposures, explanations, embedder)
+        scored_concepts = tuple(concept_scores)
+        story_scores = StoryScores(STORY, plot.title, scored_concepts, ())
+        scores.append(story_scores)
     final_report = report(scores)
     story_report = report_by_story(scores)
     results = f"{final_report}\n\n{story_report}"

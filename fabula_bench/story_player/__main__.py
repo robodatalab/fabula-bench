@@ -8,8 +8,11 @@ from authordoc.storydoc import Document
 
 def main() -> None:
     story = Document.load(Path("fabula_bench/stories/space_opera.author"))
+    plots = story.plots()
+    plot_count = len(plots)
+    plot_number = int(input(f"Plot to start from (1-{plot_count})> "))
     exposure_tracker = ExposureTracker(story)
-    player = StoryPlayer(story, exposure_tracker)
+    player = StoryPlayer(story, exposure_tracker, plot_number - 1)
 
     human = HumanPlayer()
     human.play(player)

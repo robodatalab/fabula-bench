@@ -48,14 +48,16 @@ They automated excavators stop.
 
 Earth notices the disapeparance of the ships, and assumes they have just been attacked in an act of war.
 
-<!-- cell: plot id="eb95bb84-666a-442c-973f-8364ea6080d9" title="How the war begun (high-level)" edges="7f257336-180f-4415-83cd-a39c836692cc:3838abc8-e2d5-4465-ada4-0313f8faea8b>8bacfa2c-64dd-4b0f-8f9f-03e0ed76db4b, 81685398-0c74-40cf-9302-b2abc0ee5037:8bacfa2c-64dd-4b0f-8f9f-03e0ed76db4b>4c507036-d7ec-4475-8c0a-79f127995ae5, 7f6fb523-1508-477f-bdad-a9dea03c43c2:4c507036-d7ec-4475-8c0a-79f127995ae5>6bffc590-9df0-436b-91c2-d813cd467b2a" -->
+<!-- cell: note id="eb95bb84-666a-442c-973f-8364ea6080d9" -->
 
-<ol title="How the alien race attacked Earth and why.">
-<li id="3838abc8-e2d5-4465-ada4-0313f8faea8b" timestamp="1" words="7-15">Earth finds an artifact on Mars and begin excavating.</li>
-<li id="8bacfa2c-64dd-4b0f-8f9f-03e0ed76db4b" words="17-41">The artifact is actually a living organism and the excavation is damaging it. It sends a signal to its race, who come to protect it.</li>
-<li id="4c507036-d7ec-4475-8c0a-79f127995ae5" timestamp="2" words="43-55">Earth sees the ships coming out of hyper-space, and thinks it's an attack.</li>
-<li id="6bffc590-9df0-436b-91c2-d813cd467b2a" words="57-58">War begins.</li>
-</ol>
+## How the war begun
+
+How the alien race attacked Earth and why.
+
+1. Earth finds an artifact on Mars and begin excavating.
+2. The artifact is actually a living organism and the excavation is damaging it. It sends a signal to its race, who come to protect it.
+3. Earth sees the ships coming out of hyper-space, and thinks it's an attack.
+4. War begins.
 
 <!-- cell: plot id="96b07979-7be6-4ce4-a6a4-fdb269f81466" title="How the war begun (low-level)" edges="8c1e507b-7ce0-4319-a470-d7db8470c2ab:78f58d5c-7cbf-4703-b827-ac1e99484c51>17407ff9-1ee0-48f6-9715-975d604056a3, 86e0c370-b499-448c-b32d-cbba25ee73bf:17407ff9-1ee0-48f6-9715-975d604056a3>981dcaa2-1eec-4154-8f4f-691a8f6331e1, 068c1b1c-69c1-4f29-b25e-e8bf05869287:981dcaa2-1eec-4154-8f4f-691a8f6331e1>026c4034-fdcd-4e06-a98b-02e1b975f6bc, a0d5f4a7-6bc0-4c39-baed-c52acb26a702:18fa90e9-d869-4af2-96f6-671e4141a51a>1c1b9e2c-f93d-44d7-80c3-65a252c56c43, 645bc048-2064-4d91-964f-1287cf09cfe5:1c1b9e2c-f93d-44d7-80c3-65a252c56c43>caaf77c9-54c7-4651-b27f-7b83af728116, 43cfa2dc-1c49-4629-918c-9e6c3c4d39ca:85a84899-678c-4bf5-a781-3c0929af8d4f>902418fc-9e01-4c58-ba91-4da58e89d652, 3429c43a-2bc8-4d47-9543-4a120028fac9:902418fc-9e01-4c58-ba91-4da58e89d652>2e8b2bb3-7a25-4f36-8bef-ec34721d75d2, 1819178c-df4a-4eb6-a648-f3d093f4ae79:2e8b2bb3-7a25-4f36-8bef-ec34721d75d2>715999ae-42f2-4440-bc79-7fff0e43a5a2, 9e195f4d-061f-41d5-aa19-8a436ea47aca:715999ae-42f2-4440-bc79-7fff0e43a5a2>5d44d092-b857-4bd9-ae54-7cada30f2265, 062d2ff2-c158-4457-9e8b-82138eede9e5:42ddb454-8d5c-4712-ba8b-c1189c79bbc0>45801474-bce9-4977-8b09-04568814c95d, aef24e87-32b6-45e9-b952-5b5a3c140425:45801474-bce9-4977-8b09-04568814c95d>dd589b4e-4c7a-4f4f-a9cb-404ec06ee196, d77fec95-e699-4225-99d7-80a20b962c1a:dd589b4e-4c7a-4f4f-a9cb-404ec06ee196>4b149bc0-f217-4ec1-a863-78ae85da52ba, 848d2734-d949-4487-8221-e0f393a4f777:4b149bc0-f217-4ec1-a863-78ae85da52ba>27e2080d-a10b-4c1e-a22f-f4bb52ee34b7, ae990dc0-412d-4a61-b053-a7efedcbe994:026c4034-fdcd-4e06-a98b-02e1b975f6bc>18fa90e9-d869-4af2-96f6-671e4141a51a, baf5d260-62b0-48b8-91d6-2fc57dce264c:caaf77c9-54c7-4651-b27f-7b83af728116>85a84899-678c-4bf5-a781-3c0929af8d4f, f350041c-4bf5-4924-98dc-681e0e3f11a9:5d44d092-b857-4bd9-ae54-7cada30f2265>42ddb454-8d5c-4712-ba8b-c1189c79bbc0" -->
 
@@ -127,14 +129,16 @@ The fleet fires, and Varn's corvette is destroyed.
 
 Varn's daughter receives her mother's last message.
 
-<!-- cell: plot id="dca7728d-3313-43e2-9dc1-2878b99cc3c0" title="Captain Varn and her daughter (high-level)" edges="4dff3ba5-f9d0-45ab-b6ba-b80033e2e88c:e424b0c8-2808-4d87-97ef-eed1b1c4a740>f614d64f-2b40-4248-8567-48efef1f5e37, 66dbf0c0-3005-44f7-add7-45561f9e25a1:f614d64f-2b40-4248-8567-48efef1f5e37>b91c62c9-7fe5-43e9-9df5-129ad57da9db, bf8971a3-660a-46b4-b7a9-96a9055f1821:b91c62c9-7fe5-43e9-9df5-129ad57da9db>9cacf434-9ae3-4b5a-8439-9a2cce0b73ec" -->
+<!-- cell: note id="dca7728d-3313-43e2-9dc1-2878b99cc3c0" -->
 
-<ol title="How Captain Varn gave her life to buy her daughter time.">
-<li id="e424b0c8-2808-4d87-97ef-eed1b1c4a740" words="431-447">Captain Varn leaves her daughter on Earth to command the corvette that escorts the mission to Mars.</li>
-<li id="f614d64f-2b40-4248-8567-48efef1f5e37" words="449-466">At Mars, Varn and her daughter keep talking, and Varn tells her of her doubts about the excavation.</li>
-<li id="b91c62c9-7fe5-43e9-9df5-129ad57da9db" words="468-480">When the alien fleet arrives, Varn fears it will go on to Earth.</li>
-<li id="9cacf434-9ae3-4b5a-8439-9a2cce0b73ec" words="482-511">Varn believes her daughter will have no chance unless someone stands in the fleet's way. She says goodbye to her daughter, puts her corvette in the fleet's path, and dies.</li>
-</ol>
+## Captain Varn and her daughter
+
+How Captain Varn gave her life to buy her daughter time.
+
+1. Captain Varn leaves her daughter on Earth to command the corvette that escorts the mission to Mars.
+2. At Mars, Varn and her daughter keep talking, and Varn tells her of her doubts about the excavation.
+3. When the alien fleet arrives, Varn fears it will go on to Earth.
+4. Varn believes her daughter will have no chance unless someone stands in the fleet's way. She says goodbye to her daughter, puts her corvette in the fleet's path, and dies.
 
 <!-- cell: plot id="0ba0da30-1107-4920-9637-b37bca145789" title="Captain Varn and her daughter (low-level)" edges="be9f3907-80db-4266-aeab-13658c114004:ac450db2-4e30-4b8c-a299-e0539c1c3c03>ebbc016a-d49f-45aa-831f-e7c201d7aa88, 680cb49c-61ec-493c-b7b5-b0f7ae98966d:ebbc016a-d49f-45aa-831f-e7c201d7aa88>a5c674da-08a1-425f-ae73-65bf32505dd4, e3150870-e21b-437c-b2fb-3ab3cc490da3:a5c674da-08a1-425f-ae73-65bf32505dd4>e238dfd0-3bbb-47a2-8bf8-21a752bc8011, 0ec1d0f9-3e65-4dff-aa9a-37705671ef4a:e238dfd0-3bbb-47a2-8bf8-21a752bc8011>9a791f4c-d54c-48fb-8088-e963ebc5491c, 349dabc1-77c0-449a-9e5e-911211da5275:9a791f4c-d54c-48fb-8088-e963ebc5491c>ba8d58bd-bebc-4c41-9151-045bcaa70a72, ed793d2c-da3b-4c3d-9a84-8589b810cdb3:ba8d58bd-bebc-4c41-9151-045bcaa70a72>154d142c-cf04-4e91-82dc-747f85dda7f5, fe5e35f6-7834-45d5-8f7d-9b6aaba94004:154d142c-cf04-4e91-82dc-747f85dda7f5>7ed2958a-b4ef-485d-b6fd-8255e0c48205, de9fc47e-0ec5-4f0e-aa5d-860d0a8c1f5c:7ed2958a-b4ef-485d-b6fd-8255e0c48205>8487e6b3-9c20-42c7-8870-30d14c184033, e94e87ee-f5ee-44e2-976c-6812dcb6e900:8487e6b3-9c20-42c7-8870-30d14c184033>2ef7ac99-d328-497e-96ce-e24d6f241b41, a972c2b1-bbae-42d9-bd35-bb2c055f228a:2ef7ac99-d328-497e-96ce-e24d6f241b41>49c17798-07f4-48b0-a4c0-9af31d6834a4, 26909aba-22e1-4369-b492-02c3d9b1a947:49c17798-07f4-48b0-a4c0-9af31d6834a4>cbf88628-c1dd-46bf-8f11-0efe989a85eb, 8a3009bc-03b8-420c-b153-83549cb831a3:cbf88628-c1dd-46bf-8f11-0efe989a85eb>cd191fae-6fab-4947-8e0b-2151da3c3de6, 557b09dd-bb68-47f2-9735-d514f01c7d81:cd191fae-6fab-4947-8e0b-2151da3c3de6>c77e468d-2b09-4523-b12d-73afd2ff8acc, 503fbf1d-dbc3-483a-b1e8-8d59845b525b:c77e468d-2b09-4523-b12d-73afd2ff8acc>a87ad0c3-efc8-49c8-a44e-6fb6735835a2, dafc956e-ebbe-4420-827a-0586753e8e49:a87ad0c3-efc8-49c8-a44e-6fb6735835a2>5bb2c34b-d3e7-468e-bded-bd4a7dfed052" -->
 
@@ -155,6 +159,118 @@ Varn's daughter receives her mother's last message.
 <li id="c77e468d-2b09-4523-b12d-73afd2ff8acc" timestamp="4.2" location="orbit" words="8767-9124">Varn moves her corvette into the fleet's path to buy her daughter time.</li>
 <li id="a87ad0c3-efc8-49c8-a44e-6fb6735835a2" timestamp="4.3" location="orbit" words="9174-9524">The fleet fires, and Varn's corvette is destroyed.</li>
 <li id="5bb2c34b-d3e7-468e-bded-bd4a7dfed052" timestamp="4.5" location="earth, Varn's house" words="9914-10340">Varn's daughter receives her mother's last message.</li>
+</ol>
+
+<!-- cell: note id="9797dc34-5962-43ff-aab0-4a23cfea7922" -->
+
+## The politician's deal
+
+How a corrupt politician used Captain Varn to win Mars for his backers, fell for her, and lost everything.
+
+1. The politician sets out to win a mafia-tied mining company exclusive rights to Mars, and befriends Captain Varn, who commands the mission's escort, for what she can tell him and the weight she gives him.
+2. He passes on what Varn tells him, and uses it to push the committee into faster and deeper digging.
+3. When the alien fleet arrives, the company makes him keep the digging going, and his love for Varn turns against his deal.
+4. The excavation is lost to the war, and the evidence from the custody case exposes him: he loses the deal, his seat and Varn.
+
+<!-- cell: plot id="3e1100db-02f4-434a-af42-9e9c3cf08843" title="The politician's deal (low-level)" edges="90af46c5-8935-484b-9e2d-abb68c62c8ab:589f3663-64dc-4aec-ad1e-493a8927f191>8422be60-7d37-42d3-a1f1-6f0f82555ba4, 7b5149a2-d430-406d-87a6-a47ca5ccd7dc:8422be60-7d37-42d3-a1f1-6f0f82555ba4>ca180136-4258-4d25-a292-3af0d6137af2, bab104ec-a35e-47a0-94e4-fa1b450bf3c6:ca180136-4258-4d25-a292-3af0d6137af2>6e2e062f-d5fe-46ef-a477-b3a02db36617, 012949a1-cc62-48b6-befe-e4e1c4aa2c5f:6e2e062f-d5fe-46ef-a477-b3a02db36617>faf4f244-09a4-4ba8-8562-ba1fff92e507, 477ea5f0-3a6b-46da-a336-c15a53fe2e82:faf4f244-09a4-4ba8-8562-ba1fff92e507>67d53dfb-4625-4a74-9585-00b066fe60ce, 8f48dd3e-34f8-4e51-a872-627347c11a3e:67d53dfb-4625-4a74-9585-00b066fe60ce>198e68d9-b03d-4513-bb1e-240d50fe333b, fd70ff4f-22b1-4d6f-90e6-104971076b73:198e68d9-b03d-4513-bb1e-240d50fe333b>9e4e9f1f-7654-40d9-a654-458acdb305c8, fc67428f-78ef-437b-acb5-3b162b0ed2b2:9e4e9f1f-7654-40d9-a654-458acdb305c8>2fa3fe8a-cab8-4827-bb25-43ab957c1af0, 2c20b181-7179-4df5-b3b5-0bd1ebdf21ea:2fa3fe8a-cab8-4827-bb25-43ab957c1af0>6ea45030-a6f2-4529-9465-0ae2a297ddaf, 08354c6b-b2c5-48b8-a882-c709e76511c4:6ea45030-a6f2-4529-9465-0ae2a297ddaf>fad9aa0b-ff15-4826-9e82-1bfde9b2dcc5, c94d3dda-36ed-4d1e-bc58-423e87893859:fad9aa0b-ff15-4826-9e82-1bfde9b2dcc5>20042bf3-b404-4347-a71d-3753222c0e04, 5b9efebb-935a-4d69-9f0d-1779894a06b6:20042bf3-b404-4347-a71d-3753222c0e04>a5a49d44-dad4-4333-8212-212220328d0c, 2be0883d-fcc7-4be9-8a73-526869905e9b:a5a49d44-dad4-4333-8212-212220328d0c>4411bd09-df3e-4c5a-a5e3-3dd672641722, afe0500e-e187-43ea-a53a-edbc76998d46:4411bd09-df3e-4c5a-a5e3-3dd672641722>1f1c7e43-2b23-4f69-a91b-80a28775b123, a7a17ba3-6402-4138-9f24-61c23e789fc0:1f1c7e43-2b23-4f69-a91b-80a28775b123>5d242200-e8fe-439b-8513-b62f37a3ecda" -->
+
+<ol title="A politician in the pay of a mafia-tied mining company befriends Captain Varn to learn what the government knows about Mars, keeps the digging going for his backers even when the alien fleet arrives, and is exposed and ruined as the war begins.">
+<li id="589f3663-64dc-4aec-ad1e-493a8927f191" timestamp="0.2" location="earth, a restaurant">The politician, who sits on the committee that oversees the space agency, uses his meetings with Captain Varn to learn what the government is doing on Mars, and is not telling the committee.</li>
+<li id="8422be60-7d37-42d3-a1f1-6f0f82555ba4" timestamp="1.1" location="earth, the company's offices">The owners of a mining company with ties to the mafia, who paid for the politician's career, tell him to win them exclusive rights to mine Mars, now that something has been found there.</li>
+<li id="ca180136-4258-4d25-a292-3af0d6137af2" timestamp="1.3" location="earth, parliament">He puts the company's bid for an exclusive licence to the committee, but the other members will not commit until they know what was found.</li>
+<li id="6e2e062f-d5fe-46ef-a477-b3a02db36617" timestamp="1.4" location="earth, the company's offices">He tells the owners that Varn will be his eyes on Mars, and that through her he will know more than anyone on the committee.</li>
+<li id="faf4f244-09a4-4ba8-8562-ba1fff92e507" timestamp="2.1" location="orbit">On their calls, Varn tells him that the object is unlike any rock, and that the agency is keeping what it finds quiet. He passes it on to the company.</li>
+<li id="67d53dfb-4625-4a74-9585-00b066fe60ce" timestamp="2.2.1" location="earth, parliament">With what Varn told him, he persuades the committee to order faster and deeper digging, with machines the company supplies.</li>
+<li id="198e68d9-b03d-4513-bb1e-240d50fe333b" timestamp="2.3.1" location="earth, parliament">Members who cannot get the agency's findings come to him for them, and the company's licence gains a majority.</li>
+<li id="9e4e9f1f-7654-40d9-a654-458acdb305c8" timestamp="3.1.1" location="earth, the company's offices">The owners order him to push Varn to investigate the object more closely, so that whatever is in the ground is theirs before anyone can stop it.</li>
+<li id="2fa3fe8a-cab8-4827-bb25-43ab957c1af0" timestamp="3.2" location="earth, parliament">Against the members who want the excavation halted, he talks the committee into ordering the mission to protect the discovery and dig on, which keeps Varn's corvette in the fleet's path.</li>
+<li id="6ea45030-a6f2-4529-9465-0ae2a297ddaf" timestamp="3.3" location="orbit">Varn tells him that her corvette cannot stop a fleet. He understands that the order he fought for may cost her her life.</li>
+<li id="fad9aa0b-ff15-4826-9e82-1bfde9b2dcc5" timestamp="3.4" location="earth, the company's offices">His concerns show the owners that he has grown attached to Varn, and they begin to doubt him.</li>
+<li id="20042bf3-b404-4347-a71d-3753222c0e04" timestamp="3.5" location="earth, parliament">Word reaches the committee that his name, and his ties to the company, have come up in a court hearing over the custody of Varn's daughter.</li>
+<li id="a5a49d44-dad4-4333-8212-212220328d0c" timestamp="4.1.1" location="earth, parliament">The committee suspends him while his ties to the company are investigated.</li>
+<li id="4411bd09-df3e-4c5a-a5e3-3dd672641722" timestamp="4.3" location="earth, the company's offices">The owners fire him: he has grown too attached to Varn, and become a liability.</li>
+<li id="1f1c7e43-2b23-4f69-a91b-80a28775b123" timestamp="4.4" location="earth, the company's offices">The company loses contact with its excavators on Mars, and with them the licence it was promised.</li>
+<li id="5d242200-e8fe-439b-8513-b62f37a3ecda" timestamp="4.5" location="earth, the court">He learns that Earth's ships at Mars, Varn's corvette among them, are gone, and that Earth calls it an act of war.</li>
+</ol>
+
+<!-- cell: note id="397a460f-3636-47fb-9687-f747fed675bc" -->
+
+## The politician and Captain Varn
+
+How a politician pretended to like Captain Varn, and came to love her.
+
+1. The politician meets Captain Varn and pretends to like her, to get into her good graces. She tells him about her daughter, and that she is not looking for romance; he keeps playing coy.
+2. When Varn is sent to Mars, he arranges remote dates. They start talking about the future, and she asks him to look in on her daughter.
+3. A day with her daughter reminds him of his own childhood, and he is strangely moved. When his overseers want Varn pushed closer to the object, he voices concerns.
+4. As the alien fleet closes in, in a last desperate call, he realizes he loves her, and promises to look after her daughter.
+
+<!-- cell: plot id="54d2a399-e38c-4f8e-8ba7-22e965ec879a" title="The politician and Captain Varn (low-level)" edges="1d6ffa76-53b4-4551-bbbd-d4eef96091fe:b27fcca3-cf80-4241-b658-9a505feb075e>48e7772f-91a8-4a29-aeed-e43711d3e858, ea4fcbbf-0257-43f0-9c3f-2d2767eebfd7:48e7772f-91a8-4a29-aeed-e43711d3e858>374c0da6-5fff-4063-bbf5-630fdbbacdb9, 3edfc3a6-7c5e-4032-99da-b82b12abfed6:374c0da6-5fff-4063-bbf5-630fdbbacdb9>d95e8bae-814f-440c-8313-2c1fe2eec0d7, f25de376-eaec-469f-a60b-61e859174605:d95e8bae-814f-440c-8313-2c1fe2eec0d7>2a276b38-e6d9-4db1-aef5-15c942b2ae6f, 75031a43-cfbb-4833-ab12-1301068ca59c:2a276b38-e6d9-4db1-aef5-15c942b2ae6f>604ce2a6-1ab6-4bdc-ba72-7b7526d6562e, 9cc74a17-ad4d-4ab9-859e-485620632ebc:604ce2a6-1ab6-4bdc-ba72-7b7526d6562e>1d2cbbcf-2c53-48ff-a775-9fa5493261dd, 495e4e72-9a07-4e10-8a94-24aef9132427:1d2cbbcf-2c53-48ff-a775-9fa5493261dd>b84d945c-ea9e-4266-874c-62fea7bec038, 25d9cba0-e7c2-4d5e-80c0-bbc58719ee79:b84d945c-ea9e-4266-874c-62fea7bec038>5413d17f-ab61-45b0-8bf5-1a628fd98fc3, c2bbc7c4-a301-4caa-bcd8-0f0785a8abd3:5413d17f-ab61-45b0-8bf5-1a628fd98fc3>c3e8b8f1-dad3-460d-b9e8-a529481ff041" -->
+
+<ol title="A politician courts Captain Varn for what she can tell him, keeps up remote dates when she is sent to Mars, is moved by a day with her daughter, and, as the alien fleet closes in, realizes he loves her and promises to look after the girl.">
+<li id="b27fcca3-cf80-4241-b658-9a505feb075e" timestamp="0.1" location="earth, command center">The politician meets Captain Varn, and starts pretending to like her, to get into her good graces.</li>
+<li id="48e7772f-91a8-4a29-aeed-e43711d3e858" timestamp="0.2" location="earth, a restaurant">He invites her to dinner. She tells him about her daughter, and that she is not looking for romance.</li>
+<li id="374c0da6-5fff-4063-bbf5-630fdbbacdb9" timestamp="0.3" location="earth, a restaurant">They keep meeting, and he keeps playing coy.</li>
+<li id="d95e8bae-814f-440c-8313-2c1fe2eec0d7" timestamp="1.4" location="earth, the company's offices">He learns that Varn is being sent with the mission to Mars: a relief, and at first an opportunity to learn more about the mysterious object.</li>
+<li id="2a276b38-e6d9-4db1-aef5-15c942b2ae6f" timestamp="2.1" location="orbit">With Varn in space, he arranges remote dates: he calls her, and they start talking about the future.</li>
+<li id="604ce2a6-1ab6-4bdc-ba72-7b7526d6562e" timestamp="2.2" location="orbit">On one of their calls, Varn asks him to check on her daughter, and he agrees.</li>
+<li id="1d2cbbcf-2c53-48ff-a775-9fa5493261dd" timestamp="2.3" location="earth, Varn's house">He spends a day with her daughter, taking care of her. Among the photos of Varn and the stories the girl tells about her, something reminds him of his own childhood.</li>
+<li id="b84d945c-ea9e-4266-874c-62fea7bec038" timestamp="3.1" location="orbit">The next time he calls Varn, he is strangely moved.</li>
+<li id="5413d17f-ab61-45b0-8bf5-1a628fd98fc3" timestamp="3.1.1" location="earth, the company's offices">When his overseers order him to push Varn to investigate the object more closely, he voices concerns.</li>
+<li id="c3e8b8f1-dad3-460d-b9e8-a529481ff041" timestamp="4.1" location="orbit">As the alien fleet closes in, in a last desperate call with Varn, he realizes that he loves her, and promises to look after her daughter.</li>
+</ol>
+
+<!-- cell: note id="46a0a8ec-de09-415a-bf2b-498fb9518907" -->
+
+## The detective hired against Captain Varn
+
+How a detective hired to find dirt on Captain Varn came to take her side, and helped her daughter to the man she trusted.
+
+1. Captain Varn's ex-husband hires a detective to find dirt on her. He finds nothing on her, but sees a politician courting her, and follows him to a company with ties to the mafia.
+2. His client's glee at anything that will hurt Varn troubles him, and he starts looking into the client instead. Watching the politician look after Varn's daughter, he sees a bond forming, and asks Varn to meet him.
+3. He finds that Varn is the better parent, and that the father only wants to hurt her. As his own photographs are used against her in court, he cancels the contract and sides with Varn.
+4. When Varn's ship is destroyed, he helps the politician win custody of her daughter.
+
+<!-- cell: plot id="d747aff2-bac6-4448-a95e-2b00d83c5f0d" title="The detective hired against Captain Varn (low-level)" edges="831ce51a-19e7-4614-8a50-c4de9de9fb67:ecfd224a-7ab6-4397-8f49-6fe043e233c1>213dd038-fb32-48ad-90b4-63f3f78e35ac, cb54ba22-e80c-4aef-a96c-ff1294cb90ba:213dd038-fb32-48ad-90b4-63f3f78e35ac>508750bb-0570-4732-a097-ec2d251e25f5, b111f900-09ca-4f24-b8ed-6d338ee254bd:508750bb-0570-4732-a097-ec2d251e25f5>41317c82-ab7b-4df6-8c17-e33939448a3e, 103a36ba-110e-4a00-b6c7-88104477181c:41317c82-ab7b-4df6-8c17-e33939448a3e>b615a6e6-19d5-453f-a3d7-f2e42276d7c3, 155f4eae-86a0-433b-bff2-f7b0bc21869d:b615a6e6-19d5-453f-a3d7-f2e42276d7c3>85c4d4ab-e749-42dd-9451-94eb366ce7bb, b883d1f3-9a7a-493f-b640-8912f8c26cd0:85c4d4ab-e749-42dd-9451-94eb366ce7bb>7ff121b2-0d29-4e9b-b12c-f6e8fc012f89, fceb5632-5ffe-4499-929b-638eba75e5f8:7ff121b2-0d29-4e9b-b12c-f6e8fc012f89>f6d510af-2eb5-46e9-a1aa-2385f1c38b7f, 7e0626ca-cb2b-4048-9e01-85d07c58095a:f6d510af-2eb5-46e9-a1aa-2385f1c38b7f>b1c6a60a-d757-4ad9-a788-c60803b617ad, 4ffc1f56-a07a-4682-8f07-d0ce7e721c86:b1c6a60a-d757-4ad9-a788-c60803b617ad>7e266d4a-1d4d-450e-bcaa-be35b6f5d402, c685f3e7-908e-4928-a445-631665745967:7e266d4a-1d4d-450e-bcaa-be35b6f5d402>d8092fc5-4dea-43a6-a8e1-c68dde5a9d80, 74a974b1-cdd7-4ec9-aa18-9331e1da67bb:d8092fc5-4dea-43a6-a8e1-c68dde5a9d80>edb80954-ecf5-4ec2-8d2a-37bdc28790ff, e55329cf-10bf-4251-bdc3-fa0f41d7ec64:edb80954-ecf5-4ec2-8d2a-37bdc28790ff>1705e003-c8a9-41a9-9ff6-a25d3f36902b, 389e2686-960d-4936-b850-3f643b4fb05b:1705e003-c8a9-41a9-9ff6-a25d3f36902b>b234cb66-d2dc-4a51-978d-fcbbfdb3b796" -->
+
+<ol title="A detective hired by Captain Varn's ex-husband finds nothing on her, is troubled by his client's wish to hurt her, finds that she is the better parent and the father only wants revenge, cancels his contract, and, when her ship is destroyed, helps the politician win custody of her daughter.">
+<li id="ecfd224a-7ab6-4397-8f49-6fe043e233c1" timestamp="0.1" location="earth, the detective's office">Captain Varn's ex-husband, who is not over her and wants custody of their daughter, hires the detective to find dirt on her.</li>
+<li id="213dd038-fb32-48ad-90b4-63f3f78e35ac" timestamp="0.2" location="earth, a restaurant">Following Varn, the detective watches her dine with a man he recognizes: a politician on the committee that oversees the space agency.</li>
+<li id="508750bb-0570-4732-a097-ec2d251e25f5" timestamp="0.3" location="earth, a restaurant">He photographs their meetings, but finds nothing on Varn: she drinks little, talks about her daughter, and goes home alone.</li>
+<li id="41317c82-ab7b-4df6-8c17-e33939448a3e" timestamp="1.4" location="earth, the company's offices">Told by his client to dig into the man, he tails the politician to the offices of a mining company known for its ties to the mafia.</li>
+<li id="b615a6e6-19d5-453f-a3d7-f2e42276d7c3" timestamp="2.1" location="earth, the detective's office">He hands his client the photographs and the company's name. The man is glad of anything that will hurt Varn, and never once asks about his daughter. For the first time, the detective is uneasy.</li>
+<li id="85c4d4ab-e749-42dd-9451-94eb366ce7bb" timestamp="2.2" location="earth, the detective's office">Instead of looking for more on Varn, he starts looking into his client.</li>
+<li id="7ff121b2-0d29-4e9b-b12c-f6e8fc012f89" timestamp="2.3" location="earth, Varn's house">Watching Varn's house, he sees the politician spend the day looking after her daughter, and a bond forming between them.</li>
+<li id="f6d510af-2eb5-46e9-a1aa-2385f1c38b7f" timestamp="3.1" location="earth, the detective's office">He sends Varn a message on her ship, asking to meet her when she can.</li>
+<li id="b1c6a60a-d757-4ad9-a788-c60803b617ad" timestamp="3.2" location="earth, the daughter's school">From the girl's teachers and Varn's neighbours, he learns that Varn has raised her daughter alone, and raised her well.</li>
+<li id="7e266d4a-1d4d-450e-bcaa-be35b6f5d402" timestamp="3.3" location="earth, the detective's office">He finds that the father has hardly seen his daughter in years, and has told his friends that the custody case is about making Varn pay.</li>
+<li id="d8092fc5-4dea-43a6-a8e1-c68dde5a9d80" timestamp="3.4" location="earth, the court">He sits in on the custody hearing, where the photographs he took are used to paint Varn as the companion of a man tied to the mafia.</li>
+<li id="edb80954-ecf5-4ec2-8d2a-37bdc28790ff" timestamp="3.5" location="earth, the detective's office">He cancels his contract with Varn's ex-husband, and sides with Varn.</li>
+<li id="1705e003-c8a9-41a9-9ff6-a25d3f36902b" timestamp="4.2" location="earth, the politician's office">He brings the politician what he has found: that Varn is the better parent, and that the father only wants to hurt her.</li>
+<li id="b234cb66-d2dc-4a51-978d-fcbbfdb3b796" timestamp="4.5" location="earth, the court">When Varn's ship is destroyed, he puts his evidence before the court for the politician, so that her daughter goes to the man Varn trusted with her, not to her father.</li>
+</ol>
+
+<!-- cell: note id="68dd0411-78f1-4cd8-9f16-b123a091cfdc" -->
+
+## The custody of Captain Varn's daughter
+
+How a lawyer fought to take Captain Varn's daughter from her, and lost the girl to the man Varn trusted.
+
+1. Armed with the detective's evidence, Captain Varn's ex-husband hires a lawyer and sues for custody of their daughter while Varn is away on her mission to Mars.
+2. At the hearings, Varn has to answer from her ship over a delayed link. The lawyer argues her dangerous assignment and her ties to a politician linked to the mafia, and the court leans toward the father.
+3. Varn's ship is lost before the ruling. The politician asks for custody as Varn wished, the detective's evidence shows that the father only wanted to hurt her, and the court gives the girl to the politician.
+
+<!-- cell: plot id="8f4f71f1-37ca-4d57-a0cf-45471d855f9a" title="The custody of Captain Varn's daughter (low-level)" edges="baea2afe-a380-488b-8a6c-fe480a595662:3de9da00-a114-44c2-b928-5a9a4607b20e>125e3aff-9837-4abf-b289-527ba3e949f5, 6707810e-3776-4402-b17f-f2d07b04a8c3:125e3aff-9837-4abf-b289-527ba3e949f5>cd62e9ff-c532-4813-89af-554fcbcab636, 750b8823-44dd-4838-901d-a782ca0568bc:cd62e9ff-c532-4813-89af-554fcbcab636>74048a74-1b5e-4b90-a21f-54044574db30, dfbe00c4-7b1b-4dcb-b8a0-d787076ab381:74048a74-1b5e-4b90-a21f-54044574db30>c58e4b7f-b365-4c69-9b62-1001dc2d6fc9, fac08b49-6ac7-4efa-aa6e-7fea5e450c82:c58e4b7f-b365-4c69-9b62-1001dc2d6fc9>e6e5cb18-ddf3-4bbb-a06f-af763b38d43b, 546955cd-360f-42f8-b501-205d64cb7154:e6e5cb18-ddf3-4bbb-a06f-af763b38d43b>dfe42004-939c-483e-9583-148504e78d3f, 1259a8c7-0369-4a37-9163-23d3ddcda356:dfe42004-939c-483e-9583-148504e78d3f>4a8327f1-a68b-4923-9884-de47f1b33e74, 93f1d7a7-bd76-466a-9d1b-c096ed1f94e3:4a8327f1-a68b-4923-9884-de47f1b33e74>145b23ba-cb74-4c19-bd9e-d9b934bc245f" -->
+
+<ol title="Hired by Captain Varn's ex-husband, a lawyer sues for custody of their daughter while Varn is at Mars, turns the court against her with the detective's photographs, and, when Varn's ship is lost, sees the girl given to the politician once the father is shown to have only wanted revenge.">
+<li id="3de9da00-a114-44c2-b928-5a9a4607b20e" timestamp="2.2" location="earth, the lawyer's office">Captain Varn's ex-husband brings a lawyer the detective's photographs, and hires her to win him custody of his daughter.</li>
+<li id="125e3aff-9837-4abf-b289-527ba3e949f5" timestamp="2.3" location="earth, the court">The lawyer sues for custody: the mother is away on a dangerous mission, and keeps company with a man tied to the mafia.</li>
+<li id="cd62e9ff-c532-4813-89af-554fcbcab636" timestamp="3.1" location="earth, the court">At the first hearing, Varn has to answer from her ship over a delayed link. Her answers arrive minutes late, and the court hears them as evasions.</li>
+<li id="74048a74-1b5e-4b90-a21f-54044574db30" timestamp="3.2" location="earth, the court">The lawyer argues that Varn's assignment puts her life at risk, and leaves the girl with no parent at home.</li>
+<li id="c58e4b7f-b365-4c69-9b62-1001dc2d6fc9" timestamp="3.4" location="earth, the court">She puts the detective's photographs before the court: Varn with the politician, and the politician at the doors of the company.</li>
+<li id="e6e5cb18-ddf3-4bbb-a06f-af763b38d43b" timestamp="3.5" location="earth, the court">When news of the alien ships around Mars reaches the court, the judge leans toward the father: the girl needs a parent who will come home.</li>
+<li id="dfe42004-939c-483e-9583-148504e78d3f" timestamp="4.1" location="earth, the court">The judge announces that she will rule for the father.</li>
+<li id="4a8327f1-a68b-4923-9884-de47f1b33e74" timestamp="4.5" location="earth, the court">On the day of the ruling, word comes that Varn's ship is lost. The politician asks the court for custody of her daughter, as Varn asked him to.</li>
+<li id="145b23ba-cb74-4c19-bd9e-d9b934bc245f" timestamp="5.1" location="earth, the court">The detective's evidence shows that the father only wanted to hurt Varn. The court gives the girl to the politician, and the lawyer is left knowing whom she fought for.</li>
 </ol>
 
 <!-- cell: salient-concept id="9b3935d3-7478-41e4-b6f1-b798fb29a439" title="Motherhood" words="48e45b7a-e444-4bdf-835b-d0c41a7e45ed:1100-1121, c1869892-16e7-4f2c-a47d-b34cbf7eaf04:1777-1838, 87608cc0-de26-416a-b60d-a547355c13bc:2425-2623, 6ecb608e-db6d-4f06-b5bd-7d00fadc393a:3689-3750, d374a0a5-cfd6-4217-b968-94f508c756f1:7801-7869, f1a58ddd-852a-4841-8f06-941cb3b4048b:8558-8630, 605bdad1-743e-4f7c-b870-6c82e8060513:8641-8676, 5b1e0bce-7264-4086-bba4-68803b898030:9047-9088, 342b956a-00e7-46ec-83b9-4c72ea21f467:10247-10303" -->
