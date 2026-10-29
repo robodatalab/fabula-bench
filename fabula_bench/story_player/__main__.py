@@ -7,7 +7,7 @@ from authordoc.storydoc import Document
 
 
 def main() -> None:
-    story = Document.load(Path("fabula_bench/stories/hostage.author"))
+    story = Document.load(Path("fabula_bench/stories/space_opera.author"))
     exposure_tracker = ExposureTracker(story)
     player = StoryPlayer(story, exposure_tracker)
 
