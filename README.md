@@ -22,8 +22,8 @@ The more plots one interactive story holds, and the more misleading edges, the e
 **More plots in one world.** New stories, each in its own `.author` file, set in the world of `space_opera.author` and on its clock, so that they can be meshed with it and with one another.
 
 - [ ] A courtroom drama.
-- [ ] A detective story.
-- [ ] A romance.
+- [x] A detective story (`detective_story.author`).
+- [x] A romance (`romance.author`).
 - [x] A political drama: factions fighting over the extraction of resources in space (`political_drama.author`).
 - [ ] Find the places where the plots can come into contact, and adjust their events so that the plots intersect there.
 - [ ] Decide how separate `.author` files are meshed into one world, and mesh them.
