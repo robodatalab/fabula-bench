@@ -21,21 +21,24 @@ The more plots one interactive story holds, and the more misleading edges, the e
 
 **More plots in one world.** New stories, each in its own `.author` file, set in the world of `space_opera.author` and on its clock, so that they can be meshed with it and with one another.
 
-- [ ] A courtroom drama.
-- [x] A detective story (`detective_story.author`).
-- [x] A romance (`romance.author`).
 - [x] A political drama: factions fighting over the extraction of resources in space (`political_drama.author`).
-- [ ] Find the places where the plots can come into contact, and adjust their events so that the plots intersect there.
+- [x] A romance (`romance.author`).
+- [x] A detective story (`detective_story.author`).
+- [x] A courtroom drama (`courtroom_drama.author`).
+- [ ] The salient concepts each new story's plots pursue, general and story-specific.
+- [x] Find the places where the plots can come into contact, and adjust their events so that the plots intersect there.
 - [ ] Decide how separate `.author` files are meshed into one world, and mesh them.
 - [ ] Decide how a misleading edge, one that belongs to no plot, is written, and add misleading edges.
+- [ ] Add connections, scenes that lead into another plot at or near its beginning. Unlike misleading edges, they are meant to be followed.
 - [ ] Generate the scenes and choices of the meshed world, and annotate the salient concepts on them again, `space_opera.author`'s included.
-- [ ] Decide where in the world a play starts.
+- [ ] Start a play at the beginning of a chosen plot: the story player takes the plot's index, and a function tells how many plots an interactive story has, so that the agent can be run from every plot in turn.
 
 **Scoring.** We still measure exposure, and add the trajectory: which events the play visited, and whether, and how closely, they follow a plot.
 
 - [ ] Record the events every play visits, in order.
 - [ ] Measure how closely the visited events align with each plot: how many of the plot's events the play visited, in the plot's order, and how often the play left the plot and came back to it.
 - [ ] Decide how to score the agent's grasp of the concepts of the plot it followed.
+- [ ] Credit an agent that joins a plot partway: one that followed, say, 70% of a plot and correctly reported its concepts understood it, even without seeing its beginning.
 - [ ] Save the trajectory and its alignment with every run.
 
 ## Running it
