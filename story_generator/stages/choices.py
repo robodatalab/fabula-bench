@@ -16,6 +16,7 @@ then its endings, numbered in the order of the edges:
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -138,6 +139,7 @@ class Choices(Stage):
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
         confidence: Confidence = params["confidence"]
+        checkpoint: Callable[[], None] = params["checkpoint"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         plots = written_world_events(document, "")
@@ -186,6 +188,7 @@ class Choices(Stage):
             written = Document.from_cells(cells, document.path)
             document = with_words_pointed(written, cell_of_event, anchors_of_concept)
             story.write_text(document.text, encoding="utf-8")
+            checkpoint()
             self.progress = (done + 1, count)
             logger.info("choices of scene %d of %d accepted", done + 1, count, extra={"progress": self.progress})
 

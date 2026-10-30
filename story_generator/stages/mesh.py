@@ -7,6 +7,7 @@ now."""
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -77,6 +78,7 @@ class Mesh(Stage):
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
         confidence: Confidence = params["confidence"]
+        checkpoint: Callable[[], None] = params["checkpoint"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         plots_at_the_start = document.plots()
@@ -107,6 +109,7 @@ class Mesh(Stage):
             cells = [plot_meshed if cell.unique_id == plot.unique_id else cell for cell in document.cells]
             document = Document.from_cells(cells, document.path)
             story.write_text(document.text, encoding="utf-8")
+            checkpoint()
             self.progress = (index + 1, count)
             logger.info("plot %d of %d meshed", index + 1, count, extra={"progress": self.progress})
 

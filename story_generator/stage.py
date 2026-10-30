@@ -77,8 +77,10 @@ class Stage(ABC):
     def run(self, **params: Any) -> None:
         """Does the stage's work. The workflow gives it `story`, the path to the
         story's .author file, `renderer`, the StageVisitor that shows the author
-        its drafts, and `confidence`, the Confidence that decides which drafts the
-        author reviews. Raises AuthorStopped when the author stops."""
+        its drafts, `confidence`, the Confidence that decides which drafts the
+        author reviews, and `checkpoint`, which the stage calls right after every
+        time it writes the story, so that the confidence stands checkpointed with
+        what it wrote. Raises AuthorStopped when the author stops."""
 
     @abstractmethod
     def accept(self, visitor: StageVisitor) -> Review:

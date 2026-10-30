@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
@@ -348,6 +348,7 @@ class Scenes(Stage):
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
         confidence: Confidence = params["confidence"]
+        checkpoint: Callable[[], None] = params["checkpoint"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         scenes_at_the_start = get_scenes(document)
@@ -467,6 +468,7 @@ class Scenes(Stage):
             written = Document.from_cells(cells, document.path)
             document = with_words_pointed(written, cell_of_event, anchors_now)
             story.write_text(document.text, encoding="utf-8")
+            checkpoint()
             self.progress = (index + 1, count)
             logger.info("scene %d of %d accepted", index + 1, count, extra={"progress": self.progress})
 

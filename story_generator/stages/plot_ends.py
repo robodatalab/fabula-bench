@@ -19,7 +19,7 @@ and what happens, separated by bars:
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -137,6 +137,7 @@ class PlotEnds(Stage):
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
         confidence: Confidence = params["confidence"]
+        checkpoint: Callable[[], None] = params["checkpoint"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         concepts = document.salient_concepts()
@@ -150,6 +151,7 @@ class PlotEnds(Stage):
             kept.append(cell)
         document = Document.from_cells(kept, document.path)
         story.write_text(document.text, encoding="utf-8")
+        checkpoint()
         count = len(concepts)
         # A plot that illustrates several concepts is begun once.
         begun: set[str] = set()
@@ -192,6 +194,7 @@ class PlotEnds(Stage):
             begun.add(plot_written.unique_id)
             document = Document.from_cells(cells, document.path)
             story.write_text(document.text, encoding="utf-8")
+            checkpoint()
             self.progress = (index + 1, count)
             logger.info("plot %d of %d begun", index + 1, count, extra={"progress": self.progress})
 

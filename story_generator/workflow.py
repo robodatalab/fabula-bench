@@ -11,11 +11,12 @@ scene is built from versions dedicated to the concepts that show at its events,
 merged between the concepts' markers; and the choices that end the scenes come
 last.
 
-After every stage, and when the author stops, the workflow checkpoints which
-stages are finished, one a line, and the author's confidence in every kind of
-draft, in a cell of its own last in the story, of a kind the format does not
-know and keeps as it is: stopped in a stage, it resumes at that stage, as
-confident as it was. Going back to a stage runs it again, and every stage after
+Every time a stage writes the story, after every stage, and when the author
+stops, the workflow checkpoints which stages are finished, one a line, and the
+author's confidence in every kind of draft, in a cell of its own last in the
+story, of a kind the format does not know and keeps as it is: stopped in a
+stage, or killed in it, it resumes at that stage, as confident as it was when
+the stage last wrote the story. Going back to a stage runs it again, and every stage after
 it.
 
 While a stage runs, whatever is logged under this package goes to the
@@ -114,6 +115,10 @@ class Workflow:
             again = STAGES[at:]
             finished = [name for name in finished if name not in again]
             self._checkpoint(finished, confidence)
+
+        def checkpoint() -> None:
+            self._checkpoint(finished, confidence)
+
         for name in STAGES:
             if name in finished:
                 continue
@@ -121,7 +126,9 @@ class Workflow:
             with _logged_as(name, self._handler):
                 logger.info("started")
                 try:
-                    stage.run(story=self._story, renderer=self._renderer, confidence=confidence)
+                    stage.run(
+                        story=self._story, renderer=self._renderer, confidence=confidence, checkpoint=checkpoint
+                    )
                 except AuthorStopped:
                     logger.info("stopped")
                     self._checkpoint(finished, confidence)

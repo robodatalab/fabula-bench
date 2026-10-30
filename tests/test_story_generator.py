@@ -213,6 +213,28 @@ class _LosingMarkers(_Model):
         return unmarked
 
 
+class _Died(Exception):
+    """The run died, as it does when the model stops answering and the run is
+    killed."""
+
+
+class _DyingAtTheSecondDescription(_Model):
+    """Stands in for the model as `_Model` does, until it is asked to describe a
+    second concept: then the run dies."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.descriptions = 0
+
+    def complete(self, system: str, user: str, max_new_tokens: int) -> str:
+        if system == concepts.DESCRIPTION_INSTRUCTIONS:
+            self.descriptions += 1
+            if self.descriptions == 2:
+                raise _Died
+        written = super().complete(system, user, max_new_tokens)
+        return written
+
+
 def _new_story(test: unittest.TestCase) -> Path:
     """An empty story, alone in a directory of its own that is gone after the
     test."""
@@ -568,3 +590,18 @@ class SelectiveReview(unittest.TestCase):
         confidence = resumed.confidence()
         level = confidence.level("concept descriptions")
         self.assertAlmostEqual(level, 0.36)
+
+    def test_keeps_the_confidence_of_every_draft_written_when_the_run_dies_in_a_stage(self) -> None:
+        story = _new_story(self)
+        model = _DyingAtTheSecondDescription()
+        author = _Author(ABOUT)
+        heard = _Heard()
+        workflow = Workflow(story, model, author, heard, EVERY_DRAFT)
+
+        with self.assertRaises(_Died):
+            workflow.run()
+
+        resumed = Workflow(story, model, author, heard, EVERY_DRAFT)
+        confidence = resumed.confidence()
+        level = confidence.level("concept descriptions")
+        self.assertAlmostEqual(level, 0.2)

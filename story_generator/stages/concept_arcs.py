@@ -17,7 +17,7 @@ concept shows there, or a dash where it does not:
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 from uuid import NAMESPACE_URL, uuid5
@@ -140,6 +140,7 @@ class ConceptArcs(Stage):
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
         confidence: Confidence = params["confidence"]
+        checkpoint: Callable[[], None] = params["checkpoint"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         plots_at_the_start = document.plots()
@@ -174,6 +175,7 @@ class ConceptArcs(Stage):
                 cells = [*document.cells[:after_the_plot], note, *document.cells[after_the_plot:]]
             document = Document.from_cells(cells, document.path)
             story.write_text(document.text, encoding="utf-8")
+            checkpoint()
             self.progress = (index + 1, count)
             logger.info("arcs of plot %d of %d accepted", index + 1, count, extra={"progress": self.progress})
 

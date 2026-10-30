@@ -543,6 +543,8 @@ concepts
 plot ends
 mesh
 concept arcs
+confidence in scene merges: 0.900
+confidence in scene versions: 0.900
 
 <!-- cell: markdown id="9e492f45-cd01-4e49-846e-396b7a09b1ed" -->
 

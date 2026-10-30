@@ -14,7 +14,7 @@ The author reviews, and the model writes, the list as one title a line.
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -84,6 +84,7 @@ class Concepts(Stage):
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
         confidence: Confidence = params["confidence"]
+        checkpoint: Callable[[], None] = params["checkpoint"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         held = document.salient_concepts()
@@ -112,6 +113,7 @@ class Concepts(Stage):
         other_cells = [cell for cell in document.cells if not isinstance(cell, SalientConceptCell)]
         document = Document.from_cells([*listed_concepts, *other_cells], document.path)
         story.write_text(document.text, encoding="utf-8")
+        checkpoint()
         count = len(titles)
         logger.info("%d concepts listed", count, extra={"progress": (0, count)})
         for index, title in enumerate(titles):
@@ -130,6 +132,7 @@ class Concepts(Stage):
             cells = [described if cell.unique_id == concept.unique_id else cell for cell in document.cells]
             document = Document.from_cells(cells, document.path)
             story.write_text(document.text, encoding="utf-8")
+            checkpoint()
             self.progress = (index + 1, count)
             logger.info("concept %d of %d described", index + 1, count, extra={"progress": self.progress})
 
