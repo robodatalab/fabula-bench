@@ -82,25 +82,26 @@ class StoryPlayer:
         return scene_cell
 
 
-def play_story(story: Document, evaluated_model: CompletionModel, plot_index: int) -> tuple[list[SalientConceptCell], list[float], list[str]]:
+def play_story(
+    story: Document, evaluated_model: CompletionModel, plot_index: int
+) -> tuple[list[SalientConceptCell], list[float], list[str], list[PlotNode]]:
     """The evaluated model plays the story, scene by scene as the story tells it,
     from the beginning of the plot at `plot_index` among the story's plots, then
     explains every salient concept the play showed it, asked by the concept's
     title. Returns those concepts, how much of each the play showed, and the
-    model's explanations, in the same order."""
-    salient_concepts_tracker = ExposureTracker(story)
-    player = StoryPlayer(story, salient_concepts_tracker, plot_index)
+    model's explanations, in the same order, then every event the play showed, in
+    the order it showed them."""
+    exposure_tracker = ExposureTracker(story)
+    player = StoryPlayer(story, exposure_tracker, plot_index)
     agent = AgentPlayer(evaluated_model)
     agent.play(player)
 
-    concepts = [
-        concept for concept in salient_concepts_tracker.concepts if salient_concepts_tracker.get_exposure(concept) > 0
-    ]
-    exposures = [salient_concepts_tracker.get_exposure(concept) for concept in concepts]
+    concepts = [concept for concept in exposure_tracker.concepts if exposure_tracker.get_exposure(concept) > 0]
+    exposures = [exposure_tracker.get_exposure(concept) for concept in concepts]
     explanations = []
     concepts_asked = tqdm(concepts, desc="concepts asked", unit="concept")
     for concept in concepts_asked:
         question = QUESTION.format(title=concept.title)
         explanation = agent.ask(question)
         explanations.append(explanation)
-    return (concepts, exposures, explanations)
+    return (concepts, exposures, explanations, exposure_tracker.events_seen)

@@ -6,14 +6,17 @@ from authordoc.storydoc import Document
 
 
 class ExposureTracker:
-    """Which references to the story's salient concepts the player was shown: a
-    reference is seen when its words overlap the words of a node shown in a scene."""
+    """What the player was shown: every event, in the order it was shown, and which
+    references to the story's salient concepts it saw. A reference is seen when its
+    words overlap the words of a node shown in a scene."""
 
     def __init__(self, doc: Document) -> None:
         self.concepts = [cell for cell in doc.cells if isinstance(cell, SalientConceptCell)]
+        self.events_seen: list[PlotNode] = []
         self._seen_reference_ids: set[str] = set()
 
     def see(self, nodes: Sequence[PlotNode]) -> None:
+        self.events_seen.extend(nodes)
         for concept in self.concepts:
             for reference in concept.references:
                 for node in nodes:
