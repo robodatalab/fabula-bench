@@ -5,7 +5,7 @@ from vramen import InferenceModelResourceManager
 
 from fabula_bench.models.claude_model import ClaudeModel
 from fabula_bench.embeddings import EMBEDDING_MODEL_MEMORY_GB, DescriptionEmbedder
-from fabula_bench.scoring import StoryScores, report, report_by_story, score_concepts
+from fabula_bench.metrics.salient_concept_comprehension import score_comprehension
 from fabula_bench.story_player.story_player import play_story
 from authordoc.storydoc import Document
 
@@ -23,18 +23,19 @@ def main(manager: InferenceModelResourceManager) -> None:
     evaluated_model = ClaudeModel(EVALUATED_MODEL)
     embedder = DescriptionEmbedder(manager)
 
-    # One play from the beginning of every plot of the story.
-    scores = []
+    # One play from the beginning of every plot of the story: how well it was
+    # comprehended, then what the model explained of every concept it was shown.
+    plays = []
     plots = story.plots()
     for plot_index, plot in enumerate(plots):
         concepts, exposures, explanations = play_story(story, evaluated_model, plot_index)
-        concept_scores = score_concepts(concepts, exposures, explanations, embedder)
-        scored_concepts = tuple(concept_scores)
-        story_scores = StoryScores(STORY, plot.title, scored_concepts, ())
-        scores.append(story_scores)
-    final_report = report(scores)
-    story_report = report_by_story(scores)
-    results = f"{final_report}\n\n{story_report}"
+        comprehension = score_comprehension(concepts, exposures, explanations, embedder)
+        rows = [f"{STORY.name}, from {plot.title}: comprehension {comprehension:.3f}"]
+        for concept, exposure, explanation in zip(concepts, exposures, explanations, strict=True):
+            rows.append(f"\n{concept.title} ({exposure:.0%} shown): {explanation}")
+        play = "\n".join(rows)
+        plays.append(play)
+    results = "\n\n".join(plays)
     print(results)
 
     RUNS.mkdir(exist_ok=True)

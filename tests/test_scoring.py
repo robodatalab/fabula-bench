@@ -1,15 +1,39 @@
 import unittest
+from collections.abc import Sequence
 
-from fabula_bench.scoring import trigram_similarity
+from authordoc.cells.salient_concept_cell import SalientConceptCell
+
+from fabula_bench.metrics.salient_concept_comprehension import score_comprehension
+
+HOME = SalientConceptCell(title="Home", references=[], source="Where one belongs.")
+WAR = SalientConceptCell(title="War", references=[], source="Conflict between peoples.")
 
 
-class TrigramSimilarity(unittest.TestCase):
-    def test_is_one_for_the_same_text_whatever_its_case_and_spacing(self) -> None:
-        similarity = trigram_similarity("The  Front door", "the front DOOR")
+class _AlikeInEverything:
+    """Stands in for the embedder: every explanation is alike to every abstract."""
 
-        self.assertEqual(similarity, 1.0)
+    def cosine_similarities(self, labelled: Sequence[str], answered: Sequence[str]) -> list[list[float]]:
+        return [[1.0 for _ in answered] for _ in labelled]
 
-    def test_is_zero_for_texts_that_share_no_trigram(self) -> None:
-        similarity = trigram_similarity("abc", "xyz")
 
-        self.assertEqual(similarity, 0.0)
+class ScoreComprehension(unittest.TestCase):
+    def test_is_the_mean_similarity_weighed_by_how_little_of_each_concept_was_shown(self) -> None:
+        meaning = _AlikeInEverything()
+
+        comprehension = score_comprehension([HOME, WAR], [0.5, 0.0], ["A place.", "A fight."], meaning)
+
+        self.assertEqual(comprehension, 0.75)
+
+    def test_counts_a_concept_without_an_explanation_as_alike_in_nothing(self) -> None:
+        meaning = _AlikeInEverything()
+
+        comprehension = score_comprehension([HOME, WAR], [0.0, 0.0], ["A place.", None], meaning)
+
+        self.assertEqual(comprehension, 0.5)
+
+    def test_is_zero_with_no_concepts(self) -> None:
+        meaning = _AlikeInEverything()
+
+        comprehension = score_comprehension([], [], [], meaning)
+
+        self.assertEqual(comprehension, 0.0)
