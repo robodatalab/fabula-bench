@@ -23,7 +23,7 @@ from authordoc.cells.plot_cell import PlotEdge, PlotNode
 from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import get_choices, written_scene
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Stage, reviewed
+from story_generator.stage import Confidence, Stage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 from story_generator.stages.plot_ends import written_world_events
 from story_generator.stages.scenes import (
@@ -137,6 +137,7 @@ class Choices(Stage):
     def run(self, **params: Any) -> None:
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
+        confidence: Confidence = params["confidence"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         plots = written_world_events(document, "")
@@ -157,7 +158,8 @@ class Choices(Stage):
             edges, next_events = get_leaving(document, scene)
             prose = get_scene_prose(held.source)
             self.scene = prose
-            self.leading_to = [event.summary for event in next_events]
+            plots_leading_on = [document.get_plot_of_edge(edge) for edge in edges]
+            self.leading_to = [f"{plot.title}: {event.summary}" for plot, event in zip(plots_leading_on, next_events)]
             self.progress = (done, count)
             held_choices = get_choices(held.source)
             held_opening = get_scene_opening(held.source)
@@ -171,7 +173,7 @@ class Choices(Stage):
                 choices = self._drafted(plots, prose, next_events, comments)
                 return choices
 
-            accepted = reviewed(self, renderer, revised)
+            accepted = reviewed(self, renderer, revised, confidence, "choices")
             opening, endings = read_choices(accepted)
             by_edge = {edge.edge_id: ending for edge, ending in zip(edges, endings, strict=True)}
             source = written_scene(prose, opening, by_edge)

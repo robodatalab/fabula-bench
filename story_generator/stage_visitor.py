@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from story_generator.stages.choices import Choices
+    from story_generator.stages.concept_arcs import ConceptArcs
     from story_generator.stages.concepts import Concepts
     from story_generator.stages.mesh import Mesh
     from story_generator.stages.plot_ends import PlotEnds
@@ -41,6 +42,9 @@ class StageVisitor(ABC):
 
     @abstractmethod
     def visit_mesh(self, stage: Mesh) -> Review: ...
+
+    @abstractmethod
+    def visit_concept_arcs(self, stage: ConceptArcs) -> Review: ...
 
     @abstractmethod
     def visit_scenes(self, stage: Scenes) -> Review: ...

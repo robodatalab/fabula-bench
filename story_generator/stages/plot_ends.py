@@ -29,7 +29,7 @@ from authordoc.cells.plot_cell import PlotCell, PlotEdge, PlotNode
 from authordoc.cells.salient_concept_cell import SalientConceptCell
 from authordoc.storydoc import Document
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Stage, reviewed
+from story_generator.stage import Confidence, Stage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 from story_generator.stages.concepts import written_concepts
 
@@ -136,6 +136,7 @@ class PlotEnds(Stage):
     def run(self, **params: Any) -> None:
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
+        confidence: Confidence = params["confidence"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         concepts = document.salient_concepts()
@@ -167,7 +168,7 @@ class PlotEnds(Stage):
                 ends = self._drafted(document, comments)
                 return ends
 
-            accepted = reviewed(self, renderer, revised)
+            accepted = reviewed(self, renderer, revised, confidence, "plot ends")
             if plot is not None:
                 start, *rest = read_events(accepted, held_ends)
                 # The events the mesh added between the ends stay between them.

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from story_generator.stage_visitor import Review, StageVisitor, Verdict
 from story_generator.stages.choices import Choices
+from story_generator.stages.concept_arcs import ConceptArcs
 from story_generator.stages.concepts import Concepts
 from story_generator.stages.mesh import Mesh
 from story_generator.stages.plot_ends import PlotEnds
@@ -44,10 +45,22 @@ class TerminalRenderer(StageVisitor):
         review = _review()
         return review
 
+    def visit_concept_arcs(self, stage: ConceptArcs) -> Review:
+        heading = _heading(f"Concept arcs of {stage.plot}", stage.progress)
+        print(f"{heading}\n{stage.description}\n\n{stage.draft}\n")
+        review = _review()
+        return review
+
     def visit_scenes(self, stage: Scenes) -> Review:
         heading = _heading(f"Scene at {stage.moment}, {stage.place}", stage.progress)
-        happening = "\n".join(f"- {summary} ({concepts})" for summary, concepts in stage.towards)
-        print(f"{heading}\nWhat happens:\n{happening}\n\n{stage.under_review}:\n\n{stage.draft}\n")
+        happening = "\n".join(f"- {plot}: {summary} ({concepts})" for plot, summary, concepts in stage.towards)
+        under_review = stage.under_review
+        if stage.version_event:
+            concept = stage.version_concept or "none"
+            under_review = f"{under_review}\nConcept: {concept}\nPlot: {stage.version_plot}\nEvent: {stage.version_event}"
+            if stage.version_shows:
+                under_review = f"{under_review}\nHow it shows here: {stage.version_shows}"
+        print(f"{heading}\nWhat happens:\n{happening}\n\n{under_review}\n\n{stage.draft}\n")
         review = _review()
         return review
 

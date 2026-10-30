@@ -3,9 +3,10 @@ its concepts, and kept in a markdown cell that every event of the scene points
 at, the whole of it.
 
 Events meet when they happen at the same moment, in places one of which holds
-the other. For every event of a scene, and every concept its plot illustrates,
-the model writes a version of the scene dedicated to that concept: the event,
-told wholly through the concept, so that all of the version shows it. The
+the other. For every event of a scene, and every concept of its plot that shows
+at the event, as the plot's concept arcs say, the model writes a version of the
+scene dedicated to that concept: the event, told wholly through the concept as
+its arc says it shows there, so that all of the version shows it. The
 versions are then merged into the scene, one after another: each comes into the
 merge between the markers of its concept, ⟦<concept>⟧ and ⟦/<concept>⟧, and the
 merge blends it into the scene so far, keeping every pair of markers, and adds
@@ -39,8 +40,9 @@ from authordoc.iterators.story_words_iterator import StoryWord, StoryWordsIterat
 from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import GAP, get_choices, get_place, get_scene_text, get_tag, tags_meet, written_scene
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Stage, reviewed
+from story_generator.stage import Confidence, Stage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
+from story_generator.stages.concept_arcs import get_arcs
 from story_generator.stages.concepts import written_concepts
 from story_generator.stages.plot_ends import get_illustrated, written_world_events
 
@@ -48,9 +50,9 @@ VERSION_INSTRUCTIONS = """You write one version of a scene of an interactive sto
 
 You are the story's narrator and its only witness: you never take part in what happens and never mention yourself. Write in the third person and the past tense: the people, what they do and say, and how that shows the concept. Add no named characters and no events of your own.
 
-You are given the story's concepts and plots, so that the version agrees with them; show nothing from the plots beyond the event. You are given where the scene takes place, the event, and the concept.
+You are given the story's concepts and plots, so that the version agrees with them; show nothing from the plots beyond the event. You are given where the scene takes place, the event, the concept, and how the concept shows at this event. Write the version as that says: what of the event does not show the concept stays out of it, for the merge adds it.
 
-When you are also given your draft and the author's comments on it, rewrite the draft to answer every comment, and change nothing the comments do not ask you to change.
+When you are also given your draft and the author's comments on it, rewrite the draft to answer every comment, and change nothing the comments do not ask you to change. The draft stands between the markers of its concept, ⟦<the concept>⟧ and ⟦/<the concept>⟧; write the version without them.
 
 Write one or two paragraphs of prose and nothing else."""
 
@@ -323,15 +325,19 @@ class Scenes(Stage):
         super().__init__()
         self._model = model
         # What the renderer shows beside the draft: when and where the scene
-        # happens, what happens there, each event with the concepts its plot
-        # illustrates, and what the draft is: which version, or which merge.
+        # happens, what happens there, each event with the plot it belongs to and
+        # the concepts that show at it, and what the draft is: which version, or
+        # which merge.
         self.moment = ""
         self.place = ""
-        self.towards: list[tuple[str, str]] = []
+        self.towards: list[tuple[str, str, str]] = []
         self.under_review = ""
-        # The version being written: its event and its concept.
-        self._event = ""
-        self._concept = ""
+        # The version under review: its concept, its event and the plot the event
+        # belongs to, and how the concept shows there; none while a merge is.
+        self.version_concept = ""
+        self.version_event = ""
+        self.version_plot = ""
+        self.version_shows = ""
         # The merge being written: the scene merged so far, the next version, and
         # the concepts whose pairs of markers it must keep.
         self._so_far = ""
@@ -341,6 +347,7 @@ class Scenes(Stage):
     def run(self, **params: Any) -> None:
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
+        confidence: Confidence = params["confidence"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         scenes_at_the_start = get_scenes(document)
@@ -354,24 +361,30 @@ class Scenes(Stage):
             self.place = get_place(scene)
             self.progress = (index, count)
             concepts = document.salient_concepts()
-            illustrated_of_event: dict[str, list[str]] = {}
+            # How every concept shows at every event, as its plot's arcs say; a plot
+            # with no arcs has every concept show at every event.
+            shows_of_event: dict[str, dict[str, str]] = {}
+            plot_of_event: dict[str, str] = {}
             for plot in document.plots():
                 illustrated = get_illustrated(plot)
-                for event in plot.nodes:
-                    illustrated_of_event[event.node_id] = illustrated
+                arcs = get_arcs(document, plot)
+                every_concept = {title: "" for title in illustrated}
+                for at, event in enumerate(plot.nodes):
+                    shows_of_event[event.node_id] = arcs[at] if arcs is not None else every_concept
+                    plot_of_event[event.node_id] = plot.title
             self.towards = []
             for event in scene:
-                illustrated = illustrated_of_event[event.node_id]
-                written_illustrated = ", ".join(illustrated) or "no concept"
-                self.towards.append((event.summary, written_illustrated))
-            # Every event's version for every concept its plot illustrates; one,
-            # with no concept, for an event whose plot illustrates none.
+                shows = shows_of_event[event.node_id]
+                written_shows = ", ".join(shows) or "no concept shows here"
+                self.towards.append((plot_of_event[event.node_id], event.summary, written_shows))
+            # Every event's version for every concept that shows at it; one, with no
+            # concept, for an event where none shows.
             versions_to_write = [
-                (event.summary, title)
+                (plot_of_event[event.node_id], event.summary, title, how)
                 for event in scene
-                for title in illustrated_of_event[event.node_id] or [""]
+                for title, how in shows_of_event[event.node_id].items() or [("", "")]
             ]
-            self._expected = [title for _, title in versions_to_write if title]
+            self._expected = [title for _, _, title, _ in versions_to_write if title]
             held = get_scene_cell(document, scene)
             anchors_of_concept = get_anchors(document)
 
@@ -386,30 +399,39 @@ class Scenes(Stage):
             if held is not None:
                 # A scene told before is reviewed whole, as the story holds it.
                 self.under_review = "The scene, as the story holds it"
+                self.version_concept = ""
+                self.version_event = ""
+                self.version_plot = ""
+                self.version_shows = ""
                 self._so_far = ""
                 self._next = ""
                 prose = get_scene_prose(held.source)
                 held_spans = _get_spans(concepts, anchors_of_concept, held.unique_id)
                 self.draft = written_marked(prose, held_spans)
-                merged = reviewed(self, renderer, revised_merge)
+                merged = reviewed(self, renderer, revised_merge, confidence, "scene merges")
             else:
                 versions = []
                 count_versions = len(versions_to_write)
-                for number, (summary, title) in enumerate(versions_to_write, start=1):
-                    self._event = summary
-                    self._concept = title
-                    dedicated = title or "no concept"
-                    self.under_review = f"Version {number} of {count_versions}, dedicated to {dedicated}: {summary}"
+                for number, (plot_title, summary, title, how) in enumerate(versions_to_write, start=1):
+                    self.version_plot = plot_title
+                    self.version_event = summary
+                    self.version_concept = title
+                    self.version_shows = how
+                    self.under_review = f"Version {number} of {count_versions}"
                     self.draft = self._version(document, [])
-                    version = reviewed(self, renderer, revised_version)
-                    versions.append((title, version))
+                    version = reviewed(self, renderer, revised_version, confidence, "scene versions")
+                    versions.append(version)
+                self.version_concept = ""
+                self.version_event = ""
+                self.version_plot = ""
+                self.version_shows = ""
                 merged = ""
-                for number, (title, version) in enumerate(versions, start=1):
+                for number, version in enumerate(versions, start=1):
                     self.under_review = f"Merge {number} of {count_versions}"
                     self._so_far = merged
-                    self._next = f"⟦{title}⟧{version}⟦/{title}⟧" if title else version
+                    self._next = version
                     self.draft = self._merged(document, [])
-                    merged = reviewed(self, renderer, revised_merge)
+                    merged = reviewed(self, renderer, revised_merge, confidence, "scene merges")
             scene_text, spans, _ = read_marked(merged)
             cell_of_event = get_cell_of_event(document)
             if held is not None:
@@ -468,21 +490,28 @@ class Scenes(Stage):
     def _version(self, document: Document, comments: list[str]) -> str:
         """The version of the scene dedicated to its concept, drafted afresh, or,
         given the author's comments, the draft under review revised to answer
-        them."""
+        them; between the markers of its concept, all of it, as it comes into
+        the merge."""
         context = self._context(document)
         concepts = document.salient_concepts()
-        description = next((concept.source for concept in concepts if concept.title == self._concept), "")
+        description = next((concept.source for concept in concepts if concept.title == self.version_concept), "")
         written_concept = (
-            f"The concept, {self._concept}:\n{description}"
-            if self._concept
+            f"The concept, {self.version_concept}:\n{description}"
+            if self.version_concept
             else "The concept: none; tell the event plainly."
         )
-        request = f"{context}\n\nThe event: {self._event}\n\n{written_concept}"
+        if self.version_shows:
+            written_concept = f"{written_concept}\n\nHow it shows at this event: {self.version_shows}"
+        request = f"{context}\n\nThe plot the event belongs to: {self.version_plot}\n\nThe event: {self.version_event}\n\n{written_concept}"
         if comments:
             written_comments = "\n".join(f"- {comment}" for comment in comments)
             request = f"{request}\n\nYour draft:\n{self.draft}\n\nThe author's comments, oldest first:\n{written_comments}"
         written = self._model.complete(VERSION_INSTRUCTIONS, request, MAX_VERSION_TOKENS)
-        version = written.strip()
+        # Markers the model kept from its draft are its concept's, put back below.
+        text, _, _ = read_marked(written)
+        if not self.version_concept:
+            return text
+        version = f"⟦{self.version_concept}⟧{text}⟦/{self.version_concept}⟧"
         return version
 
     def _merged(self, document: Document, comments: list[str]) -> str:
@@ -491,7 +520,7 @@ class Scenes(Stage):
         its markers are wrong, as many times as a merge is."""
         logger = logging.getLogger(__name__)
         context = self._context(document)
-        happening = "\n".join(f"- {summary} ({concepts})" for summary, concepts in self.towards)
+        happening = "\n".join(f"- {plot}: {summary} ({concepts})" for plot, summary, concepts in self.towards)
         request = f"{context}\n\nWhat happens there:\n{happening}"
         if self._so_far:
             request = f"{request}\n\nThe scene as merged so far:\n{self._so_far}"

@@ -23,7 +23,7 @@ from uuid import uuid4
 from authordoc.cells.salient_concept_cell import SalientConceptCell
 from authordoc.storydoc import Document
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Stage, reviewed
+from story_generator.stage import Confidence, Stage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 
 LIST_INSTRUCTIONS = """You help an author decide what an interactive story is about: its salient concepts, the ideas a reader should come away understanding, though the story never states them.
@@ -83,6 +83,7 @@ class Concepts(Stage):
     def run(self, **params: Any) -> None:
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
+        confidence: Confidence = params["confidence"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         held = document.salient_concepts()
@@ -95,7 +96,7 @@ class Concepts(Stage):
             titles = self._listed(comments)
             return titles
 
-        accepted_list = reviewed(self, renderer, listed)
+        accepted_list = reviewed(self, renderer, listed, confidence, None)
         titles = read_titles(accepted_list)
         # The concepts stand first in the story, in the list's order; a concept
         # taken off the list is gone, and one added waits for its description.
@@ -124,7 +125,7 @@ class Concepts(Stage):
                 description = self._described(titles, comments)
                 return description
 
-            accepted = reviewed(self, renderer, revised)
+            accepted = reviewed(self, renderer, revised, confidence, "concept descriptions")
             described = replace(concept, source=accepted)
             cells = [described if cell.unique_id == concept.unique_id else cell for cell in document.cells]
             document = Document.from_cells(cells, document.path)

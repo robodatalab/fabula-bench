@@ -2,6 +2,7 @@
 real ones, on stories written into temporary directories."""
 
 import logging
+import random
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,19 +10,36 @@ from pathlib import Path
 from authordoc.iterators.story_words_iterator import StoryWordsIterator
 from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import get_choices
+from story_generator.stage import CAP, Confidence
 from story_generator.stage_visitor import Review, StageVisitor, Verdict
-from story_generator.stages import choices, concepts, mesh, plot_ends, scenes
+from story_generator.stages import choices, concept_arcs, concepts, mesh, plot_ends, scenes
 from story_generator.stages.choices import Choices
+from story_generator.stages.concept_arcs import ConceptArcs, get_arcs
 from story_generator.stages.concepts import Concepts
 from story_generator.stages.mesh import Mesh
 from story_generator.stages.plot_ends import PlotEnds
 from story_generator.stages.scenes import Scenes, get_scene_cell, get_scenes
-from story_generator.workflow import STAGES, Workflow, get_checkpoint
+from story_generator.workflow import CONFIDENCE, STAGES, Workflow, get_checkpoint
 
 ACCEPT = Review(Verdict.ACCEPT)
 STOP = Review(Verdict.STOP)
 # The author says what the story is about, and accepts the list.
 ABOUT = {"concepts": [Review(Verdict.REVISE, "Home, The way back"), ACCEPT]}
+
+
+class _Drawing(random.Random):
+    """Draws the same number every time."""
+
+    def __init__(self, drawn: float) -> None:
+        super().__init__()
+        self._drawn = drawn
+
+    def random(self) -> float:
+        return self._drawn
+
+
+# Draws 0, which every level of confidence selects: the author reviews every draft.
+EVERY_DRAFT = _Drawing(0.0)
 
 
 def _between(text: str, start: str, end: str = "\n\n") -> str:
@@ -35,7 +53,8 @@ class _Model:
     """Stands in for the model. The concepts are the titles the author's latest
     comment lists, each described by its title; every plot starts and ends in its
     concept's house, at 1 and 9, and is filled in with a walk through the square
-    at 5, where every plot meets; a version of a scene is its event, said back; a
+    at 5, where every plot meets; every concept shows at every event of its plot
+    but the last, at 9; a version of a scene is its event, said back; a
     merge puts the next version after the scene merged so far, and leaves a draft
     under review as it is; and every choice is "Then, it went on.". It remembers
     what it was asked for, every version it was asked for, as its event and its
@@ -75,6 +94,21 @@ class _Model:
             events = _between(user, f"which illustrates {title}:\n")
             start, goal = events.splitlines()
             return f"{start}\n5 | earth, the square | {title} walks through the square.\n{goal}"
+        if system == concept_arcs.INSTRUCTIONS:
+            self.asked.append("arcs")
+            to_fill = _between(user, "The plot's events, each followed by its concepts:\n")
+            filled = []
+            event = ""
+            for line in to_fill.splitlines():
+                if not line.startswith(" "):
+                    event = line
+                    filled.append(line)
+                    continue
+                title, _, _ = line.partition(":")
+                concept = title.strip()
+                how = "—" if event.startswith("9 ") else f"{concept} shows here."
+                filled.append(f"{title}: {how}")
+            return "\n".join(filled)
         if system == scenes.VERSION_INSTRUCTIONS:
             self.asked.append("version")
             event = _between(user, "The event: ")
@@ -135,6 +169,10 @@ class _Author(StageVisitor):
         review = self._reviewed("mesh", stage.draft)
         return review
 
+    def visit_concept_arcs(self, stage: ConceptArcs) -> Review:
+        review = self._reviewed("concept arcs", stage.draft)
+        return review
+
     def visit_scenes(self, stage: Scenes) -> Review:
         review = self._reviewed("scenes", stage.draft)
         return review
@@ -189,7 +227,8 @@ def _finished(story: Path) -> list[str]:
     document = Document.load(story)
     checkpoint = get_checkpoint(document)
     assert checkpoint is not None
-    finished = checkpoint.source.splitlines()
+    lines = checkpoint.source.splitlines()
+    finished = [line for line in lines if not line.startswith(CONFIDENCE)]
     return finished
 
 
@@ -210,7 +249,7 @@ class AFullRun(unittest.TestCase):
         self.model = _Model()
         self.author = _Author(ABOUT)
         self.heard = _Heard()
-        workflow = Workflow(self.story, self.model, self.author, self.heard)
+        workflow = Workflow(self.story, self.model, self.author, self.heard, EVERY_DRAFT)
         workflow.run()
         self.document = Document.load(self.story)
 
@@ -234,6 +273,18 @@ class AFullRun(unittest.TestCase):
             ],
         )
 
+    def test_plans_how_every_concept_shows_at_every_event_of_its_plot(self) -> None:
+        home, _ = self.document.plots()
+
+        arcs = get_arcs(self.document, home)
+
+        self.assertEqual(arcs, [{"Home": "Home shows here."}, {"Home": "Home shows here."}, {}])
+
+    def test_writes_no_version_for_a_concept_where_it_does_not_show(self) -> None:
+        versions_of_home = [title for event, title in self.model.versions if event.startswith("Home")]
+
+        self.assertEqual(versions_of_home, ["Home", "Home", ""])
+
     def test_tells_each_scene_in_a_cell_of_its_own(self) -> None:
         scenes_now = get_scenes(self.document)
 
@@ -256,8 +307,8 @@ class AFullRun(unittest.TestCase):
         self.assertEqual(
             passages,
             {
-                "Home": ["Home begins.", "Home walks through the square.", "Home ends."],
-                "The way back": ["The way back begins.", "The way back walks through the square.", "The way back ends."],
+                "Home": ["Home begins.", "Home walks through the square."],
+                "The way back": ["The way back begins.", "The way back walks through the square."],
             },
         )
 
@@ -299,7 +350,7 @@ class ARevision(unittest.TestCase):
         model = _Model()
         author = _Author({"concepts": [*ABOUT["concepts"], *commented], "plot ends": [STOP]})
         heard = _Heard()
-        workflow = Workflow(story, model, author, heard)
+        workflow = Workflow(story, model, author, heard, EVERY_DRAFT)
 
         workflow.run()
 
@@ -314,19 +365,19 @@ class StoppingInAStage(unittest.TestCase):
         model = _Model()
         author = _Author({**ABOUT, "scenes": [STOP]})
         heard = _Heard()
-        workflow = Workflow(self.story, model, author, heard)
+        workflow = Workflow(self.story, model, author, heard, EVERY_DRAFT)
         workflow.run()
 
     def test_checkpoints_only_the_stages_finished_before_it(self) -> None:
         finished = _finished(self.story)
 
-        self.assertEqual(finished, ["concepts", "plot ends", "mesh"])
+        self.assertEqual(finished, ["concepts", "plot ends", "mesh", "concept arcs"])
 
     def test_resumes_at_it_when_run_again(self) -> None:
         model = _Model()
         resumed = _Author()
         heard = _Heard()
-        workflow = Workflow(self.story, model, resumed, heard)
+        workflow = Workflow(self.story, model, resumed, heard, EVERY_DRAFT)
 
         workflow.run()
 
@@ -342,9 +393,9 @@ class StoppingInAStage(unittest.TestCase):
         model = _Model()
         author = _Author()
         heard = _Heard()
-        workflow = Workflow(self.story, model, author, heard)
+        workflow = Workflow(self.story, model, author, heard, EVERY_DRAFT)
 
-        workflow.run()
+        workflow.run("concept arcs")
 
         first, second, *_ = model.versions
         passages = _passages(self.story)
@@ -358,7 +409,7 @@ class GoingBackToAStage(unittest.TestCase):
         model = _Model()
         author = _Author(ABOUT)
         heard = _Heard()
-        workflow = Workflow(self.story, model, author, heard)
+        workflow = Workflow(self.story, model, author, heard, EVERY_DRAFT)
         workflow.run()
 
     def test_runs_it_and_every_stage_after_it(self) -> None:
@@ -367,7 +418,7 @@ class GoingBackToAStage(unittest.TestCase):
                 model = _Model()
                 author = _Author()
                 heard = _Heard()
-                workflow = Workflow(self.story, model, author, heard)
+                workflow = Workflow(self.story, model, author, heard, EVERY_DRAFT)
 
                 workflow.run(going_back_to)
 
@@ -378,7 +429,7 @@ class GoingBackToAStage(unittest.TestCase):
         model = _Model()
         author = _Author()
         heard = _Heard()
-        workflow = Workflow(self.story, model, author, heard)
+        workflow = Workflow(self.story, model, author, heard, EVERY_DRAFT)
 
         workflow.run("concepts")
 
@@ -389,7 +440,7 @@ class GoingBackToAStage(unittest.TestCase):
         model = _Model()
         author = _Author()
         heard = _Heard()
-        workflow = Workflow(self.story, model, author, heard)
+        workflow = Workflow(self.story, model, author, heard, EVERY_DRAFT)
 
         workflow.run("scenes")
 
@@ -403,14 +454,14 @@ class MarkingPassages(unittest.TestCase):
         model = _LosingMarkers()
         author = _Author(ABOUT)
         heard = _Heard()
-        workflow = Workflow(story, model, author, heard)
+        workflow = Workflow(story, model, author, heard, EVERY_DRAFT)
 
         workflow.run()
 
         sent_back = ("scenes", "the merge's markers are wrong, so it is sent back: no pair of ⟦Home⟧")
         passages = _passages(story)
         self.assertIn(sent_back, heard.records)
-        self.assertEqual(passages["Home"], ["Home begins.", "Home walks through the square.", "Home ends."])
+        self.assertEqual(passages["Home"], ["Home begins.", "Home walks through the square."])
 
     def test_reads_the_span_of_every_pair_of_markers_even_where_pairs_overlap(self) -> None:
         text, spans, problems = scenes.read_marked("⟦A⟧one ⟦B⟧two⟦/A⟧ three⟦/B⟧")
@@ -425,3 +476,95 @@ class MarkingPassages(unittest.TestCase):
         marked = scenes.written_marked("one two three", spans)
 
         self.assertEqual(marked, "⟦A⟧one ⟦B⟧two⟦/A⟧ three⟦/B⟧")
+
+
+class TheConfidence(unittest.TestCase):
+    def test_rises_a_fifth_of_the_way_to_certainty_with_every_draft_accepted_as_drafted(self) -> None:
+        confidence = Confidence({}, EVERY_DRAFT)
+
+        confidence.accepted("scene versions")
+        once = confidence.level("scene versions")
+        confidence.accepted("scene versions")
+        twice = confidence.level("scene versions")
+
+        self.assertAlmostEqual(once, 0.2)
+        self.assertAlmostEqual(twice, 0.36)
+
+    def test_halves_with_every_draft_revised(self) -> None:
+        confidence = Confidence({"scene versions": 0.5}, EVERY_DRAFT)
+
+        confidence.revised("scene versions")
+
+        level = confidence.level("scene versions")
+        self.assertAlmostEqual(level, 0.25)
+
+    def test_never_rises_above_its_cap(self) -> None:
+        confidence = Confidence({}, EVERY_DRAFT)
+
+        for _ in range(50):
+            confidence.accepted("scene versions")
+
+        level = confidence.level("scene versions")
+        self.assertEqual(level, CAP)
+
+    def test_selects_a_draft_for_review_the_less_likely_the_more_confident_it_is(self) -> None:
+        drawn_high = _Drawing(0.6)
+        drawn_low = _Drawing(0.4)
+        unsure = Confidence({}, drawn_high)
+        sure = Confidence({"scene versions": 0.5}, drawn_high)
+        sure_but_drawn_low = Confidence({"scene versions": 0.5}, drawn_low)
+
+        selected = [
+            unsure.selects("scene versions"),
+            sure.selects("scene versions"),
+            sure_but_drawn_low.selects("scene versions"),
+        ]
+
+        self.assertEqual(selected, [True, False, True])
+
+
+class SelectiveReview(unittest.TestCase):
+    def test_accepts_unseen_a_draft_the_confidence_does_not_select_and_logs_it(self) -> None:
+        story = _new_story(self)
+        model = _Model()
+        author = _Author(ABOUT)
+        heard = _Heard()
+        # Drawn high, a draft is reviewed only while its kind has no confidence:
+        # the first of every kind.
+        workflow = Workflow(story, model, author, heard, _Drawing(0.95))
+
+        workflow.run()
+
+        reviewed_descriptions = author.shown["concepts"][2:]
+        unseen = ("concepts", "a draft of concept descriptions was accepted unreviewed, at confidence 0.20")
+        concepts_kept = Document.load(story).salient_concepts()
+        described = [concept.source for concept in concepts_kept]
+        self.assertEqual(reviewed_descriptions, ["What Home means."])
+        self.assertIn(unseen, heard.records)
+        self.assertEqual(described, ["What Home means.", "What The way back means."])
+
+    def test_always_shows_the_list_of_concepts(self) -> None:
+        story = _new_story(self)
+        model = _Model()
+        author = _Author({**ABOUT, "plot ends": [STOP]})
+        heard = _Heard()
+        confident = Workflow(story, model, author, heard, _Drawing(0.99))
+
+        confident.run()
+
+        lists_shown = author.shown["concepts"][:2]
+        self.assertEqual(lists_shown, ["", "Home\nThe way back"])
+
+    def test_keeps_the_confidence_when_the_author_stops_and_resumes_with_it(self) -> None:
+        story = _new_story(self)
+        model = _Model()
+        author = _Author({**ABOUT, "plot ends": [STOP]})
+        heard = _Heard()
+        workflow = Workflow(story, model, author, heard, EVERY_DRAFT)
+
+        workflow.run()
+
+        resumed = Workflow(story, model, author, heard, EVERY_DRAFT)
+        confidence = resumed.confidence()
+        level = confidence.level("concept descriptions")
+        self.assertAlmostEqual(level, 0.36)

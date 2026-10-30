@@ -15,7 +15,7 @@ from authordoc.cells.plot_cell import PlotCell
 from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import get_place
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Stage, reviewed
+from story_generator.stage import Confidence, Stage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 from story_generator.stages.concepts import written_concepts
 from story_generator.stages.plot_ends import chained, get_illustrated, read_events, written_events, written_world_events
@@ -76,6 +76,7 @@ class Mesh(Stage):
     def run(self, **params: Any) -> None:
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
+        confidence: Confidence = params["confidence"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
         plots_at_the_start = document.plots()
@@ -99,7 +100,7 @@ class Mesh(Stage):
                 events = self._drafted(document, comments)
                 return events
 
-            accepted = reviewed(self, renderer, revised)
+            accepted = reviewed(self, renderer, revised, confidence, "mesh")
             events = read_events(accepted, plot.nodes)
             edges = chained(events, plot.edges)
             plot_meshed = replace(plot, nodes=events, edges=edges)
