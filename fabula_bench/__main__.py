@@ -14,6 +14,9 @@ STORY = Path("fabula_bench/stories/space_opera.author")
 
 EVALUATED_MODEL = "claude-opus-5-5"
 
+# How hard the evaluated model thinks before every choice and answer.
+EVALUATED_EFFORT = "low"
+
 # Where every run's results are saved, in a file named by when the run started.
 RUNS = Path("runs")
 
@@ -21,7 +24,7 @@ RUNS = Path("runs")
 def main(manager: InferenceModelResourceManager) -> None:
     started = datetime.now()
     story = Document.load(STORY)
-    evaluated_model = ClaudeModel(EVALUATED_MODEL)
+    evaluated_model = ClaudeModel(EVALUATED_MODEL, EVALUATED_EFFORT)
     embedder = DescriptionEmbedder(manager)
 
     # One play from the beginning of every plot of the story: how well the model

@@ -1,147 +1,162 @@
-"""The salient concepts each plot pursues, drafted by the model and kept as the
-story's salient concept cells. General concepts are the themes a plot is built
-on, defined as an encyclopedia defines the idea, narrowed to the story;
-story-specific concepts are what a plot builds up to, which keep a reader
-wanting to learn more. A concept two plots pursue is one concept, under one
-title.
+"""The story's salient concepts: what the story is about, kept as its salient
+concept cells, first in the story. The author says what the story is about, and
+the model keeps the list of the concepts' titles; then the model describes each
+concept, and the author reviews every description.
 
-The author reviews, and the model writes, a plot's concepts as:
+A concept is an idea, not a thing that appears in the story: a general theme the
+story is built on, such as motherhood or war, or a story-specific hook, such as
+a stranger stranded under the surface of Mars. Every concept gets a plot of its
+own, and every plot respects every concept.
 
-    ## General
-
-    ### <title>
-    <definition>
-
-    ## Story-specific
-
-    ### <title>
-    <description>
+The author reviews, and the model writes, the list as one title a line.
 """
 
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from authordoc.cells.plot_cell import PlotCell
 from authordoc.cells.salient_concept_cell import SalientConceptCell
 from authordoc.storydoc import Document
 from fabula_bench.players.agent_player import CompletionModel
 from story_generator.stage import Stage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
-from story_generator.stages.high_level_plots import get_outline_title, get_outlines
-from story_generator.stages.low_level_plots import written_events
 
-INSTRUCTIONS = """You help an author name the salient concepts one plot of an interactive story pursues: the ideas a reader should come away understanding, though the story never states them.
+LIST_INSTRUCTIONS = """You help an author decide what an interactive story is about: its salient concepts, the ideas a reader should come away understanding, though the story never states them.
 
-There are two kinds.
+A concept is either a general theme the story is built on, such as motherhood, war or justice, or a story-specific hook that keeps a reader wanting to learn more, such as a stranger stranded under the surface of Mars. Every concept will get a plot of its own that illustrates it. A character is not a concept, nor is an event, nor a place or a thing that merely appears in the story.
 
-General concepts are the themes the plot is built on, such as motherhood, war or justice. Define each the way an encyclopedia defines the idea, narrowed to how this story uses it, in one to three sentences.
+You are given the titles of the concepts so far, one a line, and the author's comments on them. Rewrite the list to answer every comment, and change nothing the comments do not ask you to change.
 
-Story-specific concepts are what the plot builds up to: what keeps a reader pinned to the story and wanting to learn more. A plot can build up to several, and not only at its end: an intermediate concept can keep the reader hooked. Each is built over several events. Name each by its role in the story, and describe it as an idea, not as a list of events. A character is not a story-specific concept, nor is an event that happens once and leads nowhere, nor anything a general concept already covers.
+Write the titles, one a line, and nothing else."""
 
-You are given the plot's outline and events, and the concepts the world already has. Where the plot pursues one of them, write it with its title and description unchanged.
+DESCRIPTION_INSTRUCTIONS = """You help an author describe one salient concept of an interactive story: an idea a reader should come away understanding, though the story never states it. Every concept gets a plot of its own that illustrates it, and every plot respects every concept, so the description is what the plots will be written to show.
+
+Describe the concept as an idea, in one to three sentences. A general theme, such as motherhood or war, is defined the way an encyclopedia defines the idea, narrowed to how this story uses it. A story-specific hook is described by its role in the story: what it is, what drives it, and why a reader wants to learn more. Describe neither as a list of events.
+
+You are given the titles of the story's concepts, what the author has said the story is about, and the concept to describe.
 
 When you are also given your draft and the author's comments on it, rewrite the draft to answer every comment, and change nothing the comments do not ask you to change.
 
-Write in exactly this form, and nothing else:
+Write the description and nothing else."""
 
-## General
+# Room for the titles of a story's concepts.
+MAX_LIST_TOKENS = 500
 
-### <title>
-<definition>
-
-## Story-specific
-
-### <title>
-<description>"""
-
-# Room for the concepts of one plot.
-MAX_CONCEPTS_TOKENS = 2000
+# Room for the description of one concept.
+MAX_DESCRIPTION_TOKENS = 500
 
 
-def read_concepts(written: str) -> list[tuple[str, str]]:
-    """The concepts a draft lists, as their titles and descriptions, in order."""
-    concepts = []
-    # A concept's heading may open the draft, with no line before it.
-    sections = f"\n{written}".split("\n### ")
-    for section in sections[1:]:
-        title, _, rest = section.partition("\n")
-        description, _, _ = rest.partition("\n## ")
-        concepts.append((title.strip(), description.strip()))
-    return concepts
+def read_titles(written: str) -> list[str]:
+    """The titles a list holds, in order, each once."""
+    titles: list[str] = []
+    for line in written.splitlines():
+        unmarked = line.strip().lstrip("-*• ")
+        title = unmarked.strip()
+        if title and title not in titles:
+            titles.append(title)
+    return titles
+
+
+def written_concepts(concepts: Sequence[SalientConceptCell]) -> str:
+    """The concepts, each under its title, with its description."""
+    described = [f"### {concept.title}\n{concept.source}" for concept in concepts]
+    written = "\n\n".join(described) or "None yet."
+    return written
 
 
 class Concepts(Stage):
     def __init__(self, model: CompletionModel) -> None:
         super().__init__()
         self._model = model
-        # The plot under review, for the renderer to show.
-        self.title = ""
+        # What the renderer shows: the concept whose description is under
+        # review, none while the list is.
+        self.concept = ""
+        # What the author has said the story is about, in the comments on the
+        # list.
+        self._about: list[str] = []
 
     def run(self, **params: Any) -> None:
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
-        plots = document.plots()
-        count = len(plots)
-        for index, plot in enumerate(plots):
-            self.title = plot.title
-            self.progress = (index, count)
-            self.draft = self._drafted(document, plot, [])
+        held = document.salient_concepts()
+        held_titles = [concept.title for concept in held]
+        self.concept = ""
+        self.draft = "\n".join(held_titles)
 
-            def revised(comments: list[str]) -> str:
-                concepts = self._drafted(document, plot, comments)
-                return concepts
+        def listed(comments: list[str]) -> str:
+            self._about = list(comments)
+            titles = self._listed(comments)
+            return titles
 
-            accepted = reviewed(self, renderer, revised)
-            concepts = read_concepts(accepted)
-            cells = list(document.cells)
-            for title, description in concepts:
-                held_at = next(
-                    (at for at, cell in enumerate(cells) if isinstance(cell, SalientConceptCell) and cell.title == title),
-                    None,
-                )
-                if held_at is not None:
-                    held = cells[held_at]
-                    described = replace(held, source=description)
-                    cells[held_at] = described
-                    continue
-                concepts_at = [at for at, cell in enumerate(cells) if isinstance(cell, SalientConceptCell)]
-                after_them = concepts_at[-1] + 1 if concepts_at else len(cells)
+        accepted_list = reviewed(self, renderer, listed)
+        titles = read_titles(accepted_list)
+        # The concepts stand first in the story, in the list's order; a concept
+        # taken off the list is gone, and one added waits for its description.
+        held_of_title = {concept.title: concept for concept in held}
+        listed_concepts = []
+        for title in titles:
+            concept = held_of_title.get(title)
+            if concept is None:
                 identifier = uuid4()
                 concept_id = str(identifier)
-                concept = SalientConceptCell(title=title, references=[], source=description, _unique_id=concept_id)
-                cells.insert(after_them, concept)
+                concept = SalientConceptCell(title=title, references=[], source="", _unique_id=concept_id)
+            listed_concepts.append(concept)
+        other_cells = [cell for cell in document.cells if not isinstance(cell, SalientConceptCell)]
+        document = Document.from_cells([*listed_concepts, *other_cells], document.path)
+        story.write_text(document.text, encoding="utf-8")
+        count = len(titles)
+        logger.info("%d concepts listed", count, extra={"progress": (0, count)})
+        for index, title in enumerate(titles):
+            concepts = document.salient_concepts()
+            concept = next(concept for concept in concepts if concept.title == title)
+            self.concept = title
+            self.progress = (index, count)
+            self.draft = concept.source if concept.source else self._described(titles, [])
+
+            def revised(comments: list[str]) -> str:
+                description = self._described(titles, comments)
+                return description
+
+            accepted = reviewed(self, renderer, revised)
+            described = replace(concept, source=accepted)
+            cells = [described if cell.unique_id == concept.unique_id else cell for cell in document.cells]
             document = Document.from_cells(cells, document.path)
             story.write_text(document.text, encoding="utf-8")
             self.progress = (index + 1, count)
-            logger.info("concepts of plot %d of %d accepted", index + 1, count, extra={"progress": self.progress})
+            logger.info("concept %d of %d described", index + 1, count, extra={"progress": self.progress})
 
     def accept(self, visitor: StageVisitor) -> Review:
         review = visitor.visit_concepts(self)
         return review
 
-    def _drafted(self, document: Document, plot: PlotCell, comments: list[str]) -> str:
-        """The plot's concepts, drafted afresh, or, given the author's comments, the
-        draft under review revised to answer them."""
-        outlines = get_outlines(document)
-        outline = next((note.source for note in outlines if get_outline_title(note.source) == plot.title), plot.overview)
-        events = written_events(plot.nodes)
-        held = [f"### {concept.title}\n{concept.source}" for concept in document.salient_concepts()]
-        world_concepts = "\n\n".join(held) or "None yet."
-        request = (
-            f"The plot's outline:\n{outline}\n\n"
-            f"The plot's events:\n{events}\n\n"
-            f"The concepts the world already has:\n{world_concepts}"
-        )
+    def _listed(self, comments: list[str]) -> str:
+        """The list under review, revised to answer the author's comments."""
+        titles = self.draft or "None yet."
+        written_comments = "\n".join(f"- {comment}" for comment in comments)
+        request = f"The titles so far:\n{titles}\n\nThe author's comments, oldest first:\n{written_comments}"
+        written = self._model.complete(LIST_INSTRUCTIONS, request, MAX_LIST_TOKENS)
+        listed = written.strip()
+        return listed
+
+    def _described(self, titles: list[str], comments: list[str]) -> str:
+        """The concept's description, drafted afresh, or, given the author's
+        comments, the draft under review revised to answer them."""
+        written_titles = "\n".join(f"- {title}" for title in titles)
+        request = f"The story's concepts:\n{written_titles}"
+        if self._about:
+            about = "\n".join(f"- {said}" for said in self._about)
+            request = f"{request}\n\nWhat the author has said the story is about:\n{about}"
+        request = f"{request}\n\nThe concept to describe: {self.concept}"
         if comments:
             written_comments = "\n".join(f"- {comment}" for comment in comments)
             request = f"{request}\n\nYour draft:\n{self.draft}\n\nThe author's comments, oldest first:\n{written_comments}"
-        written = self._model.complete(INSTRUCTIONS, request, MAX_CONCEPTS_TOKENS)
-        concepts = written.strip()
-        return concepts
+        written = self._model.complete(DESCRIPTION_INSTRUCTIONS, request, MAX_DESCRIPTION_TOKENS)
+        description = written.strip()
+        return description

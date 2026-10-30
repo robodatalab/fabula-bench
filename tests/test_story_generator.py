@@ -6,35 +6,22 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from authordoc.cells.note_cell import NoteCell
+from authordoc.iterators.story_words_iterator import StoryWordsIterator
 from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import get_choices
 from story_generator.stage_visitor import Review, StageVisitor, Verdict
-from story_generator.stages import annotations, choices, concepts, high_level_plots, low_level_plots, meeting_points, scenes
-from story_generator.stages.annotations import Annotations, get_scene_cells
+from story_generator.stages import choices, concepts, mesh, plot_ends, scenes
 from story_generator.stages.choices import Choices
 from story_generator.stages.concepts import Concepts
-from story_generator.stages.high_level_plots import HighLevelPlots
-from story_generator.stages.low_level_plots import LowLevelPlots
-from story_generator.stages.meeting_points import MeetingPoints
-from story_generator.stages.plot_ideas import PlotIdeas
-from story_generator.stages.scenes import Scenes
-from story_generator.workflow import Workflow, get_checkpoint
+from story_generator.stages.mesh import Mesh
+from story_generator.stages.plot_ends import PlotEnds
+from story_generator.stages.scenes import Scenes, get_scene_cell, get_scenes
+from story_generator.workflow import STAGES, Workflow, get_checkpoint
 
 ACCEPT = Review(Verdict.ACCEPT)
 STOP = Review(Verdict.STOP)
-STAGES_IN_ORDER = [
-    "plot ideas",
-    "high-level plots",
-    "low-level plots",
-    "meeting points",
-    "scenes",
-    "choices",
-    "concepts",
-    "annotations",
-]
-# The author adds one idea, and accepts it.
-AN_IDEA = {"plot ideas": [Review(Verdict.REVISE, "A heist."), ACCEPT]}
+# The author says what the story is about, and accepts the list.
+ABOUT = {"concepts": [Review(Verdict.REVISE, "Home, The way back"), ACCEPT]}
 
 
 def _between(text: str, start: str, end: str = "\n\n") -> str:
@@ -45,60 +32,72 @@ def _between(text: str, start: str, end: str = "\n\n") -> str:
 
 
 class _Model:
-    """Stands in for the model. An outline is the idea, said back, with the
-    author's latest comment as its last act; a plot is its beginning and its end
-    in one house; the meeting points leave the events as they were; a scene is
-    what happens in it, said back; every choice is "Then, it went on."; and a
-    concept's passage is the first scene, from its first word to its last. It
-    remembers what it was asked for."""
+    """Stands in for the model. The concepts are the titles the author's latest
+    comment lists, each described by its title; every plot starts and ends in its
+    concept's house, at 1 and 9, and is filled in with a walk through the square
+    at 5, where every plot meets; a version of a scene is its event, said back; a
+    merge puts the next version after the scene merged so far, and leaves a draft
+    under review as it is; and every choice is "Then, it went on.". It remembers
+    what it was asked for, every version it was asked for, as its event and its
+    concept, and every scene merged so far it was given."""
 
     def __init__(self) -> None:
         self.asked: list[str] = []
+        self.versions: list[tuple[str, str]] = []
+        self.merged_so_far: list[str] = []
 
     def complete(self, system: str, user: str, max_new_tokens: int) -> str:
-        if system == high_level_plots.INSTRUCTIONS:
-            self.asked.append("outline")
-            idea = _between(user, "The author's idea:\n")
-            outline = f"## {idea}\n\nWhat {idea} is about.\n\n1. It begins."
+        if system == concepts.LIST_INSTRUCTIONS:
+            self.asked.append("concepts")
+            comments = _between(user, "The author's comments, oldest first:\n", "\n\n\n")
+            lines = comments.splitlines()
+            latest = lines[-1]
+            listed = latest.removeprefix("- ")
+            titles = listed.split(", ")
+            return "\n".join(titles)
+        if system == concepts.DESCRIPTION_INSTRUCTIONS:
+            self.asked.append("description")
+            title = _between(user, "The concept to describe: ", "\n")
             if "The author's comments" not in user:
-                return outline
+                return f"What {title} means."
             comments = _between(user, "The author's comments, oldest first:\n", "\n\n\n")
             lines = comments.splitlines()
             latest = lines[-1]
             comment = latest.removeprefix("- ")
-            return f"{outline}\n2. {comment}"
-        if system == low_level_plots.INSTRUCTIONS:
+            return f"What {title} means, {comment}"
+        if system == plot_ends.INSTRUCTIONS:
+            self.asked.append("ends")
+            title = _between(user, "The concept whose plot to begin, ", ":\n")
+            return f"1 | earth, {title}'s house | {title} begins.\n9 | earth, {title}'s house | {title} ends."
+        if system == mesh.INSTRUCTIONS:
             self.asked.append("events")
-            title = _between(user, "The plot's outline:\n## ", "\n")
-            return f"1.1 | earth, a house | {title} begins.\n1.2 | earth, a house | {title} ends."
-        if system == meeting_points.INSTRUCTIONS:
-            self.asked.append("meeting points")
-            _, _, after = user.partition("The plot to revise, ")
-            _, _, events = after.partition(":\n")
-            plot_events, _, _ = events.partition("\n\nYour draft")
-            return plot_events
-        if system == concepts.INSTRUCTIONS:
-            self.asked.append("concepts")
-            return (
-                "## General\n\n### Home\nWhere one belongs.\n\n"
-                "## Story-specific\n\n### The way back\nWhat the plot builds up to."
-            )
-        if system == scenes.INSTRUCTIONS:
-            self.asked.append("scene")
-            happening = _between(user, "What happens there:\n")
-            scene = happening.replace("- ", "")
-            return scene
+            title = _between(user, "The plot to fill in, ", ", which illustrates")
+            events = _between(user, f"which illustrates {title}:\n")
+            start, goal = events.splitlines()
+            return f"{start}\n5 | earth, the square | {title} walks through the square.\n{goal}"
+        if system == scenes.VERSION_INSTRUCTIONS:
+            self.asked.append("version")
+            event = _between(user, "The event: ")
+            title = _between(user, "The concept, ", ":\n")
+            self.versions.append((event, title))
+            return event
+        if system == scenes.MERGE_INSTRUCTIONS:
+            self.asked.append("merge")
+            if "Your draft:\n" in user:
+                draft = _between(user, "Your draft:\n", "\n\nThe author's comments")
+                return draft
+            so_far = _between(user, "The scene as merged so far:\n")
+            if so_far:
+                self.merged_so_far.append(so_far)
+            next_version = _between(user, "The next version:\n")
+            merged = f"{so_far} {next_version}"
+            return merged.strip()
         if system == choices.OPENING_INSTRUCTIONS:
             self.asked.append("opening")
             return "Then,"
         if system == choices.ENDING_INSTRUCTIONS:
             self.asked.append("ending")
             return "it went on."
-        if system == annotations.INSTRUCTIONS:
-            self.asked.append("passages")
-            first_scene = _between(user, "S1:\n")
-            words = first_scene.split()
-            return f"S1 | {words[0]} | {words[-1]}"
         raise AssertionError("asked for something no stage asks for")
 
 
@@ -124,24 +123,16 @@ class _Author(StageVisitor):
         review = scripted.pop(0)
         return review
 
-    def visit_plot_ideas(self, stage: PlotIdeas) -> Review:
-        review = self._reviewed("plot ideas", stage.draft)
-        return review
-
-    def visit_high_level_plots(self, stage: HighLevelPlots) -> Review:
-        review = self._reviewed("high-level plots", stage.draft)
-        return review
-
-    def visit_low_level_plots(self, stage: LowLevelPlots) -> Review:
-        review = self._reviewed("low-level plots", stage.draft)
-        return review
-
-    def visit_meeting_points(self, stage: MeetingPoints) -> Review:
-        review = self._reviewed("meeting points", stage.draft)
-        return review
-
     def visit_concepts(self, stage: Concepts) -> Review:
         review = self._reviewed("concepts", stage.draft)
+        return review
+
+    def visit_plot_ends(self, stage: PlotEnds) -> Review:
+        review = self._reviewed("plot ends", stage.draft)
+        return review
+
+    def visit_mesh(self, stage: Mesh) -> Review:
+        review = self._reviewed("mesh", stage.draft)
         return review
 
     def visit_scenes(self, stage: Scenes) -> Review:
@@ -150,10 +141,6 @@ class _Author(StageVisitor):
 
     def visit_choices(self, stage: Choices) -> Review:
         review = self._reviewed("choices", stage.draft)
-        return review
-
-    def visit_annotations(self, stage: Annotations) -> Review:
-        review = self._reviewed("annotations", stage.draft)
         return review
 
 
@@ -169,6 +156,23 @@ class _Heard(logging.Handler):
         stage: str = getattr(record, "stage")
         message = record.getMessage()
         self.records.append((stage, message))
+
+
+class _LosingMarkers(_Model):
+    """Stands in for the model as `_Model` does, but loses the markers of its first
+    merge."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.lost = False
+
+    def complete(self, system: str, user: str, max_new_tokens: int) -> str:
+        written = super().complete(system, user, max_new_tokens)
+        if system != scenes.MERGE_INSTRUCTIONS or self.lost:
+            return written
+        self.lost = True
+        unmarked = scenes.MARKER.sub("", written)
+        return unmarked
 
 
 def _new_story(test: unittest.TestCase) -> Path:
@@ -189,52 +193,89 @@ def _finished(story: Path) -> list[str]:
     return finished
 
 
+def _passages(story: Path) -> dict[str, list[str]]:
+    """Every concept's passages, by its title, as the words they point at."""
+    document = Document.load(story)
+    story_words = StoryWordsIterator(document)
+    passages = {}
+    for concept in document.salient_concepts():
+        texts = [story_words.text(reference.story_word_range) for reference in concept.references]
+        passages[concept.title] = texts
+    return passages
+
+
 class AFullRun(unittest.TestCase):
     def setUp(self) -> None:
         self.story = _new_story(self)
+        self.model = _Model()
+        self.author = _Author(ABOUT)
         self.heard = _Heard()
-        model = _Model()
-        author = _Author(AN_IDEA)
-        workflow = Workflow(self.story, model, author, self.heard)
+        workflow = Workflow(self.story, self.model, self.author, self.heard)
         workflow.run()
         self.document = Document.load(self.story)
 
-    def test_keeps_the_idea_and_its_outline_as_notes(self) -> None:
-        notes = [cell.source for cell in self.document.cells if isinstance(cell, NoteCell)]
+    def test_keeps_the_concepts_the_author_named_each_described(self) -> None:
+        concepts_kept = self.document.salient_concepts()
 
-        self.assertEqual(notes, ["## Plot ideas\n\nA heist.", "## A heist.\n\nWhat A heist. is about.\n\n1. It begins."])
+        described = [(concept.title, concept.source) for concept in concepts_kept]
+        self.assertEqual(described, [("Home", "What Home means."), ("The way back", "What The way back means.")])
 
-    def test_writes_the_events_of_the_plot(self) -> None:
-        (plot,) = self.document.plots()
+    def test_gives_every_concept_a_plot_from_its_start_to_its_goal(self) -> None:
+        home, way_back = self.document.plots()
 
-        events = [(event.timestamp, event.summary) for event in plot.nodes]
-        self.assertEqual(events, [("1.1", "A heist. begins."), ("1.2", "A heist. ends.")])
+        events = [(event.timestamp, event.location, event.summary) for event in home.nodes]
+        self.assertEqual((way_back.title, way_back.overview), ("The way back", "Illustrates: The way back"))
+        self.assertEqual(
+            events,
+            [
+                ("1", "earth, Home's house", "Home begins."),
+                ("5", "earth, the square", "Home walks through the square."),
+                ("9", "earth, Home's house", "Home ends."),
+            ],
+        )
 
     def test_tells_each_scene_in_a_cell_of_its_own(self) -> None:
-        scene_cells = get_scene_cells(self.document)
+        scenes_now = get_scenes(self.document)
 
-        count = len(scene_cells)
-        self.assertEqual(count, 2)
+        told = [get_scene_cell(self.document, scene) for scene in scenes_now]
+        cell_ids = {cell.unique_id for cell in told if cell is not None}
+        self.assertEqual(len(cell_ids), 5)
 
-    def test_ends_a_scene_the_story_goes_on_from_in_a_choice_for_the_edge_leaving_it(self) -> None:
-        (plot,) = self.document.plots()
-        (edge,) = plot.edges
-        first_cell, _ = get_scene_cells(self.document)
+    def test_writes_a_version_for_every_concept_of_a_scene_and_merges_them_one_at_a_time(self) -> None:
+        scene_drafts = self.author.shown["scenes"]
 
-        choices_of_the_scene = get_choices(first_cell.source)
+        # Five scenes, one of them where both plots meet: a version and a merge
+        # for each event, and two of each where the plots meet.
+        reviewed = len(scene_drafts)
+        self.assertEqual(reviewed, 12)
+        self.assertEqual(self.model.merged_so_far, ["⟦Home⟧Home walks through the square.⟦/Home⟧"])
 
-        self.assertEqual(choices_of_the_scene, {edge.edge_id: "it went on."})
+    def test_keeps_the_passages_the_writer_marked_after_the_choices_are_written(self) -> None:
+        passages = _passages(self.story)
 
-    def test_annotates_every_concept_on_the_scenes(self) -> None:
-        concepts_annotated = self.document.salient_concepts()
+        self.assertEqual(
+            passages,
+            {
+                "Home": ["Home begins.", "Home walks through the square.", "Home ends."],
+                "The way back": ["The way back begins.", "The way back walks through the square.", "The way back ends."],
+            },
+        )
 
-        annotated = [(concept.title, len(concept.references)) for concept in concepts_annotated]
-        self.assertEqual(annotated, [("Home", 1), ("The way back", 1)])
+    def test_ends_a_scene_the_story_goes_on_from_in_a_choice_for_every_edge_leaving_it(self) -> None:
+        scenes_now = get_scenes(self.document)
+        in_the_square = scenes_now[2]
+        cell = get_scene_cell(self.document, in_the_square)
+        assert cell is not None
+
+        choices_of_the_scene = get_choices(cell.source)
+
+        endings = list(choices_of_the_scene.values())
+        self.assertEqual(endings, ["it went on.", "it went on."])
 
     def test_checkpoints_every_stage_in_the_order_it_ran(self) -> None:
         finished = _finished(self.story)
 
-        self.assertEqual(finished, STAGES_IN_ORDER)
+        self.assertEqual(finished, STAGES)
 
     def test_checkpoints_in_the_story_s_last_cell_and_writes_nothing_beside_the_story(self) -> None:
         checkpoint = get_checkpoint(self.document)
@@ -247,35 +288,31 @@ class AFullRun(unittest.TestCase):
     def test_hands_the_handler_every_record_under_the_name_of_the_stage_it_was_logged_in(self) -> None:
         first, *_ = self.heard.records
 
-        self.assertEqual(first, ("plot ideas", "started"))
-        self.assertIn(("scenes", "scene 1 of 2 accepted"), self.heard.records)
+        self.assertEqual(first, ("concepts", "started"))
+        self.assertIn(("scenes", "scene 3 of 5 accepted"), self.heard.records)
 
 
 class ARevision(unittest.TestCase):
     def test_answers_the_author_s_comment(self) -> None:
         story = _new_story(self)
-        commented = [Review(Verdict.REVISE, "It ends in a chase."), ACCEPT]
+        commented = [Review(Verdict.REVISE, "told from far away."), ACCEPT]
         model = _Model()
-        author = _Author({**AN_IDEA, "high-level plots": commented, "low-level plots": [STOP]})
+        author = _Author({"concepts": [*ABOUT["concepts"], *commented], "plot ends": [STOP]})
         heard = _Heard()
         workflow = Workflow(story, model, author, heard)
 
         workflow.run()
 
         document = Document.load(story)
-        outlines = [
-            cell.source for cell in document.cells if isinstance(cell, NoteCell) and cell.source.startswith("## A heist.")
-        ]
-        *_, accepted = author.shown["high-level plots"]
-        self.assertEqual(outlines, ["## A heist.\n\nWhat A heist. is about.\n\n1. It begins.\n2. It ends in a chase."])
-        self.assertEqual(accepted, outlines[0])
+        home, _ = document.salient_concepts()
+        self.assertEqual(home.source, "What Home means, told from far away.")
 
 
 class StoppingInAStage(unittest.TestCase):
     def setUp(self) -> None:
         self.story = _new_story(self)
         model = _Model()
-        author = _Author({**AN_IDEA, "scenes": [STOP]})
+        author = _Author({**ABOUT, "scenes": [STOP]})
         heard = _Heard()
         workflow = Workflow(self.story, model, author, heard)
         workflow.run()
@@ -283,7 +320,7 @@ class StoppingInAStage(unittest.TestCase):
     def test_checkpoints_only_the_stages_finished_before_it(self) -> None:
         finished = _finished(self.story)
 
-        self.assertEqual(finished, ["plot ideas", "high-level plots", "low-level plots", "meeting points"])
+        self.assertEqual(finished, ["concepts", "plot ends", "mesh"])
 
     def test_resumes_at_it_when_run_again(self) -> None:
         model = _Model()
@@ -293,25 +330,39 @@ class StoppingInAStage(unittest.TestCase):
 
         workflow.run()
 
-        self.assertEqual(resumed.visited, ["scenes", "choices", "concepts", "annotations"])
+        self.assertEqual(resumed.visited, ["scenes", "choices"])
+
+    def test_writes_a_version_of_an_event_for_every_concept_its_plot_illustrates(self) -> None:
+        document = Document.load(self.story)
+        home, _ = document.plots()
+        illustrating_both = home.with_overview("What a home is.\nIllustrates: Home, The way back")
+        cells = [illustrating_both if cell.unique_id == home.unique_id else cell for cell in document.cells]
+        both = Document.from_cells(cells, document.path)
+        self.story.write_text(both.text, encoding="utf-8")
+        model = _Model()
+        author = _Author()
+        heard = _Heard()
+        workflow = Workflow(self.story, model, author, heard)
+
+        workflow.run()
+
+        first, second, *_ = model.versions
+        passages = _passages(self.story)
+        self.assertEqual([first, second], [("Home begins.", "Home"), ("Home begins.", "The way back")])
+        self.assertIn("Home begins.", passages["The way back"])
 
 
 class GoingBackToAStage(unittest.TestCase):
     def setUp(self) -> None:
         self.story = _new_story(self)
         model = _Model()
-        author = _Author(AN_IDEA)
+        author = _Author(ABOUT)
         heard = _Heard()
         workflow = Workflow(self.story, model, author, heard)
         workflow.run()
 
-    def test_runs_it_and_every_stage_that_depends_on_it_and_no_other(self) -> None:
-        for going_back_to, run_again in {
-            "low-level plots": ["low-level plots", "meeting points", "scenes", "choices", "concepts", "annotations"],
-            "scenes": ["scenes", "choices", "annotations"],
-            "concepts": ["concepts", "annotations"],
-            "annotations": ["annotations"],
-        }.items():
+    def test_runs_it_and_every_stage_after_it(self) -> None:
+        for going_back_to in STAGES:
             with self.subTest(going_back_to=going_back_to):
                 model = _Model()
                 author = _Author()
@@ -320,7 +371,8 @@ class GoingBackToAStage(unittest.TestCase):
 
                 workflow.run(going_back_to)
 
-                self.assertEqual(author.visited, run_again)
+                at = STAGES.index(going_back_to)
+                self.assertEqual(author.visited, STAGES[at:])
 
     def test_reviews_what_the_story_holds_instead_of_drafting_it_afresh(self) -> None:
         model = _Model()
@@ -328,21 +380,48 @@ class GoingBackToAStage(unittest.TestCase):
         heard = _Heard()
         workflow = Workflow(self.story, model, author, heard)
 
-        workflow.run("low-level plots")
+        workflow.run("concepts")
 
-        self.assertNotIn("events", model.asked)
-        self.assertNotIn("scene", model.asked)
+        self.assertEqual(model.asked, [])
 
-    def test_annotates_every_concept_on_the_scenes_again(self) -> None:
+    def test_keeps_the_passages_of_the_scenes_it_reviews_again(self) -> None:
+        passages_before = _passages(self.story)
         model = _Model()
         author = _Author()
         heard = _Heard()
         workflow = Workflow(self.story, model, author, heard)
 
-        workflow.run("low-level plots")
+        workflow.run("scenes")
 
-        document = Document.load(self.story)
-        concepts_annotated = document.salient_concepts()
-        annotated = [(concept.title, len(concept.references)) for concept in concepts_annotated]
-        self.assertEqual(annotated, [("Home", 1), ("The way back", 1)])
+        passages_after = _passages(self.story)
+        self.assertEqual(passages_after, passages_before)
 
+
+class MarkingPassages(unittest.TestCase):
+    def test_sends_back_a_merge_that_loses_its_markers(self) -> None:
+        story = _new_story(self)
+        model = _LosingMarkers()
+        author = _Author(ABOUT)
+        heard = _Heard()
+        workflow = Workflow(story, model, author, heard)
+
+        workflow.run()
+
+        sent_back = ("scenes", "the merge's markers are wrong, so it is sent back: no pair of ⟦Home⟧")
+        passages = _passages(story)
+        self.assertIn(sent_back, heard.records)
+        self.assertEqual(passages["Home"], ["Home begins.", "Home walks through the square.", "Home ends."])
+
+    def test_reads_the_span_of_every_pair_of_markers_even_where_pairs_overlap(self) -> None:
+        text, spans, problems = scenes.read_marked("⟦A⟧one ⟦B⟧two⟦/A⟧ three⟦/B⟧")
+
+        self.assertEqual(text, "one two three")
+        self.assertEqual(spans, [scenes.Span("A", 0, 7), scenes.Span("B", 4, 13)])
+        self.assertEqual(problems, [])
+
+    def test_writes_the_markers_back_where_the_spans_are(self) -> None:
+        spans = [scenes.Span("A", 0, 7), scenes.Span("B", 4, 13)]
+
+        marked = scenes.written_marked("one two three", spans)
+
+        self.assertEqual(marked, "⟦A⟧one ⟦B⟧two⟦/A⟧ three⟦/B⟧")

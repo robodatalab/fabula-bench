@@ -3,8 +3,8 @@
 Run as `python -m story_generator`, with the Anthropic API key in the
 environment; it asks for the story's .author file, and creates it if there is
 none. Stopped in a stage, run it again on the same file to resume at that stage.
-`--back-to "<stage>"` goes back to a stage, and runs it, and every stage that
-depends on it, again.
+`--back-to "<stage>"` goes back to a stage, and runs it, and every stage after
+it, again.
 """
 
 from __future__ import annotations
@@ -19,6 +19,9 @@ from story_generator.workflow import Workflow
 
 WRITING_MODEL = "claude-opus-5-5"
 
+# Writing a story, and finding where it shows its concepts, takes judgement.
+WRITING_EFFORT = "high"
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Write a story with its author, stage by stage.")
@@ -31,7 +34,7 @@ def main() -> None:
     # A new story starts as an empty file.
     if not story.exists():
         story.write_text("", encoding="utf-8")
-    model = ClaudeModel(WRITING_MODEL)
+    model = ClaudeModel(WRITING_MODEL, WRITING_EFFORT)
     renderer = TerminalRenderer()
     handler = logging.StreamHandler()
     formatter = logging.Formatter("   [%(stage)s] %(message)s")

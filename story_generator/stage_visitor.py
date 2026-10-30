@@ -10,13 +10,10 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from story_generator.stages.annotations import Annotations
     from story_generator.stages.choices import Choices
     from story_generator.stages.concepts import Concepts
-    from story_generator.stages.high_level_plots import HighLevelPlots
-    from story_generator.stages.low_level_plots import LowLevelPlots
-    from story_generator.stages.meeting_points import MeetingPoints
-    from story_generator.stages.plot_ideas import PlotIdeas
+    from story_generator.stages.mesh import Mesh
+    from story_generator.stages.plot_ends import PlotEnds
     from story_generator.stages.scenes import Scenes
 
 
@@ -37,25 +34,16 @@ class Review:
 
 class StageVisitor(ABC):
     @abstractmethod
-    def visit_plot_ideas(self, stage: PlotIdeas) -> Review: ...
-
-    @abstractmethod
-    def visit_high_level_plots(self, stage: HighLevelPlots) -> Review: ...
-
-    @abstractmethod
-    def visit_low_level_plots(self, stage: LowLevelPlots) -> Review: ...
-
-    @abstractmethod
-    def visit_meeting_points(self, stage: MeetingPoints) -> Review: ...
-
-    @abstractmethod
     def visit_concepts(self, stage: Concepts) -> Review: ...
+
+    @abstractmethod
+    def visit_plot_ends(self, stage: PlotEnds) -> Review: ...
+
+    @abstractmethod
+    def visit_mesh(self, stage: Mesh) -> Review: ...
 
     @abstractmethod
     def visit_scenes(self, stage: Scenes) -> Review: ...
 
     @abstractmethod
     def visit_choices(self, stage: Choices) -> Review: ...
-
-    @abstractmethod
-    def visit_annotations(self, stage: Annotations) -> Review: ...

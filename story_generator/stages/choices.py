@@ -2,7 +2,8 @@
 the opening of a sentence the scene leaves unfinished, and an ending of it for
 each edge leaving the scene's events, towards the event that edge leads to. The
 opening is written from the scene and every event that could follow, and each
-ending from the opening and its event alone.
+ending from the opening and its event alone. Every salient concept's passages
+stay on the words of the scene they show.
 
 The author reviews, and the model is shown, a scene's choices as its opening,
 then its endings, numbered in the order of the edges:
@@ -20,18 +21,26 @@ from typing import Any
 
 from authordoc.cells.plot_cell import PlotEdge, PlotNode
 from authordoc.storydoc import Document
-from fabula_bench.benchmark_document import GAP, get_choices, get_scene_text, written_scene
+from fabula_bench.benchmark_document import get_choices, written_scene
 from fabula_bench.players.agent_player import CompletionModel
 from story_generator.stage import Stage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
-from story_generator.stages.high_level_plots import get_outlines
-from story_generator.stages.scenes import get_cell_of_event, get_scene_cell, get_scene_prose, get_scenes, with_events_told
+from story_generator.stages.plot_ends import written_world_events
+from story_generator.stages.scenes import (
+    get_anchors,
+    get_cell_of_event,
+    get_scene_cell,
+    get_scene_opening,
+    get_scene_prose,
+    get_scenes,
+    with_words_pointed,
+)
 
 OPENING_INSTRUCTIONS = """You are the narrator of a story, and its only witness. You never take part in what happens and never mention yourself.
 
 You are given the scene you have just told, and the events that could follow it. Each event starts with its moment and its place, like "3.1. [orbit]"; never mention these.
 
-You are also given an outline of the story's plots, so that what you write agrees with them. Reveal nothing from it beyond the events you are given. When you are also given the author's comments on your earlier choices, answer every one of them.
+You are also given the story's plots, so that what you write agrees with them. Reveal nothing from them beyond the events you are given. When you are also given the author's comments on your earlier choices, answer every one of them.
 
 Write only the opening of the next sentence, in the third person and the past tense, and stop in the middle of it, so that the sentence could be finished in a way that leads towards any one of those events. The opening must not lean towards one event more than the others, and must not tell what happens. Add no characters, places or events beyond those given.
 
@@ -53,7 +62,7 @@ ENDING_INSTRUCTIONS = """You are the narrator of a story, and its only witness. 
 
 You are given the opening of a sentence, and one event that could follow. The event starts with its moment and its place, like "3.1. [orbit]"; never mention these.
 
-You are also given an outline of the story's plots, so that what you write agrees with them. Reveal nothing from it beyond the event you are given. When you are also given the author's comments on your earlier choices, answer every one of them.
+You are also given the story's plots, so that what you write agrees with them. Reveal nothing from them beyond the event you are given. When you are also given the author's comments on your earlier choices, answer every one of them.
 
 Write only the words that finish the sentence, in the third person and the past tense, so that it leads towards the event: it shows whom to follow, what to watch or where to go to see the event, but does not tell what happens. Do not repeat the opening. Add no characters, places or events beyond those given.
 
@@ -98,18 +107,6 @@ def get_leaving(document: Document, scene: list[PlotNode]) -> tuple[list[PlotEdg
     return (edges, next_events)
 
 
-def get_scene_opening(source: str) -> str | None:
-    """The opening of the sentence a scene's cell leaves unfinished; None for a
-    scene with no choices."""
-    told = get_scene_text(source)
-    if not told.endswith(GAP):
-        return None
-    _, _, unfinished = told.rpartition("\n\n")
-    without_the_gap = unfinished.removesuffix(GAP)
-    opening = without_the_gap.strip()
-    return opening
-
-
 def written_choices(opening: str, endings: list[str]) -> str:
     numbered = [f"{number}. {ending}" for number, ending in enumerate(endings, start=1)]
     listed = "\n".join(numbered)
@@ -142,8 +139,7 @@ class Choices(Stage):
         renderer: StageVisitor = params["renderer"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
-        outlines = get_outlines(document)
-        outline = "\n\n".join(note.source for note in outlines)
+        plots = written_world_events(document, "")
         going_on = []
         scenes_at_the_start = get_scenes(document)
         for index, scene in enumerate(scenes_at_the_start):
@@ -169,10 +165,10 @@ class Choices(Stage):
                 held_endings = [held_choices[edge.edge_id] for edge in edges]
                 self.draft = written_choices(held_opening, held_endings)
             else:
-                self.draft = self._drafted(outline, prose, next_events, [])
+                self.draft = self._drafted(plots, prose, next_events, [])
 
             def revised(comments: list[str]) -> str:
-                choices = self._drafted(outline, prose, next_events, comments)
+                choices = self._drafted(plots, prose, next_events, comments)
                 return choices
 
             accepted = reviewed(self, renderer, revised)
@@ -180,10 +176,13 @@ class Choices(Stage):
             by_edge = {edge.edge_id: ending for edge, ending in zip(edges, endings, strict=True)}
             source = written_scene(prose, opening, by_edge)
             cell_of_event = get_cell_of_event(document)
+            # The choices follow the scene's prose, which keeps its characters, so
+            # its passages stand where they stood.
+            anchors_of_concept = get_anchors(document)
             scene_cell = held.with_source(source)
             cells = [scene_cell if cell.unique_id == held.unique_id else cell for cell in document.cells]
             written = Document.from_cells(cells, document.path)
-            document = with_events_told(written, cell_of_event)
+            document = with_words_pointed(written, cell_of_event, anchors_of_concept)
             story.write_text(document.text, encoding="utf-8")
             self.progress = (done + 1, count)
             logger.info("choices of scene %d of %d accepted", done + 1, count, extra={"progress": self.progress})
@@ -192,7 +191,7 @@ class Choices(Stage):
         review = visitor.visit_choices(self)
         return review
 
-    def _drafted(self, outline: str, prose: str, next_events: list[PlotNode], comments: list[str]) -> str:
+    def _drafted(self, plots: str, prose: str, next_events: list[PlotNode], comments: list[str]) -> str:
         """The scene's choices, drafted afresh, or, given the author's comments,
         written again to answer them."""
         options = [f"{event.timestamp}. [{event.location}] {event.summary}" for event in next_events]
@@ -202,7 +201,7 @@ class Choices(Stage):
             written_comments = "\n".join(f"- {comment}" for comment in comments)
             commented = f"\n\nYour earlier choices:\n{self.draft}\n\nThe author's comments on them, oldest first:\n{written_comments}"
         opening_request = (
-            f"The story's outline:\n{outline}\n\n"
+            f"The story's plots:\n{plots}\n\n"
             f"The scene:\n{prose}\n\nWhat could happen next:\n{could_happen}{commented}"
         )
         opening_written = self._model.complete(OPENING_INSTRUCTIONS, opening_request, MAX_SENTENCE_PART_TOKENS)
@@ -210,7 +209,7 @@ class Choices(Stage):
         endings = []
         for option in options:
             ending_request = (
-                f"The story's outline:\n{outline}\n\n"
+                f"The story's plots:\n{plots}\n\n"
                 f"The opening:\n{opening}\n\nWhat could happen next:\n{option}{commented}"
             )
             ending_written = self._model.complete(ENDING_INSTRUCTIONS, ending_request, MAX_SENTENCE_PART_TOKENS)

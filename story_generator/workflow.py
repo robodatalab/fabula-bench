@@ -1,18 +1,18 @@
 """The workflow of writing a story with its author.
 
-The stages run in this order:
+The stages run one after another, each on what the ones before it wrote:
 
-    plot ideas → high-level plots → low-level plots ─┬→ meeting points → scenes → choices ─┬→ annotations
-                                                      └→ concepts ─────────────────────────┘
+    concepts → plot ends → mesh → scenes → choices
 
-The concepts depend on the low-level plots alone, beside the branch that writes
-the scenes; the annotations need both branches. The author works through one
-stage at a time, so the two branches run one after the other.
+The story is built from its concepts: every concept gets a plot, begun as its
+start and its goal; the mesh fills every plot in between, so that the plots meet;
+every scene is written towards its events and their plots' concepts, marking the
+passages that show them; and the choices that end the scenes come last.
 
 After every stage, the workflow checkpoints which stages are finished, one a
 line, in a cell of its own last in the story, of a kind the format does not
 know and keeps as it is: stopped in a stage, it resumes at that stage. Going
-back to a stage runs it again, and every stage that depends on it, and no other.
+back to a stage runs it again, and every stage after it.
 
 While a stage runs, whatever is logged under this package goes to the
 workflow's handler as that stage's; the workflow logs when the stage starts, and
@@ -30,20 +30,13 @@ from authordoc.storydoc import Document
 from fabula_bench.players.agent_player import CompletionModel
 from story_generator.stage import AuthorStopped, Stage
 from story_generator.stage_visitor import StageVisitor
-from story_generator.stages.annotations import Annotations
 from story_generator.stages.choices import Choices
 from story_generator.stages.concepts import Concepts
-from story_generator.stages.high_level_plots import HighLevelPlots
-from story_generator.stages.low_level_plots import LowLevelPlots
-from story_generator.stages.meeting_points import MeetingPoints
-from story_generator.stages.plot_ideas import PlotIdeas
+from story_generator.stages.mesh import Mesh
+from story_generator.stages.plot_ends import PlotEnds
 from story_generator.stages.scenes import Scenes
 
-TRUNK = ["plot ideas", "high-level plots", "low-level plots"]
-SCENES_BRANCH = ["meeting points", "scenes", "choices"]
-CONCEPTS_BRANCH = ["concepts"]
-JOIN = ["annotations"]
-PARTS = (TRUNK, SCENES_BRANCH, CONCEPTS_BRANCH, JOIN)
+STAGES = ["concepts", "plot ends", "mesh", "scenes", "choices"]
 
 # The kind of the cell the workflow checkpoints in.
 CHECKPOINT = "workflow-checkpoint"
@@ -64,14 +57,11 @@ class Workflow:
         self._renderer = renderer
         self._handler = handler
         self.stages: dict[str, Stage] = {
-            "plot ideas": PlotIdeas(),
-            "high-level plots": HighLevelPlots(model),
-            "low-level plots": LowLevelPlots(model),
-            "meeting points": MeetingPoints(model),
+            "concepts": Concepts(model),
+            "plot ends": PlotEnds(model),
+            "mesh": Mesh(model),
             "scenes": Scenes(model),
             "choices": Choices(model),
-            "concepts": Concepts(model),
-            "annotations": Annotations(model),
         }
 
     def finished(self) -> list[str]:
@@ -89,24 +79,24 @@ class Workflow:
         logger = logging.getLogger(__name__)
         finished = self.finished()
         if going_back_to is not None:
-            again = _depending_on(going_back_to)
+            at = STAGES.index(going_back_to)
+            again = STAGES[at:]
             finished = [name for name in finished if name not in again]
             self._checkpoint(finished)
-        for part in PARTS:
-            for name in part:
-                if name in finished:
-                    continue
-                stage = self.stages[name]
-                with _logged_as(name, self._handler):
-                    logger.info("started")
-                    try:
-                        stage.run(story=self._story, renderer=self._renderer)
-                    except AuthorStopped:
-                        logger.info("stopped")
-                        return
-                    logger.info("finished")
-                finished.append(name)
-                self._checkpoint(finished)
+        for name in STAGES:
+            if name in finished:
+                continue
+            stage = self.stages[name]
+            with _logged_as(name, self._handler):
+                logger.info("started")
+                try:
+                    stage.run(story=self._story, renderer=self._renderer)
+                except AuthorStopped:
+                    logger.info("stopped")
+                    return
+                logger.info("finished")
+            finished.append(name)
+            self._checkpoint(finished)
 
     def _checkpoint(self, finished: list[str]) -> None:
         """Writes down which stages are finished, in the story's last cell: a stage
@@ -119,19 +109,6 @@ class Workflow:
         cells = [*others, checkpoint]
         written = Document.from_cells(cells, document.path)
         self._story.write_text(written.text, encoding="utf-8")
-
-
-def _depending_on(stage: str) -> list[str]:
-    """The stage, and every stage that depends on it: the rest of its own part of
-    the workflow, and every part after it that needs it."""
-    part = next(part for part in PARTS if stage in part)
-    at = part.index(stage)
-    rest = part[at:]
-    if part is TRUNK:
-        return [*rest, *SCENES_BRANCH, *CONCEPTS_BRANCH, *JOIN]
-    if part is JOIN:
-        return rest
-    return [*rest, *JOIN]
 
 
 @contextmanager

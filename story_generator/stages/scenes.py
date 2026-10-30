@@ -1,46 +1,101 @@
-"""A scene for every group of events that meet, written by the model and kept in
-a markdown cell that every event of the scene points at, the whole of it.
+"""A scene for every group of events that meet, built from versions dedicated to
+its concepts, and kept in a markdown cell that every event of the scene points
+at, the whole of it.
 
 Events meet when they happen at the same moment, in places one of which holds
-the other. A scene's words are numbered with the story's, so writing a scene
-moves the words of every scene after it: every event is then pointed again at
-the whole of the cell that tells it, and the salient concepts lose their
-passages, which are annotated last, on the finished scenes."""
+the other. For every event of a scene, and every concept its plot illustrates,
+the model writes a version of the scene dedicated to that concept: the event,
+told wholly through the concept, so that all of the version shows it. The
+versions are then merged into the scene, one after another: each comes into the
+merge between the markers of its concept, ⟦<concept>⟧ and ⟦/<concept>⟧, and the
+merge blends it into the scene so far, keeping every pair of markers, and adds
+around them what a scene needs. Where a sentence comes to show two concepts,
+their pairs overlap. What stands between a concept's markers in the finished
+scene are the concept's passages: written for the concept, never found in the
+scene afterwards. The author reviews every version and every merge.
+
+A scene's words are numbered with the story's, so writing a cell moves the words
+of every cell after it. Every event is then pointed again at the whole of the
+cell that tells it, and every concept's passages at the words that stand where
+they stood: in which cell, and between which of its characters.
+"""
 
 from __future__ import annotations
 
 import logging
-from dataclasses import replace
+import re
+from collections.abc import Sequence
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from authordoc.cells.cell import Cell
 from authordoc.cells.markdown_cell import MarkdownCell
 from authordoc.cells.plot_cell import PlotCell, PlotNode
-from authordoc.cells.salient_concept_cell import SalientConceptCell
+from authordoc.cells.salient_concept_cell import SalientConceptCell, SalientConceptReference
 from authordoc.cells.story_word_range import StoryWordRange
-from authordoc.iterators.story_words_iterator import StoryWordsIterator
+from authordoc.iterators.story_words_iterator import StoryWord, StoryWordsIterator
 from authordoc.storydoc import Document
-from fabula_bench.benchmark_document import GAP, get_place, get_scene_text, get_tag, tags_meet
+from fabula_bench.benchmark_document import GAP, get_choices, get_place, get_scene_text, get_tag, tags_meet, written_scene
 from fabula_bench.players.agent_player import CompletionModel
 from story_generator.stage import Stage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
-from story_generator.stages.high_level_plots import get_outlines
+from story_generator.stages.concepts import written_concepts
+from story_generator.stages.plot_ends import get_illustrated, written_world_events
 
-INSTRUCTIONS = """You write one scene of an interactive story, the way a text adventure such as Zork shows a location: whoever reads it may have come to it from anywhere in the story, so it stands on its own. It says nothing of what happened before it, and nothing of what may happen after it.
+VERSION_INSTRUCTIONS = """You write one version of a scene of an interactive story, dedicated to one salient concept: the scene's event, told wholly through that concept, so that every sentence of the version shows the concept's idea, though it never names it. A later pass merges this version with the versions dedicated to the scene's other concepts, and adds what a scene needs beyond them.
 
-You are the story's narrator and its only witness: you never take part in what happens and never mention yourself. Write in the third person and the past tense.
+You are the story's narrator and its only witness: you never take part in what happens and never mention yourself. Write in the third person and the past tense: the people, what they do and say, and how that shows the concept. Add no named characters and no events of your own.
 
-You are given an outline of the story's plots, so that the scene agrees with them: who its people are, where they are, and how they reach one another. Use the outline for that alone, and show nothing from it beyond the events of this scene.
+You are given the story's concepts and plots, so that the version agrees with them; show nothing from the plots beyond the event. You are given where the scene takes place, the event, and the concept.
 
-You are given where the scene takes place and the events that happen there. When there are several, they happen at the same moment and in the same place, and the scene shows every one of them. Describe the place, and the people there: what they see, do and say. Show each event as it is given and nothing beyond it: add no named characters and no events of your own, though the people an event implies, such as a crew or a team of scientists, may be seen at their work.
+When you are also given your draft and the author's comments on it, rewrite the draft to answer every comment, and change nothing the comments do not ask you to change.
 
-When you are also given your draft of the scene and the author's comments on it, rewrite the draft to answer every comment, and change nothing the comments do not ask you to change.
+Write one or two paragraphs of prose and nothing else."""
 
-Write two to four paragraphs of prose and nothing else: no title, no heading, no list."""
+MERGE_INSTRUCTIONS = """You write one scene of an interactive story, the way a text adventure such as Zork shows a location: whoever reads it may have come to it from anywhere in the story, so it stands on its own. It says nothing of what happened before it, and nothing of what may happen after it. You are the story's narrator and its only witness: you never take part in what happens and never mention yourself. Write in the third person and the past tense.
 
-# Room for a scene of a few paragraphs.
-MAX_SCENE_TOKENS = 1500
+The scene is built from versions, each dedicated to one salient concept and marked with it: the version's text stands between ⟦<the concept>⟧ and ⟦/<the concept>⟧. You are given the story's concepts and plots, where the scene takes place and what happens there, the scene as merged so far, when there is one, and the next version. Merge them into one scene: blend their texts so that they read as one, and add around them what a scene needs: the place, pacing, dialogue, description.
+
+Keep every pair of markers, and keep between each pair the text that shows its concept, rewritten as the blending needs. Text you add that shows no concept goes outside every pair. Where a sentence comes to show two concepts, their pairs may overlap.
+
+When you are also given your draft and the author's comments on it, rewrite the draft to answer every comment, keep every pair of markers, and change nothing the comments do not ask you to change.
+
+Write the scene with its markers, two to five paragraphs of prose, and nothing else."""
+
+# Room for a version of a paragraph or two.
+MAX_VERSION_TOKENS = 1500
+
+# Room for a scene of a few paragraphs, with its markers.
+MAX_MERGE_TOKENS = 3000
+
+# How many times a merge whose markers are wrong is sent back.
+MERGE_ATTEMPTS = 3
+
+# A concept's marker: opening, or, with the slash, closing the concept's text.
+MARKER = re.compile(r"⟦(/?)([^⟦⟧]+)⟧")
+
+
+@dataclass(frozen=True)
+class Span:
+    """Where a concept's passage stands in a scene."""
+
+    concept: str
+    start: int
+    end: int
+
+
+@dataclass(frozen=True)
+class Anchor:
+    """Where a passage of a salient concept stands: in which cell, between which of
+    its characters. It stays there however the story's other cells change, and
+    gives the passage its words again once they have moved."""
+
+    reference_id: str
+    cell_id: str
+    start: int
+    end: int
 
 
 def get_scenes(document: Document) -> list[list[PlotNode]]:
@@ -100,19 +155,70 @@ def get_scene_prose(source: str) -> str:
     return prose
 
 
-def with_events_told(document: Document, cell_of_event: dict[str, str]) -> Document:
-    """The document with every event in `cell_of_event` pointed at the whole of
-    the cell that tells it, wherever that cell's words now stand, every other
-    event untold, and no salient concept annotated."""
-    numbers_of_cell: dict[str, list[int]] = {}
+def get_scene_opening(source: str) -> str | None:
+    """The opening of the sentence a scene's cell leaves unfinished; None for a
+    scene with no choices."""
+    told = get_scene_text(source)
+    if not told.endswith(GAP):
+        return None
+    _, _, unfinished = told.rpartition("\n\n")
+    without_the_gap = unfinished.removesuffix(GAP)
+    opening = without_the_gap.strip()
+    return opening
+
+
+def get_anchors(document: Document) -> dict[str, list[Anchor]]:
+    """Where every salient concept's passages stand, by the concept's id."""
+    story_words = StoryWordsIterator(document)
+    anchors_of_concept: dict[str, list[Anchor]] = {}
+    for concept in document.salient_concepts():
+        anchors = []
+        for reference in concept.references:
+            spans = story_words.spans(reference.story_word_range)
+            if not spans:
+                continue
+            first_span, *_ = spans
+            anchor = Anchor(
+                reference.reference_id,
+                first_span.cell_id,
+                first_span.start_character_offset_in_cell,
+                first_span.end_character_offset_in_cell,
+            )
+            anchors.append(anchor)
+        anchors_of_concept[concept.unique_id] = anchors
+    return anchors_of_concept
+
+
+def with_words_pointed(
+    document: Document, cell_of_event: dict[str, str], anchors_of_concept: dict[str, list[Anchor]]
+) -> Document:
+    """The document with every event in `cell_of_event` pointed at the whole of the
+    cell that tells it, wherever that cell's words now stand, every other event
+    untold, and every salient concept's passages pointed at the words that stand
+    where its anchors are; a passage whose words are gone is gone."""
+    words_of_cell: dict[str, list[StoryWord]] = {}
     for word in StoryWordsIterator(document):
-        numbers = numbers_of_cell.setdefault(word.cell_id, [])
-        numbers.append(word.number)
+        cell_words = words_of_cell.setdefault(word.cell_id, [])
+        cell_words.append(word)
     cells: list[Cell] = []
     for cell in document.cells:
         if isinstance(cell, SalientConceptCell):
-            unannotated = replace(cell, references=[])
-            cells.append(unannotated)
+            anchors = anchors_of_concept.get(cell.unique_id, [])
+            references = []
+            for anchor in anchors:
+                anchored_words = words_of_cell.get(anchor.cell_id, [])
+                numbers = [
+                    word.number
+                    for word in anchored_words
+                    if word.end_character_offset_in_cell > anchor.start and word.start_character_offset_in_cell < anchor.end
+                ]
+                if not numbers:
+                    continue
+                passage_words = StoryWordRange(numbers[0], numbers[-1])
+                reference = SalientConceptReference(anchor.reference_id, passage_words)
+                references.append(reference)
+            annotated = replace(cell, references=references)
+            cells.append(annotated)
             continue
         if not isinstance(cell, PlotCell):
             cells.append(cell)
@@ -120,8 +226,8 @@ def with_events_told(document: Document, cell_of_event: dict[str, str]) -> Docum
         events = []
         for event in cell.nodes:
             cell_id = cell_of_event.get(event.node_id)
-            numbers = numbers_of_cell.get(cell_id, []) if cell_id is not None else []
-            words = StoryWordRange(numbers[0], numbers[-1]) if numbers else None
+            told_words = words_of_cell.get(cell_id, []) if cell_id is not None else []
+            words = StoryWordRange(told_words[0].number, told_words[-1].number) if told_words else None
             told = replace(event, story_word_range=words)
             events.append(told)
         plot_told = replace(cell, nodes=events)
@@ -130,23 +236,113 @@ def with_events_told(document: Document, cell_of_event: dict[str, str]) -> Docum
     return story
 
 
+def read_marked(marked: str) -> tuple[str, list[Span], list[str]]:
+    """A marked scene's text without its markers, the span of every pair of
+    markers in that text, and what is wrong with the markers: one that closes no
+    pair, or one never closed. Pairs may overlap."""
+    parts: list[str] = []
+    length = 0
+    at = 0
+    opened_at: dict[str, list[int]] = {}
+    spans: list[Span] = []
+    problems: list[str] = []
+    for marker in MARKER.finditer(marked):
+        marker_start = marker.start()
+        before = marked[at:marker_start]
+        parts.append(before)
+        length += len(before)
+        at = marker.end()
+        closing = marker.group(1)
+        written_title = marker.group(2)
+        title = written_title.strip()
+        if not closing:
+            starts = opened_at.setdefault(title, [])
+            starts.append(length)
+            continue
+        starts = opened_at.get(title, [])
+        if not starts:
+            problems.append(f"⟦/{title}⟧ closes no ⟦{title}⟧")
+            continue
+        start = starts.pop()
+        span = Span(title, start, length)
+        spans.append(span)
+    rest = marked[at:]
+    parts.append(rest)
+    for title, starts in opened_at.items():
+        unclosed = [f"⟦{title}⟧ is never closed" for _ in starts]
+        problems.extend(unclosed)
+    text = "".join(parts)
+    # The text is kept without the blank around it, and every span moves with it.
+    unindented = text.lstrip()
+    shift = len(text) - len(unindented)
+    stripped = unindented.rstrip()
+    end_of_text = len(stripped)
+    kept = [
+        Span(span.concept, max(span.start - shift, 0), min(span.end - shift, end_of_text))
+        for span in spans
+    ]
+    moved = [span for span in kept if span.start < span.end]
+    return (stripped, moved, problems)
+
+
+def written_marked(text: str, spans: Sequence[Span]) -> str:
+    """The text with every span between the markers of its concept."""
+    # Where two markers stand at one place, a pair that closes there closes
+    # before one opens.
+    markers = []
+    for span in spans:
+        markers.append((span.start, 1, f"⟦{span.concept}⟧"))
+        markers.append((span.end, 0, f"⟦/{span.concept}⟧"))
+    markers.sort(key=lambda marker: (marker[0], marker[1]))
+    parts = []
+    at = 0
+    for place, _, written in markers:
+        parts.append(text[at:place])
+        parts.append(written)
+        at = place
+    rest = text[at:]
+    parts.append(rest)
+    marked = "".join(parts)
+    return marked
+
+
+def get_marking_problems(marked: str, expected: Sequence[str]) -> list[str]:
+    """What is wrong with a marked scene's markers: a pair that closes nothing or
+    is never closed, a concept expected with no pair, and a pair of a concept
+    that is not expected."""
+    _, spans, problems = read_marked(marked)
+    marked_titles = {span.concept for span in spans}
+    missing = [f"no pair of ⟦{title}⟧" for title in expected if title not in marked_titles]
+    unexpected = [f"⟦{title}⟧ is no concept of the scene" for title in sorted(marked_titles) if title not in expected]
+    all_problems = [*problems, *missing, *unexpected]
+    return all_problems
+
+
 class Scenes(Stage):
     def __init__(self, model: CompletionModel) -> None:
         super().__init__()
         self._model = model
-        # What the renderer shows beside the scene: when and where it happens,
-        # and what happens in it.
+        # What the renderer shows beside the draft: when and where the scene
+        # happens, what happens there, each event with the concepts its plot
+        # illustrates, and what the draft is: which version, or which merge.
         self.moment = ""
         self.place = ""
-        self.happening: list[str] = []
+        self.towards: list[tuple[str, str]] = []
+        self.under_review = ""
+        # The version being written: its event and its concept.
+        self._event = ""
+        self._concept = ""
+        # The merge being written: the scene merged so far, the next version, and
+        # the concepts whose pairs of markers it must keep.
+        self._so_far = ""
+        self._next = ""
+        self._expected: list[str] = []
 
     def run(self, **params: Any) -> None:
         story: Path = params["story"]
         renderer: StageVisitor = params["renderer"]
         logger = logging.getLogger(__name__)
         document = Document.load(story)
-        outlines = get_outlines(document)
-        outline = "\n\n".join(note.source for note in outlines)
         scenes_at_the_start = get_scenes(document)
         count = len(scenes_at_the_start)
         for index in range(count):
@@ -156,27 +352,98 @@ class Scenes(Stage):
             scene = scenes[index]
             self.moment = scene[0].timestamp
             self.place = get_place(scene)
-            self.happening = [event.summary for event in scene]
             self.progress = (index, count)
+            concepts = document.salient_concepts()
+            illustrated_of_event: dict[str, list[str]] = {}
+            for plot in document.plots():
+                illustrated = get_illustrated(plot)
+                for event in plot.nodes:
+                    illustrated_of_event[event.node_id] = illustrated
+            self.towards = []
+            for event in scene:
+                illustrated = illustrated_of_event[event.node_id]
+                written_illustrated = ", ".join(illustrated) or "no concept"
+                self.towards.append((event.summary, written_illustrated))
+            # Every event's version for every concept its plot illustrates; one,
+            # with no concept, for an event whose plot illustrates none.
+            versions_to_write = [
+                (event.summary, title)
+                for event in scene
+                for title in illustrated_of_event[event.node_id] or [""]
+            ]
+            self._expected = [title for _, title in versions_to_write if title]
             held = get_scene_cell(document, scene)
-            self.draft = get_scene_prose(held.source) if held is not None else self._drafted(outline, [])
+            anchors_of_concept = get_anchors(document)
 
-            def revised(comments: list[str]) -> str:
-                prose = self._drafted(outline, comments)
-                return prose
+            def revised_version(comments: list[str]) -> str:
+                version = self._version(document, comments)
+                return version
 
-            accepted = reviewed(self, renderer, revised)
+            def revised_merge(comments: list[str]) -> str:
+                merge = self._merged(document, comments)
+                return merge
+
+            if held is not None:
+                # A scene told before is reviewed whole, as the story holds it.
+                self.under_review = "The scene, as the story holds it"
+                self._so_far = ""
+                self._next = ""
+                prose = get_scene_prose(held.source)
+                held_spans = _get_spans(concepts, anchors_of_concept, held.unique_id)
+                self.draft = written_marked(prose, held_spans)
+                merged = reviewed(self, renderer, revised_merge)
+            else:
+                versions = []
+                count_versions = len(versions_to_write)
+                for number, (summary, title) in enumerate(versions_to_write, start=1):
+                    self._event = summary
+                    self._concept = title
+                    dedicated = title or "no concept"
+                    self.under_review = f"Version {number} of {count_versions}, dedicated to {dedicated}: {summary}"
+                    self.draft = self._version(document, [])
+                    version = reviewed(self, renderer, revised_version)
+                    versions.append((title, version))
+                merged = ""
+                for number, (title, version) in enumerate(versions, start=1):
+                    self.under_review = f"Merge {number} of {count_versions}"
+                    self._so_far = merged
+                    self._next = f"⟦{title}⟧{version}⟦/{title}⟧" if title else version
+                    self.draft = self._merged(document, [])
+                    merged = reviewed(self, renderer, revised_merge)
+            scene_text, spans, _ = read_marked(merged)
             cell_of_event = get_cell_of_event(document)
             if held is not None:
-                scene_cell = held.with_source(accepted)
+                # The scene keeps the choices it ended with; the choices stage
+                # reviews them again.
+                held_opening = get_scene_opening(held.source)
+                held_choices = get_choices(held.source)
+                source = written_scene(scene_text, held_opening, held_choices) if held_opening is not None else scene_text
+                scene_cell = held.with_source(source)
                 cells = [scene_cell if cell.unique_id == held.unique_id else cell for cell in document.cells]
             else:
-                scene_cell = MarkdownCell(source=accepted)
+                scene_cell = MarkdownCell(source=scene_text)
                 cells = [*document.cells, scene_cell]
             for event in scene:
                 cell_of_event[event.node_id] = scene_cell.unique_id
+            # The scene's passages are the ones marked in it now; every other
+            # passage stays where it stands.
+            anchors_now = {
+                concept_id: [anchor for anchor in anchors if anchor.cell_id != scene_cell.unique_id]
+                for concept_id, anchors in anchors_of_concept.items()
+            }
+            id_of_concept = {concept.title: concept.unique_id for concept in concepts}
+            for span in spans:
+                concept_id = id_of_concept.get(span.concept)
+                if concept_id is None:
+                    logger.warning("%s is no concept of the story; its passage is left out", span.concept)
+                    continue
+                identifier = uuid4()
+                reference_id = str(identifier)
+                anchor = Anchor(reference_id, scene_cell.unique_id, span.start, span.end)
+                concept_anchors = anchors_now.setdefault(concept_id, [])
+                concept_anchors.append(anchor)
             written = Document.from_cells(cells, document.path)
-            document = with_events_told(written, cell_of_event)
+            document = with_words_pointed(written, cell_of_event, anchors_now)
             story.write_text(document.text, encoding="utf-8")
             self.progress = (index + 1, count)
             logger.info("scene %d of %d accepted", index + 1, count, extra={"progress": self.progress})
@@ -185,23 +452,80 @@ class Scenes(Stage):
         review = visitor.visit_scenes(self)
         return review
 
-    def _drafted(self, outline: str, comments: list[str]) -> str:
-        """The scene, drafted afresh, or, given the author's comments, the draft
-        under review revised to answer them."""
-        happening = "\n".join(f"- {summary}" for summary in self.happening)
-        request = (
-            f"The story's outline:\n{outline}\n\n"
-            f"Where the scene takes place: {self.place}\n\nWhat happens there:\n{happening}"
+    def _context(self, document: Document) -> str:
+        """What every request about the scene begins with: the story's concepts and
+        plots, and where the scene takes place."""
+        concepts = document.salient_concepts()
+        written_story_concepts = written_concepts(concepts)
+        plots = written_world_events(document, "")
+        context = (
+            f"The story's concepts:\n{written_story_concepts}\n\n"
+            f"The story's plots:\n{plots}\n\n"
+            f"Where the scene takes place: {self.place}"
         )
+        return context
+
+    def _version(self, document: Document, comments: list[str]) -> str:
+        """The version of the scene dedicated to its concept, drafted afresh, or,
+        given the author's comments, the draft under review revised to answer
+        them."""
+        context = self._context(document)
+        concepts = document.salient_concepts()
+        description = next((concept.source for concept in concepts if concept.title == self._concept), "")
+        written_concept = (
+            f"The concept, {self._concept}:\n{description}"
+            if self._concept
+            else "The concept: none; tell the event plainly."
+        )
+        request = f"{context}\n\nThe event: {self._event}\n\n{written_concept}"
         if comments:
             written_comments = "\n".join(f"- {comment}" for comment in comments)
-            request = (
-                f"{request}\n\nYour draft of the scene:\n{self.draft}\n\n"
-                f"The author's comments, oldest first:\n{written_comments}"
-            )
-        written = self._model.complete(INSTRUCTIONS, request, MAX_SCENE_TOKENS)
-        prose = written.strip()
-        return prose
+            request = f"{request}\n\nYour draft:\n{self.draft}\n\nThe author's comments, oldest first:\n{written_comments}"
+        written = self._model.complete(VERSION_INSTRUCTIONS, request, MAX_VERSION_TOKENS)
+        version = written.strip()
+        return version
+
+    def _merged(self, document: Document, comments: list[str]) -> str:
+        """The next version merged into the scene so far, or, given the author's
+        comments, the draft under review revised to answer them; sent back while
+        its markers are wrong, as many times as a merge is."""
+        logger = logging.getLogger(__name__)
+        context = self._context(document)
+        happening = "\n".join(f"- {summary} ({concepts})" for summary, concepts in self.towards)
+        request = f"{context}\n\nWhat happens there:\n{happening}"
+        if self._so_far:
+            request = f"{request}\n\nThe scene as merged so far:\n{self._so_far}"
+        if self._next:
+            request = f"{request}\n\nThe next version:\n{self._next}"
+        if comments:
+            written_comments = "\n".join(f"- {comment}" for comment in comments)
+            request = f"{request}\n\nYour draft:\n{self.draft}\n\nThe author's comments, oldest first:\n{written_comments}"
+        expected_now = [title for title in self._expected if f"⟦{title}⟧" in f"{self._so_far}{self._next}{self.draft}"]
+        marked = ""
+        for _ in range(MERGE_ATTEMPTS):
+            written = self._model.complete(MERGE_INSTRUCTIONS, request, MAX_MERGE_TOKENS)
+            marked = written.strip()
+            problems = get_marking_problems(marked, expected_now)
+            if not problems:
+                return marked
+            listed = "; ".join(problems)
+            logger.warning("the merge's markers are wrong, so it is sent back: %s", listed)
+            request = f"{request}\n\nYour last merge's markers were wrong: {listed}. Write the merge again, with every pair of markers."
+        return marked
+
+
+def _get_spans(
+    concepts: Sequence[SalientConceptCell], anchors_of_concept: dict[str, list[Anchor]], cell_id: str
+) -> list[Span]:
+    """The concepts' passages that stand in the cell, as spans of its text."""
+    spans = []
+    for concept in concepts:
+        anchors = anchors_of_concept.get(concept.unique_id, [])
+        for anchor in anchors:
+            if anchor.cell_id == cell_id:
+                span = Span(concept.title, anchor.start, anchor.end)
+                spans.append(span)
+    return spans
 
 
 def _meets(scene: list[PlotNode], tag: tuple[str, list[str]]) -> bool:
