@@ -1,3 +1,5 @@
+import random
+
 from tqdm import tqdm
 
 from fabula_bench.benchmark_document import get_choices, get_scene_text, get_tag, tags_meet
@@ -31,23 +33,30 @@ class StoryPlayer:
         plots = self._doc.plots()
         self._followed_plot = plots[self._plot_index]
         self._current_node = self._followed_plot.nodes[0]
+        # The edges of the continuations the current scene offered, in the order
+        # it offered them.
+        self._offered_edges: list[PlotEdge] = []
 
     def step(self, action: int) -> None:
-        """Follow the current scene's continuation at index `action`."""
-        _, outgoing_edges = self._get_current_scene_nodes()
-        edge = outgoing_edges[action]
+        """Follow the continuation at index `action` among those the current scene
+        offered when it was last told."""
+        edge = self._offered_edges[action]
         self._followed_plot = self._doc.get_plot_of_edge(edge)
         self._current_node = self._followed_plot.get_node_by_id(edge.to_node_id)
 
     def get_current_scene(self) -> tuple[str, list[str]]:
         """The current scene as the story tells it, up to the gap its
         continuations fill, and those continuations, one for each edge leaving
-        it; where the story ends, the scene and no continuations. The scene's
-        nodes count as seen by the exposure tracker."""
+        it, in a random order; where the story ends, the scene and no
+        continuations. The scene's nodes count as seen by the exposure tracker."""
         current_nodes, outgoing_edges = self._get_current_scene_nodes()
         self._exposure_tracker.see(current_nodes)
         scene_cell = self._get_scene_cell()
         description = get_scene_text(scene_cell.source)
+        # The edge continuing the followed plot comes first; shuffled, where a
+        # continuation stands says nothing of which plot it follows.
+        random.shuffle(outgoing_edges)
+        self._offered_edges = outgoing_edges
         if not outgoing_edges:
             return (f"{description}\n\n{STORY_ENDS}", [])
         choices = get_choices(scene_cell.source)

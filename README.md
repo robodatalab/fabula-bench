@@ -8,7 +8,7 @@ fabula-bench tests whether a model understands what it reads: whether it can mod
 
 The model plays an interactive story, and the stories are vast. One interactive story holds many full-fledged plots that mesh in a single world: a starship captain who gives her life for her daughter, the daughter left behind on Earth, a watcher on the Moon, but also a detective on Earth looking into a killing, a lawyer fighting a case, a boy who has fallen in love. Every scene ends with an unfinished sentence and a choice of endings, which lead on in the story being read or across into another one.
 
-- **Following.** A model that does not understand what it reads jumps from scene to scene, and so from story to story. A model that understands follows the story it started reading, and when it strays from it by mistake, it tries to get back to it.
+- **Following.** A model that does not understand what it reads jumps from scene to scene, and so from story to story. A model that understands follows the story it started reading, and when it strays from it by mistake, it tries to get back to it. The endings are offered in a random order in every scene, so that where an ending stands says nothing of where it leads: when the ending that went on in the story being read always came first, a model that answered 1 every time followed that story from its beginning to its end without understanding any of it.
 - **Scoring.** When the play ends, we can see how closely the agent stuck to one, preferred plot, and how well it grasped the concepts that plot was based on.
 
 ### How a story is built
