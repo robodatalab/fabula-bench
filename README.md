@@ -13,7 +13,7 @@ The model plays an interactive story, and the stories are vast. One interactive 
 
 ### How a story is built
 
-The plots of an interactive story form a densely interconnected graph, and we build it from the story's salient concepts: what the story is about, such as motherhood, sacrifice or expansion. Every concept gets a plot that illustrates it, and constrains the other plots: once motherhood is a concept, the mothers in every plot act as mothers do. Each plot begins as two events, its start and its goal, and events are added between them, plot by plot, until the plots mesh: they meet where their events share a time and a place. Before any scene is written, each plot's concept arcs say how each of its concepts shows at each of its events, if at all. Each scene is then written from versions: for every event it holds and every concept that shows at the event, a version of the scene dedicated to that concept, told as its arc says it shows there. The versions are merged into the scene one at a time, each between its concept's markers, and the markers become the concept's passages, so that the concepts are annotated as the story is written, by text written for them. On top of the plots, some edges between scenes belong to no plot at all: they are there to mislead. The choices that end the scenes are written after them. Last, the story is played as the benchmark plays it, with no model, to report whether every plot can be followed from start to finish, with every reference of its concepts, and how far a play that takes the same option every time follows it.
+The plots of an interactive story form a densely interconnected graph, and we build it from the story's salient concepts: what the story is about, such as motherhood, sacrifice or expansion. Every concept gets a plot that illustrates it, and constrains the other plots: once motherhood is a concept, the mothers in every plot act as mothers do. Each plot begins as two events, its start and its goal, and events are added between them, plot by plot, until the plots mesh: they meet where their events share a time and a place. Before any scene is written, each plot's concept arcs say how each of its concepts shows at each of its events, if at all. Each scene is then written from versions: for every event it holds and every concept that shows at the event, a version of the scene dedicated to that concept, told as its arc says it shows there. The versions are merged into the scene one at a time, each between its concept's markers, and the markers become the concept's passages, so that the concepts are annotated as the story is written, by text written for them. The choices that end the scenes are written once the scenes are. On top of the plots, some edges between scenes are to belong to no plot at all, there to mislead; they are not built yet. Last, the story is played as the benchmark plays it, with no model, to report whether every plot can be followed from start to finish, with every reference of its concepts, and how far a play that takes the same option every time follows it.
 
 The more plots one interactive story holds, and the more misleading edges, the easier it is for an agent to be derailed from the story it follows, and so the more it shows when an agent keeps to it.
 
@@ -28,22 +28,23 @@ The more plots one interactive story holds, and the more misleading edges, the e
 - [x] The salient concepts each new story's plots pursue, general and story-specific.
 - [x] Find the places where the plots can come into contact, and adjust their events so that the plots intersect there.
 - [x] Mesh the stories into one world: an interactive story is a single `.author` document, so every plot is in `space_opera.author`.
+- [ ] Mesh the plots tightly, so that they meet at most of their events and a play jumps between them often: in `space_opera.author`, 40 of the 58 scenes offer a single choice.
 - [ ] Decide how a misleading edge, one that belongs to no plot, is written, and add misleading edges.
 - [ ] Add connections, scenes that lead into another plot at or near its beginning. Unlike misleading edges, they are meant to be followed.
 - [x] Generate the scenes and choices of the meshed world.
-- [ ] Annotate the salient concepts on the meshed world's scenes, `space_opera.author`'s included.
-- [x] Start a play at the beginning of a chosen plot: the story player takes the plot's index among the story's plots, so that the agent can be run from every plot in turn. The high-level plots are notes that outline the plots, so every plot cell is one a play can start from.
+- [x] Write the salient concepts into the meshed world's scenes, `space_opera.author`'s included: every scene is built from versions dedicated to its concepts, merged between their markers, which become the concepts' passages.
+- [x] Start a play at the beginning of a chosen plot: the story player takes the plot's index among the story's plots, so that the agent can be run from every plot in turn.
 
-**Authoring tool.** The way we write a story, from the author's plot ideas to its plots, concepts, scenes and choices, each step reviewed and revised by the author, as code in `story_generator`, with a text interface. It is a test of a feature for the authorship editor.
+**Authoring tool.** The way we write a story, from its concepts to its plots, their concept arcs, its scenes and its choices, each step reviewed and revised by the author, as code in `story_generator`, with a text interface. It is a test of a feature for the authorship editor.
 
-- [x] Design it: a workflow of stages, each run once the stages it depends on are done, each reviewed and revised by the author until accepted, drawn by a renderer that visits it, and reopened when the author goes back; the workflow's progress saved beside the story, so that it can be stopped and resumed.
-- [ ] Build it, with a rudimentary text interface.
+- [x] Design it: a workflow of stages, each run once the stages it depends on are done, drawn by a renderer that visits it, and reopened when the author goes back. Every draft is reviewed and revised by the author until accepted, or, once the author trusts its kind, accepted unseen by chance. The workflow's progress, and the author's confidence in every kind of draft, are checkpointed in a cell of the story, so that it can be stopped and resumed.
+- [x] Build it, with a rudimentary text interface: concepts, plot ends, mesh, concept arcs, scenes and choices, and last, a check that plays the finished story.
 
-**Scoring.** We still measure exposure, and add the trajectory: which events the play visited, and whether, and how closely, they follow a plot.
+**Scoring.** Every play is scored on how well the agent comprehended the concepts the play showed it, and how closely it followed the plot it started from.
 
-- [ ] Record the events every play visits, in order.
-- [ ] Measure how closely the visited events align with each plot: how many of the plot's events the play visited, in the plot's order, and how often the play left the plot and came back to it.
-- [ ] Decide how to score the agent's grasp of the concepts of the plot it followed.
+- [x] Record the events every play visits, in order.
+- [x] Measure how closely the visited events follow the plot the play started from: its trajectories, runs of the plot's events each right after the one before, scored by their lengths squared, so that a return to the plot counts as much as the play then stays.
+- [x] Decide how to score the agent's grasp of the concepts: every concept the play showed it, by how alike in meaning its explanation is to the concept's description, times one minus the concept's exposure.
 - [ ] Credit an agent that joins a plot partway: one that followed, say, 70% of a plot and correctly reported its concepts understood it, even without seeing its beginning.
 - [ ] Save the trajectory and its alignment with every run.
 
@@ -55,13 +56,21 @@ You need [uv](https://docs.astral.sh/uv/) and an Anthropic API key in a `.env` f
 uv run --env-file .env python -m fabula_bench
 ```
 
-Claude Opus 5.5 plays `fabula_bench/stories/space_opera.author` once from the beginning of each of its plots; both are set at the top of `fabula_bench/__main__.py`. Progress bars count the scenes played and the concepts asked. The results — the final scores, and for every play the plot it started from, every concept's exposure, similarities and score, and the model's explanations — are printed and saved to `runs/<when the run started>.txt`.
+Claude Opus 5.5, at low effort, plays `fabula_bench/stories/space_opera.author` once from the beginning of each of its plots; all three are set at the top of `fabula_bench/__main__.py`. Progress bars count the scenes played and the concepts asked. For every play, the plot it started from, its salient concept comprehension and plot following scores, and every concept it was shown, with how much of it was shown and the model's explanation, are printed and saved to `runs/<when the run started>.txt`.
 
 To play a story yourself, from the plot you choose:
 
 ```
 uv run python -m fabula_bench.story_player
 ```
+
+To write a story, or go on writing one, with the story generator:
+
+```
+uv run --env-file .env python -m story_generator
+```
+
+It asks for the story's `.author` file, creates it if there is none, and resumes at the stage the story was left in. `--back-to "<stage>"` runs a stage again, and every stage after it.
 
 How the stories are written is described in [docs/developer.md](docs/developer.md).
 
