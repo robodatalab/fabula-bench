@@ -2,7 +2,7 @@ import random
 
 from tqdm import tqdm
 
-from fabula_bench.benchmark_document import get_choices, get_scene_text, get_tag, tags_meet
+from fabula_bench.benchmark_document import get_choices, get_scene_at, get_scene_text
 from fabula_bench.players.agent_player import AgentPlayer, CompletionModel
 from fabula_bench.story_player.exposure_tracker import ExposureTracker
 from authordoc.cells.cell import Cell
@@ -49,7 +49,7 @@ class StoryPlayer:
         continuations fill, and those continuations, one for each edge leaving
         it, in a random order; where the story ends, the scene and no
         continuations. The scene's nodes count as seen by the exposure tracker."""
-        current_nodes, outgoing_edges = self._get_current_scene_nodes()
+        current_nodes, outgoing_edges = get_scene_at(self._doc, self._followed_plot, self._current_node)
         self._exposure_tracker.see(current_nodes)
         scene_cell = self._get_scene_cell()
         description = get_scene_text(scene_cell.source)
@@ -62,24 +62,6 @@ class StoryPlayer:
         choices = get_choices(scene_cell.source)
         continuations = [choices[edge.edge_id] for edge in outgoing_edges]
         return (description, continuations)
-
-    def _get_current_scene_nodes(self) -> tuple[list[PlotNode], list[PlotEdge]]:
-        """The nodes of the current scene — the current node, and every node of the
-        other plots whose event meets it — and the edges leaving them."""
-        current_tag = get_tag(self._current_node)
-        current_nodes = [self._current_node]
-        outgoing_edges = [
-            edge for edge in self._followed_plot.edges if edge.from_node_id == self._current_node.node_id
-        ]
-        for plot in self._doc.plots():
-            if plot is self._followed_plot:
-                continue
-            for node in plot.nodes:
-                tag = get_tag(node)
-                if tags_meet(tag, current_tag):
-                    current_nodes.append(node)
-                    outgoing_edges += [edge for edge in plot.edges if edge.from_node_id == node.node_id]
-        return (current_nodes, outgoing_edges)
 
     def _get_scene_cell(self) -> Cell:
         """The cell that tells the current scene: the one the current node's words

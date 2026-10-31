@@ -2,14 +2,15 @@
 
 The stages run one after another, each on what the ones before it wrote:
 
-    concepts → plot ends → mesh → concept arcs → scenes → choices
+    concepts → plot ends → mesh → concept arcs → scenes → choices → validity
 
 The story is built from its concepts: every concept gets a plot, begun as its
 start and its goal; the mesh fills every plot in between, so that the plots meet;
 the concept arcs say how every concept shows at every event of its plot; every
 scene is built from versions dedicated to the concepts that show at its events,
 merged between the concepts' markers; and the choices that end the scenes come
-last.
+after them. Last, the story is played as the benchmark plays it, to check that
+it does what the benchmark needs of it.
 
 Every time a stage writes the story, after every stage, and when the author
 stops, the workflow checkpoints which stages are finished, one a line, and the
@@ -42,8 +43,9 @@ from story_generator.stages.concepts import Concepts
 from story_generator.stages.mesh import Mesh
 from story_generator.stages.plot_ends import PlotEnds
 from story_generator.stages.scenes import Scenes
+from story_generator.stages.validity import Validity
 
-STAGES = ["concepts", "plot ends", "mesh", "concept arcs", "scenes", "choices"]
+STAGES = ["concepts", "plot ends", "mesh", "concept arcs", "scenes", "choices", "validity"]
 
 # The kind of the cell the workflow checkpoints in.
 CHECKPOINT = "workflow-checkpoint"
@@ -83,6 +85,7 @@ class Workflow:
             "concept arcs": ConceptArcs(model),
             "scenes": Scenes(model),
             "choices": Choices(model),
+            "validity": Validity(),
         }
 
     def finished(self) -> list[str]:

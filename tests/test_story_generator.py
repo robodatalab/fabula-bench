@@ -19,6 +19,7 @@ from story_generator.stages.concepts import Concepts
 from story_generator.stages.mesh import Mesh
 from story_generator.stages.plot_ends import PlotEnds
 from story_generator.stages.scenes import Scenes, get_scene_cell, get_scenes
+from story_generator.stages.validity import SceneCounts, Validity
 from story_generator.workflow import CONFIDENCE, STAGES, Workflow, get_checkpoint
 
 ACCEPT = Review(Verdict.ACCEPT)
@@ -179,6 +180,10 @@ class _Author(StageVisitor):
 
     def visit_choices(self, stage: Choices) -> Review:
         review = self._reviewed("choices", stage.draft)
+        return review
+
+    def visit_validity(self, stage: Validity) -> Review:
+        review = self._reviewed("validity", stage.draft)
         return review
 
 
@@ -403,7 +408,7 @@ class StoppingInAStage(unittest.TestCase):
 
         workflow.run()
 
-        self.assertEqual(resumed.visited, ["scenes", "choices"])
+        self.assertEqual(resumed.visited, ["scenes", "choices", "validity"])
 
     def test_writes_a_version_of_an_event_for_every_concept_its_plot_illustrates(self) -> None:
         document = Document.load(self.story)
@@ -468,6 +473,73 @@ class GoingBackToAStage(unittest.TestCase):
 
         passages_after = _passages(self.story)
         self.assertEqual(passages_after, passages_before)
+
+
+class CheckingTheStory(unittest.TestCase):
+    def setUp(self) -> None:
+        self.story = _new_story(self)
+        self.model = _Model()
+        self.author = _Author(ABOUT)
+        self.heard = _Heard()
+        workflow = Workflow(self.story, self.model, self.author, self.heard, EVERY_DRAFT)
+        workflow.run()
+        checked = workflow.stages["validity"]
+        assert isinstance(checked, Validity)
+        self.checked = checked
+
+    def test_sees_every_plot_whole_when_following_it_to_the_letter(self) -> None:
+        followings = [followed.following for followed in self.checked.plots]
+        breaks = [followed.breaks for followed in self.checked.plots]
+
+        self.assertEqual(followings, [1.0, 1.0])
+        self.assertEqual(breaks, [[], []])
+
+    def test_sees_every_passage_of_every_concept_a_plot_illustrates(self) -> None:
+        exposures = [followed.exposures for followed in self.checked.plots]
+
+        self.assertEqual(exposures, [{"Home": 1.0}, {"The way back": 1.0}])
+
+    def test_gives_the_chance_that_a_play_choosing_blindly_follows_every_plot_to_its_end(self) -> None:
+        # Each plot's only choice of two is in the square, where the plots meet.
+        lucks = [followed.luck for followed in self.checked.plots]
+
+        self.assertEqual(lucks, [0.5, 0.5])
+
+    def test_reports_a_plot_that_chance_follows_too_often_as_too_easy(self) -> None:
+        self.assertIn("1 time in 2: too easy, above 1 in 10", self.checked.draft)
+
+    def test_counts_the_scenes_where_plots_meet_against_those_going_on_to_a_single_scene(self) -> None:
+        # Each plot's house, at 1 and at 9, and the square, at 5.
+        self.assertEqual(self.checked.scenes, SceneCounts(5, 1, 2, 2, 0))
+
+    def test_breaks_off_a_plot_at_a_scene_with_no_choice_for_an_edge_leaving_it(self) -> None:
+        document = Document.load(self.story)
+        scenes_now = get_scenes(document)
+        square = next(scene for scene in scenes_now if len(scene) == 2)
+        square_cell = get_scene_cell(document, square)
+        assert square_cell is not None
+        choices_there = get_choices(square_cell.source)
+        gone_id, _ = choices_there
+        source = square_cell.source.replace(f'edge="{gone_id}"', 'edge="gone"')
+        unchosen = square_cell.with_source(source)
+        cells = [unchosen if cell.unique_id == square_cell.unique_id else cell for cell in document.cells]
+        broken = Document.from_cells(cells, document.path)
+        self.story.write_text(broken.text, encoding="utf-8")
+        workflow = Workflow(self.story, self.model, self.author, self.heard, EVERY_DRAFT)
+
+        workflow.run("validity")
+
+        checked = workflow.stages["validity"]
+        assert isinstance(checked, Validity)
+        followings = [followed.following for followed in checked.plots]
+        broken_off = [
+            written.endswith("has no choice for 1 of the edges leaving it")
+            for followed in checked.plots
+            for written in followed.breaks
+        ]
+        # Each plot was seen at its house, and in the square, of its three events.
+        self.assertEqual(followings, [4 / 9, 4 / 9])
+        self.assertEqual(broken_off, [True, True])
 
 
 class MarkingPassages(unittest.TestCase):

@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from story_generator.stages.mesh import Mesh
     from story_generator.stages.plot_ends import PlotEnds
     from story_generator.stages.scenes import Scenes
+    from story_generator.stages.validity import Validity
 
 
 class Verdict(Enum):
@@ -51,3 +52,8 @@ class StageVisitor(ABC):
 
     @abstractmethod
     def visit_choices(self, stage: Choices) -> Review: ...
+
+    @abstractmethod
+    def visit_validity(self, stage: Validity) -> Review:
+        """The author's verdict on the story, as the report finds it: accepted, or
+        stopped at; there is no draft to revise."""

@@ -11,6 +11,7 @@ from story_generator.stages.concepts import Concepts
 from story_generator.stages.mesh import Mesh
 from story_generator.stages.plot_ends import PlotEnds
 from story_generator.stages.scenes import Scenes
+from story_generator.stages.validity import Validity
 
 STOP = "q"
 
@@ -72,6 +73,11 @@ class TerminalRenderer(StageVisitor):
         review = _review()
         return review
 
+    def visit_validity(self, stage: Validity) -> Review:
+        print(f"\n== Validity of the story ==\n\n{stage.draft}\n")
+        review = _accepted_or_stopped()
+        return review
+
 
 def _heading(title: str, progress: tuple[int, int]) -> str:
     done, total = progress
@@ -96,3 +102,15 @@ def _review() -> Review:
     comment = input("What should change? > ")
     revised = Review(Verdict.REVISE, comment)
     return revised
+
+
+def _accepted_or_stopped() -> Review:
+    """The author's verdict on what there is no draft of to revise."""
+    answer = input(f"[a]ccept  [{STOP}] stop > ")
+    choice = answer.strip().lower()
+    while choice not in ("a", STOP):
+        answer = input(f"a or {STOP} > ")
+        choice = answer.strip().lower()
+    verdict = Verdict.ACCEPT if choice == "a" else Verdict.STOP
+    review = Review(verdict)
+    return review

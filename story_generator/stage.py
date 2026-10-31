@@ -61,11 +61,12 @@ class Confidence:
 
 
 class Stage(ABC):
-    """One stage of writing a story. It reads the story, drafts, item by item,
-    what the stage adds to it, has the author review the drafts the confidence
-    selects through the renderer, which visits the stage, and writes into the
-    story what the author accepts. It logs its progress through a logger it makes
-    where it works, with `extra={"progress": (done, total)}`."""
+    """One stage of writing a story. It reads the story, and has the author review
+    what it makes of it through the renderer, which visits the stage. A stage that
+    adds to the story drafts, item by item, what it adds, has the author review
+    the drafts the confidence selects, and writes into the story what the author
+    accepts. It logs its progress through a logger it makes where it works, with
+    `extra={"progress": (done, total)}`."""
 
     def __init__(self) -> None:
         # What a renderer shows of every stage: the draft under review, and how

@@ -20,7 +20,8 @@ events, written as a list that names the edge each choice follows:
 
 import re
 
-from authordoc.cells.plot_cell import PlotNode
+from authordoc.cells.plot_cell import PlotCell, PlotEdge, PlotNode
+from authordoc.storydoc import Document
 from authordoc.written_attributes import attributes_in, written_attribute_value
 
 # Marks the gap the choices fill, at the end of the sentence a scene leaves unfinished.
@@ -51,6 +52,26 @@ def tags_meet(tag: tuple[str, list[str]] | None, other_tag: tuple[str, list[str]
     other_time, other_place = other_tag
     shared_depth = min(len(place), len(other_place))
     return time == other_time and place[:shared_depth] == other_place[:shared_depth]
+
+
+def get_scene_at(
+    document: Document, plot: PlotCell, event: PlotNode
+) -> tuple[list[PlotNode], list[PlotEdge]]:
+    """What a play following the plot is shown at the event: the event, and every
+    event of the other plots that meets it; and the edges leaving them, the
+    followed plot's first."""
+    tag = get_tag(event)
+    nodes = [event]
+    edges = [edge for edge in plot.edges if edge.from_node_id == event.node_id]
+    for other_plot in document.plots():
+        if other_plot is plot:
+            continue
+        for node in other_plot.nodes:
+            node_tag = get_tag(node)
+            if tags_meet(node_tag, tag):
+                nodes.append(node)
+                edges += [edge for edge in other_plot.edges if edge.from_node_id == node.node_id]
+    return (nodes, edges)
 
 
 def get_place(nodes: list[PlotNode]) -> str:
