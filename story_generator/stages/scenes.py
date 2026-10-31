@@ -40,7 +40,7 @@ from authordoc.iterators.story_words_iterator import StoryWord, StoryWordsIterat
 from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import GAP, get_choices, get_place, get_scene_text, get_tag, tags_meet, written_scene
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Confidence, Stage, reviewed
+from story_generator.stage import Confidence, DraftingStage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 from story_generator.stages.concept_arcs import get_arcs
 from story_generator.stages.concepts import written_concepts
@@ -320,7 +320,7 @@ def get_marking_problems(marked: str, expected: Sequence[str]) -> list[str]:
     return all_problems
 
 
-class Scenes(Stage):
+class Scenes(DraftingStage):
     def __init__(self, model: CompletionModel) -> None:
         super().__init__()
         self._model = model

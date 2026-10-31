@@ -26,7 +26,7 @@ from authordoc.cells.note_cell import NoteCell
 from authordoc.cells.plot_cell import PlotCell, PlotNode
 from authordoc.storydoc import Document
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Confidence, Stage, reviewed
+from story_generator.stage import Confidence, DraftingStage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 from story_generator.stages.concepts import written_concepts
 from story_generator.stages.plot_ends import get_illustrated
@@ -127,7 +127,7 @@ def get_arcs(document: Document, plot: PlotCell) -> list[dict[str, str]] | None:
     return arcs
 
 
-class ConceptArcs(Stage):
+class ConceptArcs(DraftingStage):
     def __init__(self, model: CompletionModel) -> None:
         super().__init__()
         self._model = model

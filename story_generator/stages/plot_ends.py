@@ -29,7 +29,7 @@ from authordoc.cells.plot_cell import PlotCell, PlotEdge, PlotNode
 from authordoc.cells.salient_concept_cell import SalientConceptCell
 from authordoc.storydoc import Document
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Confidence, Stage, reviewed
+from story_generator.stage import Confidence, DraftingStage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 from story_generator.stages.concepts import written_concepts
 
@@ -124,7 +124,7 @@ def written_world_events(document: Document, but: str) -> str:
     return written
 
 
-class PlotEnds(Stage):
+class PlotEnds(DraftingStage):
     def __init__(self, model: CompletionModel) -> None:
         super().__init__()
         self._model = model

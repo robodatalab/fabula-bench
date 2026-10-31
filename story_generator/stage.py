@@ -61,27 +61,30 @@ class Confidence:
 
 
 class Stage(ABC):
-    """One stage of writing a story. It reads the story, and has the author review
-    what it makes of it through the renderer, which visits the stage. A stage that
-    adds to the story drafts, item by item, what it adds, has the author review
-    the drafts the confidence selects, and writes into the story what the author
-    accepts. It logs its progress through a logger it makes where it works, with
-    `extra={"progress": (done, total)}`."""
-
-    def __init__(self) -> None:
-        # What a renderer shows of every stage: the draft under review, and how
-        # many of the stage's items the author has accepted, of how many.
-        self.draft = ""
-        self.progress = (0, 0)
+    """One stage of writing a story: it reads the story, and does its part of the
+    work on it. It logs what it does through a logger it makes where it works."""
 
     @abstractmethod
     def run(self, **params: Any) -> None:
         """Does the stage's work. The workflow gives it `story`, the path to the
         story's .author file, `renderer`, the StageVisitor that shows the author
-        its drafts, `confidence`, the Confidence that decides which drafts the
-        author reviews, and `checkpoint`, which the stage calls right after every
-        time it writes the story, so that the confidence stands checkpointed with
-        what it wrote. Raises AuthorStopped when the author stops."""
+        drafts, `confidence`, the Confidence that decides which drafts the author
+        reviews, and `checkpoint`, which the stage calls right after every time it
+        writes the story, so that the confidence stands checkpointed with what it
+        wrote. Raises AuthorStopped when the author stops."""
+
+
+class DraftingStage(Stage):
+    """A stage that adds to the story: it drafts, item by item, what it adds, has
+    the author review the drafts the confidence selects through the renderer,
+    which visits the stage, and writes into the story what the author accepts. It
+    logs its progress with `extra={"progress": (done, total)}`."""
+
+    def __init__(self) -> None:
+        # What a renderer shows of every drafting stage: the draft under review,
+        # and how many of the stage's items the author has accepted, of how many.
+        self.draft = ""
+        self.progress = (0, 0)
 
     @abstractmethod
     def accept(self, visitor: StageVisitor) -> Review:
@@ -90,7 +93,7 @@ class Stage(ABC):
 
 
 def reviewed(
-    stage: Stage,
+    stage: DraftingStage,
     visitor: StageVisitor,
     revise: Callable[[list[str]], str],
     confidence: Confidence,

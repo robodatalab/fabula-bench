@@ -1,203 +1,351 @@
-"""Whether the story does what the benchmark needs of it, checked with no model,
-by playing it as the benchmark plays it.
+"""Whether the story does what the benchmark needs of it, found by playing it
+with the benchmark's own player, with no model: scripted plays, and what they
+are shown, as the benchmark's exposure tracker records it. The stage only
+reports, in the log: it changes nothing in the story, and asks the author
+nothing.
 
-Every plot is followed to the letter, from its first event: at every scene, the
-play takes the choice that goes on to the plot's next event. It must see the
-whole plot, every event right after the one before it, and every passage of every
-concept the plot illustrates.
-
-A play that chooses blindly must not follow a plot as well. The benchmark
-shuffles a scene's choices every time it shows them, so a play that always takes
-the same choice chooses blindly, and follows a plot to its end by the chance of
-taking the plot's choice at every scene of it: one in as many as the scene offers.
-A plot that chance follows more often than one time in ten is too easy to follow:
-following it says little of the play that did.
-
-Across the story, the scenes where plots meet are counted, against those that go
-on to a single scene, and those the story ends at.
-
-The author reads the report and accepts the story as it stands, or stops: there
-is no draft to revise, and what is to change is changed by going back to the
-stage that wrote it.
+1. Following every plot from start to finish. A play starts at the plot's first
+   event, and at every scene takes the choice that leads on to the plot's next
+   event. The plot breaks where the play cannot go on: where the player fails to
+   show the scene, or the scene offers no choice leading on, or two of its
+   choices read the same; or where the play ends without having been shown the
+   whole plot, each event right after the one before it.
+2. Seeing every reference of every concept. The same play must be shown every
+   reference of every concept the plot illustrates; every reference it is not
+   shown is reported, by its text.
+3. Taking the same option every time. From the first event of every plot, the
+   story is played over and over taking option 1 every time, then option 2, and
+   so on, ending, as the benchmark's agent player does, at a scene that offers
+   fewer options. The player shuffles a scene's choices every time it shows them,
+   so the plays differ. Each play's longest consistent trajectory of the plot,
+   its events each right after the one before it, is measured as the
+   plot-following score measures trajectories: how many plays reach the plot's
+   end, and how many have a longest trajectory of each length.
+4. Where plots meet. The scenes where plots intersect, against the scenes that
+   offer a single choice.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import logging
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from authordoc.cells.plot_cell import PlotCell
+from authordoc.cells.plot_cell import PlotCell, PlotNode
+from authordoc.iterators.story_words_iterator import StoryWordsIterator
 from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import get_choices, get_scene_at
-from fabula_bench.metrics.plot_following import score_plot_following
+from fabula_bench.metrics.plot_following import get_trajectories
 from fabula_bench.story_player.exposure_tracker import ExposureTracker
-from story_generator.stage import AuthorStopped, Stage
-from story_generator.stage_visitor import Review, StageVisitor, Verdict
+from fabula_bench.story_player.story_player import StoryPlayer
+from story_generator.stage import Stage
 from story_generator.stages.plot_ends import get_illustrated
 from story_generator.stages.scenes import get_cell_of_event, get_scene_cell, get_scenes
 
-# The most chance there may be that a play choosing blindly follows a plot to its
-# end.
-MOST_LUCK = 0.1
+# How many times every plot is played from its start, taking each option every
+# time.
+PLAYS = 100
+
+# How many words of a reference not shown are reported.
+OPENING_WORDS = 12
+
+# What the benchmark's player raises when it cannot show a scene: a choice
+# missing for an edge, an event told by no scene, a scene no cell tells.
+PLAYER_FAILURES = (KeyError, AttributeError, StopIteration)
 
 
 @dataclass(frozen=True)
-class PlotFollowed:
-    """What a play that follows a plot to the letter is shown."""
+class BreakingPoint:
+    """Where a play following a plot to the letter cannot go on."""
 
+    # What happens at the event the play broke at.
+    event: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class UnseenReferences:
+    """The references of a concept that a play following a plot it illustrates
+    is not shown."""
+
+    concept: str
+    # How many references the concept has.
+    total: int
+    # The opening words of every reference not shown.
+    openings: list[str]
+
+
+@dataclass(frozen=True)
+class SameOption:
+    """What the plays that take the same option every time, from the start of a
+    plot, were shown of it: how many plays had a longest consistent trajectory of
+    the plot of each length. The plays whose trajectory is the plot's whole
+    length reached its end."""
+
+    option: int
+    # How many plays had a longest consistent trajectory of each length.
+    longest_runs: dict[int, int]
+
+
+@dataclass(frozen=True)
+class PlotChecked:
     title: str
-    # How closely the play followed the plot: 1 when it saw every event of it,
-    # each right after the one before it.
-    following: float
-    # Why the play could not go on along the plot; none when it went to the end.
-    breaks: list[str]
-    # The share of every illustrated concept's passages the play saw, by the
-    # concept's title.
-    exposures: dict[str, float]
-    # The chance that a play choosing blindly follows the plot to its end.
-    luck: float
+    length: int
+    # Where following the plot to the letter broke; None where it did not.
+    breaking_point: BreakingPoint | None
+    unseen: list[UnseenReferences]
+    same_options: list[SameOption]
 
 
 @dataclass(frozen=True)
 class SceneCounts:
-    """How the story's scenes go on."""
-
     scenes: int
     # Scenes where events of more than one plot meet.
-    meetings: int
-    # Scenes that go on to a single scene: told with one choice.
+    intersections: int
+    # Scenes told with a single choice.
     single: int
-    # Scenes the story ends at: told with no choice.
-    endings: int
-    # Scenes no cell tells.
-    untold: int
 
 
-def get_followed(document: Document, plot: PlotCell) -> PlotFollowed:
-    """What a play that follows the plot to the letter, from its first event, is
-    shown, scene by scene, as the benchmark plays it."""
-    if not plot.nodes:
-        empty = PlotFollowed(plot.title, 0.0, ["it has no events"], {}, 1.0)
-        return empty
-    tracker = ExposureTracker(document)
+def get_longest_run(plot: PlotCell, events_seen: list[PlotNode]) -> int:
+    """How many events of the plot the play was shown in its longest consistent
+    trajectory, as the plot-following score finds trajectories."""
+    trajectories = get_trajectories(plot, events_seen)
+    lengths = [len(trajectory) for trajectory in trajectories]
+    longest = max(lengths, default=0)
+    return longest
+
+
+def play_following(document: Document, plot_index: int) -> tuple[ExposureTracker, BreakingPoint | None]:
+    """Plays the story from the first event of the plot at `plot_index`, taking at
+    every scene the choice that leads on to the plot's next event. Returns what
+    the play was shown, and where it broke, if it did."""
+    plots = document.plots()
+    plot = plots[plot_index]
     cell_of_event = get_cell_of_event(document)
     edge_from = {edge.from_node_id: edge for edge in plot.edges}
-    breaks: list[str] = []
-    luck = 1.0
-    passed: set[str] = set()
+    tracker = ExposureTracker(document)
+    player = StoryPlayer(document, tracker, plot_index)
     event = plot.nodes[0]
-    while event.node_id not in passed:
-        passed.add(event.node_id)
-        nodes, edges = get_scene_at(document, plot, event)
-        untold = [node.summary for node in nodes if node.node_id not in cell_of_event]
-        if untold:
-            listed = "; ".join(untold)
-            breaks.append(f"no scene tells {listed}")
-            break
-        tracker.see(nodes)
+    for _ in plot.nodes:
+        try:
+            _, continuations = player.get_current_scene()
+        except PLAYER_FAILURES as failure:
+            failure_type = type(failure)
+            kind = failure_type.__name__
+            failed = BreakingPoint(event.summary, f"the player fails to show its scene ({kind}: {failure})")
+            return (tracker, failed)
         edge = edge_from.get(event.node_id)
         if edge is None:
             break
+        next_event = plot.get_node_by_id(edge.to_node_id)
         cell_id = cell_of_event[event.node_id]
         scene_cell = document.cell_with_id(cell_id)
         choices = get_choices(scene_cell.source)
-        unchosen = [leaving for leaving in edges if leaving.edge_id not in choices]
-        if unchosen:
-            count = len(unchosen)
-            breaks.append(f'the scene of "{event.summary}" has no choice for {count} of the edges leaving it')
-            break
-        offered = len(edges)
-        luck = luck / offered
-        event = plot.get_node_by_id(edge.to_node_id)
-    following = score_plot_following(plot, tracker.events_seen)
-    concepts = document.salient_concepts()
+        choice = choices.get(edge.edge_id)
+        if choice is None or choice not in continuations:
+            not_offered = BreakingPoint(
+                event.summary, f'its scene offers no choice leading on to "{next_event.summary}"'
+            )
+            return (tracker, not_offered)
+        readings = continuations.count(choice)
+        if readings > 1:
+            alike = BreakingPoint(
+                event.summary, f'{readings} of its choices read the same as the one leading on: "{choice}"'
+            )
+            return (tracker, alike)
+        action = continuations.index(choice)
+        player.step(action)
+        event = next_event
+    longest = get_longest_run(plot, tracker.events_seen)
+    length = len(plot.nodes)
+    if longest < length:
+        short = BreakingPoint(
+            event.summary, f"the play ends here, shown {longest} of the plot's {length} events in a row"
+        )
+        return (tracker, short)
+    return (tracker, None)
+
+
+def get_unseen_references(document: Document, plot: PlotCell, tracker: ExposureTracker) -> list[UnseenReferences]:
+    """For every concept the plot illustrates, the references the play was not
+    shown, as the tracker recorded it; a concept whose references were all shown
+    is left out."""
+    story_words = StoryWordsIterator(document)
     illustrated = get_illustrated(plot)
-    exposures = {
-        concept.title: tracker.get_exposure(concept) for concept in concepts if concept.title in illustrated
-    }
-    followed = PlotFollowed(plot.title, following, breaks, exposures, luck)
-    return followed
+    concepts = document.salient_concepts()
+    unseen_references = []
+    for concept in concepts:
+        if concept.title not in illustrated:
+            continue
+        seen = tracker.get_seen_references(concept)
+        seen_ids = {reference.reference_id for reference in seen}
+        openings = []
+        for reference in concept.references:
+            if reference.reference_id in seen_ids:
+                continue
+            text = story_words.text(reference.story_word_range)
+            words = text.split()
+            opening = " ".join(words[:OPENING_WORDS])
+            cut = "…" if len(words) > OPENING_WORDS else ""
+            openings.append(f"{opening}{cut}")
+        total = len(concept.references)
+        if openings or not total:
+            unseen = UnseenReferences(concept.title, total, openings)
+            unseen_references.append(unseen)
+    return unseen_references
+
+
+def play_same_option(document: Document, plot_index: int, option: int) -> list[PlotNode]:
+    """Plays the story from the first event of the plot at `plot_index`, taking the
+    option every time, until a scene offers fewer options or the story ends.
+    Returns every event the play was shown, in the order it was shown them."""
+    plots = document.plots()
+    plot = plots[plot_index]
+    tracker = ExposureTracker(document)
+    player = StoryPlayer(document, tracker, plot_index)
+    # A play that goes round for ever is ended once it has taken as many steps as
+    # the story has events.
+    event_counts = [len(each.nodes) for each in plots]
+    steps = sum(event_counts)
+    try:
+        _, continuations = player.get_current_scene()
+        while option <= len(continuations) and steps:
+            player.step(option - 1)
+            _, continuations = player.get_current_scene()
+            steps -= 1
+    except PLAYER_FAILURES:
+        # The player cannot show the scene: the play ends there.
+        pass
+    events_seen = tracker.events_seen
+    return events_seen
+
+
+def get_most_offered(document: Document) -> int:
+    """The most choices any scene offers a play."""
+    plots = document.plots()
+    offered_counts = []
+    for plot in plots:
+        for event in plot.nodes:
+            _, edges = get_scene_at(document, plot, event)
+            offered = len(edges)
+            offered_counts.append(offered)
+    most_offered = max(offered_counts, default=0)
+    return most_offered
 
 
 def get_scene_counts(document: Document) -> SceneCounts:
-    """How the story's scenes go on: where plots meet, and how many scenes each
-    goes on to."""
+    """How many scenes the story has, how many of them are where plots intersect,
+    and how many offer a single choice."""
     plots = document.plots()
-    plot_of_event = {event.node_id: plot.unique_id for plot in plots for event in plot.nodes}
+    plot_of_event = {event.node_id: each.unique_id for each in plots for event in each.nodes}
     scenes = get_scenes(document)
-    meetings = 0
+    intersections = 0
     single = 0
-    endings = 0
-    untold = 0
     for scene in scenes:
         plots_met = {plot_of_event[event.node_id] for event in scene}
         if len(plots_met) > 1:
-            meetings += 1
+            intersections += 1
         scene_cell = get_scene_cell(document, scene)
         if scene_cell is None:
-            untold += 1
             continue
         choices = get_choices(scene_cell.source)
         if len(choices) == 1:
             single += 1
-        elif not choices:
-            endings += 1
     count = len(scenes)
-    counts = SceneCounts(count, meetings, single, endings, untold)
+    counts = SceneCounts(count, intersections, single)
     return counts
 
 
-def written_report(plots: Sequence[PlotFollowed], scenes: SceneCounts) -> str:
-    """What the author reads: every plot as a play following it to the letter is
-    shown it, and how the story's scenes go on."""
-    most_odds = round(1 / MOST_LUCK)
-    lines = ["Every plot, followed to the letter from its first event:"]
-    for followed in plots:
-        whole = followed.following == 1.0 and not followed.breaks
-        seen = "seen whole" if whole else f"not seen whole, followed at {followed.following:.2f}"
-        lines.append(f"- {followed.title}: {seen}")
-        lines.extend(f"  breaks off: {written_break}" for written_break in followed.breaks)
-        passages = [f"{title} {exposure:.0%}" for title, exposure in followed.exposures.items()]
-        written_passages = ", ".join(passages) or "none: it illustrates no concept"
-        lines.append(f"  passages seen: {written_passages}")
-        odds = round(1 / followed.luck)
-        too_easy = f": too easy, above 1 in {most_odds}" if followed.luck > MOST_LUCK else ""
-        lines.append(f"  a play choosing blindly follows it to its end 1 time in {odds}{too_easy}")
-    lines.append("")
+def written_report(plots: list[PlotChecked], scenes: SceneCounts) -> list[str]:
+    """The report, line by line."""
+    lines = []
+    broken = [plot for plot in plots if plot.breaking_point is not None]
+    if not broken:
+        lines.append("plots that cannot be followed from start to finish: none")
+    else:
+        lines.append("plots that cannot be followed from start to finish:")
+        for plot in broken:
+            point = plot.breaking_point
+            assert point is not None
+            lines.append(f'- {plot.title}, breaking at "{point.event}": {point.reason}')
+    incomplete = [plot for plot in plots if plot.unseen]
+    if not incomplete:
+        lines.append("concepts with references a play following their plot is not shown: none")
+    else:
+        lines.append("concepts with references a play following their plot is not shown:")
+        for plot in incomplete:
+            for unseen in plot.unseen:
+                if not unseen.total:
+                    lines.append(f"- {unseen.concept}, following {plot.title}: it has no references")
+                    continue
+                count = len(unseen.openings)
+                lines.append(f"- {unseen.concept}, following {plot.title}: {count} of {unseen.total} not shown:")
+                lines.extend(f'  "{opening}"' for opening in unseen.openings)
+    lines.append(f"taking the same option every time, from the start of every plot, played {PLAYS} times each:")
+    for plot in plots:
+        lines.append(f"- {plot.title}, {plot.length} events:")
+        for same in plot.same_options:
+            reached_end = same.longest_runs.get(plot.length, 0)
+            end_achieved = reached_end / PLAYS
+            by_length = sorted(same.longest_runs.items())
+            runs = []
+            for length, plays in by_length:
+                events = "event" if length == 1 else "events"
+                share = plays / PLAYS
+                runs.append(f"{length} {events} {share:.0%}")
+            written_runs = ", ".join(runs)
+            lines.append(
+                f"  always option {same.option} - plot end achieved {end_achieved:.0%}, "
+                f"longest consistent plot trajectory: {written_runs}"
+            )
     lines.append(
-        f"Scenes: {scenes.scenes}; where plots meet: {scenes.meetings}; "
-        f"going on to a single scene: {scenes.single}; ending the story: {scenes.endings}"
+        f"scenes: {scenes.scenes}; intersections, where plots meet: {scenes.intersections}; "
+        f"scenes with only 1 choice: {scenes.single}"
     )
-    if scenes.untold:
-        lines.append(f"Scenes no cell tells: {scenes.untold}")
-    report = "\n".join(lines)
-    return report
+    return lines
 
 
 class Validity(Stage):
     def __init__(self) -> None:
-        super().__init__()
-        # What the renderer shows beside the report: every plot as a play
-        # following it to the letter is shown it, and how the story's scenes go on.
-        self.plots: list[PlotFollowed] = []
-        self.scenes = SceneCounts(0, 0, 0, 0, 0)
+        # What the stage found: every plot, played, and the story's scenes,
+        # counted.
+        self.plots: list[PlotChecked] = []
+        self.scenes = SceneCounts(0, 0, 0)
 
     def run(self, **params: Any) -> None:
         story: Path = params["story"]
-        renderer: StageVisitor = params["renderer"]
+        logger = logging.getLogger(__name__)
         document = Document.load(story)
         plots = document.plots()
-        self.plots = [get_followed(document, plot) for plot in plots]
+        most_offered = get_most_offered(document)
+        options = range(1, most_offered + 1)
+        count = len(plots)
+        self.plots = []
+        for plot_index, plot in enumerate(plots):
+            logger.info("playing %s (%d of %d)", plot.title, plot_index + 1, count)
+            length = len(plot.nodes)
+            if not plot.nodes:
+                no_events = BreakingPoint("", "the plot has no events")
+                empty = PlotChecked(plot.title, 0, no_events, [], [])
+                self.plots.append(empty)
+                continue
+            tracker, breaking_point = play_following(document, plot_index)
+            unseen = get_unseen_references(document, plot, tracker)
+            same_options = []
+            for option in options:
+                longest_runs: Counter[int] = Counter()
+                for _ in range(PLAYS):
+                    events_seen = play_same_option(document, plot_index, option)
+                    longest = get_longest_run(plot, events_seen)
+                    longest_runs[longest] += 1
+                runs = dict(longest_runs)
+                same_option = SameOption(option, runs)
+                same_options.append(same_option)
+            checked = PlotChecked(plot.title, length, breaking_point, unseen, same_options)
+            self.plots.append(checked)
         self.scenes = get_scene_counts(document)
-        self.draft = written_report(self.plots, self.scenes)
-        self.progress = (0, 1)
-        review = self.accept(renderer)
-        if review.verdict is not Verdict.ACCEPT:
-            raise AuthorStopped
-        self.progress = (1, 1)
-
-    def accept(self, visitor: StageVisitor) -> Review:
-        review = visitor.visit_validity(self)
-        return review
+        report = written_report(self.plots, self.scenes)
+        for line in report:
+            logger.info("%s", line)

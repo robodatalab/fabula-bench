@@ -24,7 +24,7 @@ from authordoc.cells.plot_cell import PlotEdge, PlotNode
 from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import get_choices, written_scene
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Confidence, Stage, reviewed
+from story_generator.stage import Confidence, DraftingStage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 from story_generator.stages.plot_ends import written_world_events
 from story_generator.stages.scenes import (
@@ -126,7 +126,7 @@ def read_choices(written: str) -> tuple[str, list[str]]:
     return (opening.strip(), endings)
 
 
-class Choices(Stage):
+class Choices(DraftingStage):
     def __init__(self, model: CompletionModel) -> None:
         super().__init__()
         self._model = model

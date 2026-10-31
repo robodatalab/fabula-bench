@@ -5,6 +5,7 @@ import logging
 import random
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 from authordoc.iterators.story_words_iterator import StoryWordsIterator
@@ -12,7 +13,7 @@ from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import get_choices
 from story_generator.stage import CAP, Confidence
 from story_generator.stage_visitor import Review, StageVisitor, Verdict
-from story_generator.stages import choices, concept_arcs, concepts, mesh, plot_ends, scenes
+from story_generator.stages import choices, concept_arcs, concepts, mesh, plot_ends, scenes, validity
 from story_generator.stages.choices import Choices
 from story_generator.stages.concept_arcs import ConceptArcs, get_arcs
 from story_generator.stages.concepts import Concepts
@@ -57,7 +58,8 @@ class _Model:
     at 5, where every plot meets; every concept shows at every event of its plot
     but the last, at 9; a version of a scene is its event, said back; a
     merge puts the next version after the scene merged so far, and leaves a draft
-    under review as it is; and every choice is "Then, it went on.". It remembers
+    under review as it is; and every choice is "Then, it went on: " and the event
+    it leads to, so that no two choices of a scene read the same. It remembers
     what it was asked for, every version it was asked for, as its event and its
     concept, and every scene merged so far it was given."""
 
@@ -132,7 +134,8 @@ class _Model:
             return "Then,"
         if system == choices.ENDING_INSTRUCTIONS:
             self.asked.append("ending")
-            return "it went on."
+            happening = _between(user, "What could happen next:\n")
+            return f"it went on: {happening}"
         raise AssertionError("asked for something no stage asks for")
 
 
@@ -180,10 +183,6 @@ class _Author(StageVisitor):
 
     def visit_choices(self, stage: Choices) -> Review:
         review = self._reviewed("choices", stage.draft)
-        return review
-
-    def visit_validity(self, stage: Validity) -> Review:
-        review = self._reviewed("validity", stage.draft)
         return review
 
 
@@ -348,7 +347,13 @@ class AFullRun(unittest.TestCase):
         choices_of_the_scene = get_choices(cell.source)
 
         endings = list(choices_of_the_scene.values())
-        self.assertEqual(endings, ["it went on.", "it went on."])
+        self.assertEqual(
+            endings,
+            [
+                "it went on: 9. [earth, Home's house] Home ends.",
+                "it went on: 9. [earth, The way back's house] The way back ends.",
+            ],
+        )
 
     def test_checkpoints_every_stage_in_the_order_it_ran(self) -> None:
         finished = _finished(self.story)
@@ -408,7 +413,7 @@ class StoppingInAStage(unittest.TestCase):
 
         workflow.run()
 
-        self.assertEqual(resumed.visited, ["scenes", "choices", "validity"])
+        self.assertEqual(resumed.visited, ["scenes", "choices"])
 
     def test_writes_a_version_of_an_event_for_every_concept_its_plot_illustrates(self) -> None:
         document = Document.load(self.story)
@@ -450,7 +455,8 @@ class GoingBackToAStage(unittest.TestCase):
                 workflow.run(going_back_to)
 
                 at = STAGES.index(going_back_to)
-                self.assertEqual(author.visited, STAGES[at:])
+                started = [stage for stage, message in heard.records if message == "started"]
+                self.assertEqual(started, STAGES[at:])
 
     def test_reviews_what_the_story_holds_instead_of_drafting_it_afresh(self) -> None:
         model = _Model()
@@ -477,6 +483,8 @@ class GoingBackToAStage(unittest.TestCase):
 
 class CheckingTheStory(unittest.TestCase):
     def setUp(self) -> None:
+        # The player shuffles the choices of every scene it shows.
+        random.seed(0)
         self.story = _new_story(self)
         self.model = _Model()
         self.author = _Author(ABOUT)
@@ -487,32 +495,71 @@ class CheckingTheStory(unittest.TestCase):
         assert isinstance(checked, Validity)
         self.checked = checked
 
-    def test_sees_every_plot_whole_when_following_it_to_the_letter(self) -> None:
-        followings = [followed.following for followed in self.checked.plots]
-        breaks = [followed.breaks for followed in self.checked.plots]
+    def _checked_again(self, document: Document) -> Validity:
+        """The story checked again, once the document is written in its place."""
+        self.story.write_text(document.text, encoding="utf-8")
+        workflow = Workflow(self.story, self.model, self.author, self.heard, EVERY_DRAFT)
+        workflow.run("validity")
+        checked = workflow.stages["validity"]
+        assert isinstance(checked, Validity)
+        return checked
 
-        self.assertEqual(followings, [1.0, 1.0])
-        self.assertEqual(breaks, [[], []])
+    def test_finds_no_breaking_point_in_a_plot_that_can_be_followed_from_start_to_finish(self) -> None:
+        breaking_points = [plot.breaking_point for plot in self.checked.plots]
 
-    def test_sees_every_passage_of_every_concept_a_plot_illustrates(self) -> None:
-        exposures = [followed.exposures for followed in self.checked.plots]
+        self.assertEqual(breaking_points, [None, None])
 
-        self.assertEqual(exposures, [{"Home": 1.0}, {"The way back": 1.0}])
+    def test_finds_no_reference_a_play_following_its_concept_s_plot_is_not_shown(self) -> None:
+        unseen = [plot.unseen for plot in self.checked.plots]
 
-    def test_gives_the_chance_that_a_play_choosing_blindly_follows_every_plot_to_its_end(self) -> None:
-        # Each plot's only choice of two is in the square, where the plots meet.
-        lucks = [followed.luck for followed in self.checked.plots]
+        self.assertEqual(unseen, [[], []])
 
-        self.assertEqual(lucks, [0.5, 0.5])
+    def test_plays_every_plot_from_its_start_taking_the_same_option_every_time(self) -> None:
+        # Option 1 reaches the square, where either plot goes on: a play follows
+        # the plot to its end, or leaves it after two of its events. Option 2 ends
+        # at the plot's house, which offers one option.
+        option_1_runs = [plot.same_options[0].longest_runs for plot in self.checked.plots]
+        option_2_runs = [plot.same_options[1].longest_runs for plot in self.checked.plots]
+        lengths = [set(runs) for runs in option_1_runs]
+        plays = [sum(runs.values()) for runs in option_1_runs]
 
-    def test_reports_a_plot_that_chance_follows_too_often_as_too_easy(self) -> None:
-        self.assertIn("1 time in 2: too easy, above 1 in 10", self.checked.draft)
+        self.assertEqual(lengths, [{2, 3}, {2, 3}])
+        self.assertEqual(plays, [validity.PLAYS, validity.PLAYS])
+        self.assertEqual(option_2_runs, [{1: validity.PLAYS}, {1: validity.PLAYS}])
 
-    def test_counts_the_scenes_where_plots_meet_against_those_going_on_to_a_single_scene(self) -> None:
+    def test_counts_the_intersections_against_the_scenes_with_a_single_choice(self) -> None:
         # Each plot's house, at 1 and at 9, and the square, at 5.
-        self.assertEqual(self.checked.scenes, SceneCounts(5, 1, 2, 2, 0))
+        self.assertEqual(self.checked.scenes, SceneCounts(5, 1, 2))
 
-    def test_breaks_off_a_plot_at_a_scene_with_no_choice_for_an_edge_leaving_it(self) -> None:
+    def test_reports_in_the_log_and_asks_the_author_nothing(self) -> None:
+        reported = [message for stage, message in self.heard.records if stage == "validity"]
+        # How often option 1 reaches the plot's end is left to the shuffles.
+        option_1 = "  always option 1 - plot end achieved "
+        not_option_1 = [message for message in reported if not message.startswith(option_1)]
+        options_1 = [message for message in reported if message.startswith(option_1)]
+        option_2 = "  always option 2 - plot end achieved 0%, longest consistent plot trajectory: 1 event 100%"
+
+        self.assertEqual(
+            not_option_1,
+            [
+                "started",
+                "playing Home (1 of 2)",
+                "playing The way back (2 of 2)",
+                "plots that cannot be followed from start to finish: none",
+                "concepts with references a play following their plot is not shown: none",
+                "taking the same option every time, from the start of every plot, played 100 times each:",
+                "- Home, 3 events:",
+                option_2,
+                "- The way back, 3 events:",
+                option_2,
+                "scenes: 5; intersections, where plots meet: 1; scenes with only 1 choice: 2",
+                "finished",
+            ],
+        )
+        self.assertEqual(len(options_1), 2)
+        self.assertNotIn("validity", self.author.visited)
+
+    def test_breaks_a_plot_at_a_scene_the_player_fails_to_show(self) -> None:
         document = Document.load(self.story)
         scenes_now = get_scenes(document)
         square = next(scene for scene in scenes_now if len(scene) == 2)
@@ -524,22 +571,44 @@ class CheckingTheStory(unittest.TestCase):
         unchosen = square_cell.with_source(source)
         cells = [unchosen if cell.unique_id == square_cell.unique_id else cell for cell in document.cells]
         broken = Document.from_cells(cells, document.path)
-        self.story.write_text(broken.text, encoding="utf-8")
-        workflow = Workflow(self.story, self.model, self.author, self.heard, EVERY_DRAFT)
 
-        workflow.run("validity")
+        checked = self._checked_again(broken)
 
-        checked = workflow.stages["validity"]
-        assert isinstance(checked, Validity)
-        followings = [followed.following for followed in checked.plots]
-        broken_off = [
-            written.endswith("has no choice for 1 of the edges leaving it")
-            for followed in checked.plots
-            for written in followed.breaks
-        ]
-        # Each plot was seen at its house, and in the square, of its three events.
-        self.assertEqual(followings, [4 / 9, 4 / 9])
-        self.assertEqual(broken_off, [True, True])
+        square_events = [event.summary for event in square]
+        points = [plot.breaking_point for plot in checked.plots]
+        broken_at = [point.event for point in points if point is not None]
+        reasons = [point.reason.startswith("the player fails to show its scene") for point in points if point is not None]
+        self.assertEqual(broken_at, square_events)
+        self.assertEqual(reasons, [True, True])
+
+    def test_reports_the_text_of_a_reference_a_play_following_its_concept_s_plot_is_not_shown(self) -> None:
+        document = Document.load(self.story)
+        _, way_back_plot = document.plots()
+        # The way back's house, which a play following Home never passes.
+        way_back_home, *_ = way_back_plot.nodes
+        elsewhere = way_back_home.story_word_range
+        home, _ = document.salient_concepts()
+        first, *rest = home.references
+        moved = replace(first, story_word_range=elsewhere)
+        home_moved = replace(home, references=[moved, *rest])
+        cells = [home_moved if cell.unique_id == home.unique_id else cell for cell in document.cells]
+        moved_away = Document.from_cells(cells, document.path)
+
+        checked = self._checked_again(moved_away)
+
+        home_unseen, way_back_unseen = [plot.unseen for plot in checked.plots]
+        (unseen,) = home_unseen
+        (opening,) = unseen.openings
+        story_words = StoryWordsIterator(moved_away)
+        text = story_words.text(elsewhere)
+        words = text.split()
+        flattened = " ".join(words)
+        cut = opening.removesuffix("…")
+        opens_it = flattened.startswith(cut)
+        total = len(home.references)
+        self.assertEqual(way_back_unseen, [])
+        self.assertEqual((unseen.concept, unseen.total), ("Home", total))
+        self.assertTrue(opens_it)
 
 
 class MarkingPassages(unittest.TestCase):

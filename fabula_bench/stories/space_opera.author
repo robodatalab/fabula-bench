@@ -1542,6 +1542,8 @@ mesh
 concept arcs
 scenes
 choices
+
+validity
 confidence in choices: 0.893
 confidence in scene merges: 0.900
 confidence in scene versions: 0.900

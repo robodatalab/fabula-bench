@@ -16,7 +16,7 @@ from authordoc.cells.plot_cell import PlotCell
 from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import get_place
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Confidence, Stage, reviewed
+from story_generator.stage import Confidence, DraftingStage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 from story_generator.stages.concepts import written_concepts
 from story_generator.stages.plot_ends import chained, get_illustrated, read_events, written_events, written_world_events
@@ -61,7 +61,7 @@ def get_meetings(document: Document, plot: PlotCell) -> str:
     return meetings
 
 
-class Mesh(Stage):
+class Mesh(DraftingStage):
     def __init__(self, model: CompletionModel) -> None:
         super().__init__()
         self._model = model

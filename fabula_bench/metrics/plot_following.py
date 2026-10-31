@@ -24,7 +24,7 @@ from authordoc.cells.plot_cell import PlotCell, PlotNode
 def score_plot_following(plot: PlotCell, exposure: Sequence[PlotNode]) -> float:
     """How closely the play followed the plot, given every event it saw, of any
     plot, in the order it saw them."""
-    trajectories = _get_trajectories(plot, exposure)
+    trajectories = get_trajectories(plot, exposure)
     squared_lengths = [len(trajectory) ** 2 for trajectory in trajectories]
     squared_lengths_sum = sum(squared_lengths)
     event_count = len(plot.nodes)
@@ -32,7 +32,7 @@ def score_plot_following(plot: PlotCell, exposure: Sequence[PlotNode]) -> float:
     return following
 
 
-def _get_trajectories(plot: PlotCell, exposure: Sequence[PlotNode]) -> list[list[PlotNode]]:
+def get_trajectories(plot: PlotCell, exposure: Sequence[PlotNode]) -> list[list[PlotNode]]:
     """Every trajectory along which the play followed the plot, in the order it
     followed them."""
     event_ids = {event.node_id for event in plot.nodes}

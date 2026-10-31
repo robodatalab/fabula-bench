@@ -23,7 +23,7 @@ from uuid import uuid4
 from authordoc.cells.salient_concept_cell import SalientConceptCell
 from authordoc.storydoc import Document
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Confidence, Stage, reviewed
+from story_generator.stage import Confidence, DraftingStage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 
 LIST_INSTRUCTIONS = """You help an author decide what an interactive story is about: its salient concepts, the ideas a reader should come away understanding, though the story never states them.
@@ -69,7 +69,7 @@ def written_concepts(concepts: Sequence[SalientConceptCell]) -> str:
     return written
 
 
-class Concepts(Stage):
+class Concepts(DraftingStage):
     def __init__(self, model: CompletionModel) -> None:
         super().__init__()
         self._model = model
