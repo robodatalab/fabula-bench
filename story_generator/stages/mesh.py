@@ -43,6 +43,17 @@ Write every event of the plot, the first and the last included, one a line, as: 
 MAX_EVENTS_TOKENS = 3000
 
 
+PlotMatrix = list[list[int]]
+
+def _wrap_loop(start: int, count: int, length: int) -> list[int]:
+    return [(i + start) % count for i in range(length)]
+
+
+def build_round_robin_plot_matrix(n_plots: int, traj_len: int) -> PlotMatrix:
+    matrix = [_wrap_loop(j, n_plots, traj_len) for j in range(n_plots)]         
+    return matrix
+
+
 def get_meetings(document: Document, plot: PlotCell) -> str:
     """Where the plot meets the other plots: every scene its events share with
     theirs, by moment and place, one a line."""
