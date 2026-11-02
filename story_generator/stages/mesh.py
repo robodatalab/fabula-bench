@@ -44,14 +44,52 @@ MAX_EVENTS_TOKENS = 3000
 
 
 PlotMatrix = list[list[int]]
+ConnectivityTrajectory = list[set[tuple[int, int]]]
+
 
 def _wrap_loop(start: int, count: int, length: int) -> list[int]:
     return [(i + start) % count for i in range(length)]
 
 
 def build_round_robin_plot_matrix(n_plots: int, traj_len: int) -> PlotMatrix:
-    matrix = [_wrap_loop(j, n_plots, traj_len) for j in range(n_plots)]         
+    # The circle method: one seat stays put, the others turn round it a seat a
+    # step. An odd count of plots gets an empty seat, and a plot facing it meets
+    # nobody.
+    n_seats = n_plots + n_plots % 2
+    n_rounds = n_seats - 1
+    fixed_seat = n_seats - 1
+    matrix = []
+    for plot_idx in range(n_plots):
+        row = []
+        for event_idx in range(traj_len):
+            round_idx = event_idx % n_rounds
+            if plot_idx == fixed_seat:
+                partner = round_idx
+            elif plot_idx == round_idx:
+                partner = fixed_seat
+            else:
+                partner = (2 * round_idx - plot_idx) % n_rounds
+            met = plot_idx if partner >= n_plots else partner
+            row.append(met)
+        matrix.append(row)
     return matrix
+
+
+def matrix_to_connectivity_trajectory(matrix: PlotMatrix) -> ConnectivityTrajectory:
+    n_rows = len(matrix)
+    n_cols = len(matrix[0])
+
+    events_to_merge: ConnectivityTrajectory = []
+    for event_idx in range(n_cols):
+        merges_at_event = set()
+        for lhs_plot_idx in range(n_rows):
+            rhs_plot_idx = matrix[lhs_plot_idx][event_idx]
+            if lhs_plot_idx != rhs_plot_idx:
+                merge: tuple[int, int] = tuple(sorted((lhs_plot_idx, rhs_plot_idx)))
+                merges_at_event.add(merge)
+        events_to_merge.append(merges_at_event)
+
+    return events_to_merge
 
 
 def get_meetings(document: Document, plot: PlotCell) -> str:
