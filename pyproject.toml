@@ -7,7 +7,7 @@ license = "Apache-2.0"
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=1,<2",
-    "authordoc>=0.1.2",
+    "authordoc>=0.1.4",
     "tqdm>=4.66",
     "vramen>=0.2.3",
 ]
