@@ -9,8 +9,8 @@ The generator is a workflow of stages (`story_generator/workflow.py`), run one a
 | Stage | What it writes |
 |---|---|
 | concepts | A `salient-concept` cell for every concept the story is about, with its description. |
-| plot ends | A `plot` cell for every concept: the plot that illustrates it, begun as two events, its start and its goal. |
-| mesh | Every plot's events between its ends, at the moments and places where they meet the other plots' events. |
+| plots | A `plot` cell for every concept: the plot that illustrates it, written in full, four events for every plot the story has, in the story space of the plots before it. |
+| mesh | Every plot's events on the clock, its first at 1, its second at 2, and so on; and, on a round-robin schedule, every pair of plots that meets at a step, its two events there rewritten to happen in one place, so that they share a scene. |
 | concept arcs | A `note` cell after every plot: how each concept the plot illustrates shows at each of its events, if at all. |
 | scenes | A `markdown` cell for every scene, built from versions dedicated to the concepts that show at its events, merged between the concepts' markers. The markers become the concepts' passages. |
 | choices | The unfinished sentence, and the choices that finish it, that end every scene the story goes on from. |
@@ -39,7 +39,7 @@ An `.author` file is markdown cut into cells. Each cell opens with a marker, an 
 What Home means.
 ```
 
-Every marker also carries an `id`, a unique identifier of the cell; the examples here leave it out.
+Every marker also carries an `id`, a unique identifier of the cell; the examples here leave it out, but for the concepts', which the plots name.
 
 A story uses these kinds of cell:
 
@@ -72,11 +72,12 @@ A plot is a sequence of events in causal order. The `plot` cell's attributes:
 |---|---|---|
 | `title` | The plot's name. | `title="Home"` |
 | `edges` | The causal links between the events. Each is an edge id, then the event that causes, `>`, and the event it causes. | `edges="e1:n1>n2, e2:n2>n3"` |
+| `concepts` | The ids of the salient concepts the plot illustrates. | `concepts="k1, k2"` |
 
-Its body is a list: its `title` is the plot's overview, and every item one event:
+Its body is a list: its `title` is the plot's overview, if it has one, and every item one event:
 
 ```
-<ol title="Illustrates: Home">
+<ol>
 <li id="n1" timestamp="1" location="earth, Home's house" words="0-19">Home begins.</li>
 </ol>
 ```
@@ -88,7 +89,7 @@ Its body is a list: its `title` is the plot's overview, and every item one event
 | `location` | The event's place, from the broadest to the most specific, separated by commas, as in `earth, Varn's house`. |
 | `words` | The range of words of the scene that tells the event: the whole of its cell. |
 
-The item's text says what happens. A line of the overview that starts with `Illustrates:` names the concepts the plot illustrates.
+The item's text says what happens.
 
 ### Concept arcs
 
@@ -107,7 +108,7 @@ The scenes stage writes a version of an event's scene for every concept that sho
 
 ### Scenes
 
-Events at the same moment, in places one of which holds the other, form one scene: `earth` holds `earth, the square`. Where plots meet, they share a scene. A scene is told by one `markdown` cell, which every event of the scene points at, the whole of it.
+Events at the same moment and in the same place form one scene. Where plots meet, they share a scene. A scene is told by one `markdown` cell, which every event of the scene points at, the whole of it.
 
 A scene the story goes on from ends with the opening of a sentence, left unfinished at a gap, and the choices that finish it, one for every edge leaving the scene's events, each naming its edge:
 
@@ -128,7 +129,7 @@ The `workflow-checkpoint` cell lists the stages finished, one a line, and the co
 
 ```
 concepts
-plot ends
+plots
 mesh
 confidence in mesh: 0.360
 ```
@@ -139,20 +140,20 @@ Words are numbered from 0 across all the `markdown` cells, scenes or not, in the
 
 ### An example
 
-The story the tests' stand-in model and author write, with its ids shortened. Two plots, Home and The way back, each start and end at their own houses and meet in the square at 5:
+A small story, with its ids shortened. Two plots, Home and The way back, each start and end at their own houses and meet in the square at 5:
 
 ```
-<!-- cell: salient-concept title="Home" words="r1:0-1, r2:44-48" -->
+<!-- cell: salient-concept id="k1" title="Home" words="r1:0-1, r2:44-48" -->
 
 What Home means.
 
-<!-- cell: salient-concept title="The way back" words="r3:20-23, r4:49-55" -->
+<!-- cell: salient-concept id="k2" title="The way back" words="r3:20-23, r4:49-55" -->
 
 What The way back means.
 
-<!-- cell: plot title="Home" edges="e1:n1>n2, e2:n2>n3" -->
+<!-- cell: plot title="Home" edges="e1:n1>n2, e2:n2>n3" concepts="k1" -->
 
-<ol title="Illustrates: Home">
+<ol>
 <li id="n1" timestamp="1" location="earth, Home's house" words="0-19">Home begins.</li>
 <li id="n2" timestamp="5" location="earth, the square" words="44-84">Home walks through the square.</li>
 <li id="n3" timestamp="9" location="earth, Home's house" words="85-86">Home ends.</li>
@@ -169,9 +170,9 @@ What The way back means.
 9 Home ends.
   Home: —
 
-<!-- cell: plot title="The way back" edges="e3:n4>n5, e4:n5>n6" -->
+<!-- cell: plot title="The way back" edges="e3:n4>n5, e4:n5>n6" concepts="k2" -->
 
-<ol title="Illustrates: The way back">
+<ol>
 <li id="n4" timestamp="1" location="earth, The way back's house" words="20-43">The way back begins.</li>
 <li id="n5" timestamp="5" location="earth, the square" words="44-84">The way back walks through the square.</li>
 <li id="n6" timestamp="9" location="earth, The way back's house" words="87-90">The way back ends.</li>
@@ -230,7 +231,7 @@ The way back ends.
 <!-- cell: workflow-checkpoint -->
 
 concepts
-plot ends
+plots
 mesh
 concept arcs
 scenes
