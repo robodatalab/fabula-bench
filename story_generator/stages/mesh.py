@@ -1,54 +1,50 @@
-"""Every plot filled in between its two ends, one plot after another, so that it
-illustrates its concepts and meshes with the other plots: where its people come
-together with theirs, its events take their moments and places, and so share
-their scenes. The author reviews each plot beside where it meets the others
-now."""
+"""The plots brought together on a schedule, so that they meet all the time. Every
+plot has as many events as every other, and at every step the round robin pairs
+every plot with another, as players are paired in a tournament: one plot stays
+put and the others turn round it, a seat a step, and with an odd number of plots
+one sits out every step. Every plot's event at a step happens at the step's
+moment, and the two events of every pair are rewritten to happen in one place,
+where the people of both plots come together: the two plots share a scene. The
+author reviews every meeting."""
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from authordoc.cells.plot_cell import PlotCell
-from authordoc.storydoc import Document
-from fabula_bench.benchmark_document import get_place
+from authordoc.storydoc import Document, SalientConceptCell
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import Confidence, DraftingStage, reviewed
+from story_generator.stage import DraftingStage
 from story_generator.stage_visitor import Review, StageVisitor
-from story_generator.stages.concepts import written_concepts
-from story_generator.stages.plot_ends import chained, get_illustrated, read_events, written_events, written_world_events
-from story_generator.stages.scenes import get_scenes
 
 INSTRUCTIONS = """You help an author mesh the plots of an interactive story into one world. The story is built from its salient concepts: every concept has a plot that illustrates it, and every plot respects every concept, so that a character who is a mother acts as a mother in whichever plot she appears.
 
-Every event of a plot has a moment on the world's clock (numbers separated by dots, as in 2.3; a moment such as 2.3.1 falls between 2.3 and 2.4) and a place, from the broadest to the most specific, as in "earth, Varn's house". Events at the same moment, in places one of which holds the other, are one scene: that is where plots meet.
+Every plot has as many events as every other, and the plots meet on a schedule: at every moment, every plot meets another, and the two plots' events at that moment become one scene, where the people of both plots come together.
 
-You are given the story's concepts, the events of the other plots, and the plot to fill in: the concepts it illustrates, and its events so far, from the one it starts with to the goal it reaches. Add the events between them, so that:
+Every event has a moment on the world's clock and a place, from the broadest to the most specific, as in "earth, Varn's house". Events at the same moment, in places one of which holds the other, are one scene.
 
-- the plot illustrates its concepts, every event caused by the one before it;
-- where the plot's people come together with another plot's, its event takes the moment and the place of that plot's event, so that the two plots meet in one scene;
-- none of its people is in two places at one moment, in this plot or across the plots;
-- the first and the last events stay as they are.
+You are given the story's concepts, the events of every plot, the two plots to bring together at a moment, with the concepts each illustrates, their events at that moment, and the places the other plots are in at that moment. Rewrite the two events so that:
 
-Each event is a plain, simple statement of what happens and why: no clock times, no invented places, nothing added for the mechanics of the story.
+- both happen in one place, a place the story already has where one fits;
+- the place holds none of the places the other plots are in at that moment, and none of those holds it;
+- the people of both plots come together there, so that each plot's event takes part in the other's;
+- each event still does what it did for its plot: it is caused by its plot's event before it, and causes its plot's event after it;
+- none of the people is in two places at one moment.
+
+Each event is a plain, simple statement of what happens and why: no clock times, nothing added for the mechanics of the story.
 
 When you are also given your draft and the author's comments on it, rewrite the draft to answer every comment, and change nothing the comments do not ask you to change.
 
-Write every event of the plot, the first and the last included, one a line, as: moment | place | what happens. Write the lines and nothing else."""
+Write two lines, the first plot's event and then the second's, each as: moment | place | what happens. Write the lines and nothing else."""
 
-# Room for the events of one plot.
-MAX_EVENTS_TOKENS = 3000
+# Room for the two events of a meeting.
+MAX_MEETING_TOKENS = 600
 
 
 PlotMatrix = list[list[int]]
 ConnectivityTrajectory = list[set[tuple[int, int]]]
-
-
-def _wrap_loop(start: int, count: int, length: int) -> list[int]:
-    return [(i + start) % count for i in range(length)]
 
 
 def build_round_robin_plot_matrix(n_plots: int, traj_len: int) -> PlotMatrix:
@@ -92,94 +88,89 @@ def matrix_to_connectivity_trajectory(matrix: PlotMatrix) -> ConnectivityTraject
     return events_to_merge
 
 
-def get_meetings(document: Document, plot: PlotCell) -> str:
-    """Where the plot meets the other plots: every scene its events share with
-    theirs, by moment and place, one a line."""
-    title_of_event = {event.node_id: other.title for other in document.plots() for event in other.nodes}
-    own_ids = {event.node_id for event in plot.nodes}
-    lines = []
-    for scene in get_scenes(document):
-        scene_ids = {event.node_id for event in scene}
-        others = sorted({title_of_event[event_id] for event_id in scene_ids - own_ids})
-        if not own_ids & scene_ids or not others:
-            continue
-        place = get_place(scene)
-        written_others = ", ".join(others)
-        lines.append(f"{scene[0].timestamp} | {place} | with {written_others}")
-    meetings = "\n".join(lines) or "It meets no other plot."
-    return meetings
-
-
 class Mesh(DraftingStage):
+
     def __init__(self, model: CompletionModel) -> None:
         super().__init__()
         self._model = model
-        # What the renderer shows beside the plot: its title, the concepts it
-        # illustrates, its events as they are, and where it meets the other plots
-        # now.
-        self.plot = ""
-        self.concepts = ""
-        self.description = ""
-        self.events_now = ""
-        self.meetings = ""
+
 
     def run(self, **params: Any) -> None:
         story: Path = params["story"]
-        renderer: StageVisitor = params["renderer"]
-        confidence: Confidence = params["confidence"]
-        checkpoint: Callable[[], None] = params["checkpoint"]
-        logger = logging.getLogger(__name__)
+
         document = Document.load(story)
         plots_at_the_start = document.plots()
-        count = len(plots_at_the_start)
-        for index in range(count):
-            plots = document.plots()
-            plot = plots[index]
-            concepts = document.salient_concepts()
-            illustrated = get_illustrated(plot)
-            descriptions = [f"{concept.title}: {concept.source}" for concept in concepts if concept.title in illustrated]
-            self.plot = plot.title
-            self.concepts = ", ".join(illustrated) or "no concept"
-            self.description = "\n".join(descriptions)
-            self.events_now = written_events(plot.nodes)
-            self.meetings = get_meetings(document, plot)
-            self.progress = (index, count)
-            # A plot of more events than its ends has been filled in before.
-            self.draft = self.events_now if len(plot.nodes) > 2 else self._drafted(document, [])
+        if not plots_at_the_start:
+            return
+        n_plots = len(plots_at_the_start)
+        lengths = [len(plot.nodes) for plot in plots_at_the_start]
+        steps = max(lengths)
+        matrix = build_round_robin_plot_matrix(n_plots, steps)
+        trajectory = matrix_to_connectivity_trajectory(matrix)
 
-            def revised(comments: list[str]) -> str:
-                events = self._drafted(document, comments)
-                return events
+        for step_index, changes_at_step in enumerate(trajectory):
+            for first_plot_idx, second_plot_idx in changes_at_step:
+                plots = document.plots()
+                first_plot = plots[first_plot_idx]
+                second_plot = plots[second_plot_idx]
 
-            accepted = reviewed(self, renderer, revised, confidence, "mesh")
-            events = read_events(accepted, plot.nodes)
-            edges = chained(events, plot.edges)
-            plot_meshed = replace(plot, nodes=events, edges=edges)
-            cells = [plot_meshed if cell.unique_id == plot.unique_id else cell for cell in document.cells]
-            document = Document.from_cells(cells, document.path)
-            story.write_text(document.text, encoding="utf-8")
-            checkpoint()
-            self.progress = (index + 1, count)
-            logger.info("plot %d of %d meshed", index + 1, count, extra={"progress": self.progress})
+                first_event = first_plot.nodes[step_index]
+                second_event = second_plot.nodes[step_index]
+
+                merged_event_str = self._model.complete(
+                    system=f"""
+Two story plot events meet, and we need to unify them.
+Event 1:
+{first_event.summary}
+
+Event 2:
+{second_event.summary}
+
+The events are a part of two plots that attempt to detail salient concepts:
+Concept 1:
+{_concepts_str(first_plot.concepts(document))}
+Concept 2:
+{_concepts_str(second_plot.concepts(document))}
+
+Merge the events so that they stay close to their original, but represent a single event
+that provides the same information about the concepts as the original events did.
+""",
+                    user="",
+                    max_new_tokens=4096,
+                )
+
+            merged_event_desc, merged_event_location = _parse_event_str(merged_event_str)
+
+            first_meshed = first_event.with_summary(merged_event_desc)
+            first_meshed = first_meshed.with_location(merged_event_location)
+            second_meshed = second_event.with_summary(merged_event_desc)
+            second_meshed = second_meshed.with_location(merged_event_location)
+
+            first_plot_meshed = first_plot.with_node(first_meshed)
+            second_plot_meshed = second_plot.with_node(second_meshed)
+            document = document.with_cell(first_plot_meshed)
+            document = document.with_cell(second_plot_meshed)
+        
+        story.write_text(document.text, encoding="utf-8")
+
 
     def accept(self, visitor: StageVisitor) -> Review:
         review = visitor.visit_mesh(self)
         return review
 
-    def _drafted(self, document: Document, comments: list[str]) -> str:
-        """The plot's events, filled in between its ends, or, given the author's
-        comments, the draft under review revised to answer them."""
-        concepts = document.salient_concepts()
-        written = written_concepts(concepts)
-        world = written_world_events(document, self.plot)
-        request = (
-            f"The story's concepts:\n{written}\n\n"
-            f"The events of the other plots:\n{world}\n\n"
-            f"The plot to fill in, {self.plot}, which illustrates {self.concepts}:\n{self.events_now}"
-        )
-        if comments:
-            written_comments = "\n".join(f"- {comment}" for comment in comments)
-            request = f"{request}\n\nYour draft:\n{self.draft}\n\nThe author's comments, oldest first:\n{written_comments}"
-        drafted = self._model.complete(INSTRUCTIONS, request, MAX_EVENTS_TOKENS)
-        events = drafted.strip()
-        return events
+
+def _concepts_str(concepts: Sequence[SalientConceptCell]) -> str:
+    """The concepts, each under its title, with its description."""
+    described = [f"### {concept.title}\n{concept.source}" for concept in concepts]
+    written = "\n\n".join(described) or "None yet."
+    return written
+
+
+def _parse_event_str(event_str: str) -> tuple[str, str]:
+    """The merged event's description and location, from the model's answer: the
+    location, a bar, then the description, as in "earth, the square | Varn meets
+    the lawyer."."""
+    written_location, _, written_desc = event_str.partition("|")
+    location = written_location.strip()
+    desc = written_desc.strip()
+    return desc, location
