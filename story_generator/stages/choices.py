@@ -20,7 +20,6 @@ from fabula_bench.interactive_author_story import InteractiveAuthorStory, Intera
 from fabula_bench.players.agent_player import CompletionModel
 from story_generator.review import ReviewResult, TerminalReview
 from story_generator.stage import Stage, StageStep
-from story_generator.stages.plot_ends import written_world_events
 
 OPENING_INSTRUCTIONS = """You are the narrator of a story, and its only witness. You never take part in what happens and never mention yourself.
 
@@ -94,7 +93,8 @@ class ChoicesStep(StageStep):
         self._model = model
 
     def __call__(self, document: Document, reviews: TerminalReview, reviewer_instruction: str) -> tuple[ReviewResult, Document]:
-        plots = written_world_events(document, "")
+        story = InteractiveAuthorStory(document)
+        plots = story.written_world_events("")
         next_events: list[PlotNode] = []
         for edge in self._edges:
             plot = document.get_plot_of_edge(edge)
@@ -132,7 +132,6 @@ class ChoicesStep(StageStep):
         by_edge = {edge.edge_id: ending for edge, ending in edge_endings}
         opened = self._scene.with_opening(opening)
         scene = opened.with_options(by_edge)
-        story = InteractiveAuthorStory(document)
         story = story.with_scenes([scene])
 
         return review_result, story.document

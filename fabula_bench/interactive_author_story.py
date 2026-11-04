@@ -56,6 +56,9 @@ ABSENT = "—"
 # Heads the note a plot's arc is kept in, before the plot's title.
 HEADING = "## Concept arcs of "
 
+# Parts the moment, the place and what happens of an event written out for the model.
+SEPARATOR = " | "
+
 
 class InteractiveScene:
     """A scene, told by a markdown cell: its text, then the opening of a sentence it
@@ -222,14 +225,8 @@ class InteractiveAuthorStory:
     def scenes(self) -> list[InteractiveScene]:
         """Every markdown cell that tells an event, as a scene, in the order of the
         cells; a markdown cell no event points at tells no scene."""
-        first_words = {
-            event.story_word_range.first_word
-            for plot in self.document.plots()
-            for event in plot.nodes
-            if event.story_word_range is not None
-        }
-        story_words = StoryWordsIterator(self.document)
-        telling = {word.cell_id for word in story_words if word.number in first_words}
+        told = [self.scene_of(event) for plot in self.document.plots() for event in plot.nodes]
+        telling = {scene.markdown_cell_id for scene in told if scene is not None}
         scenes = [
             InteractiveScene(cell)
             for cell in self.document.cells
@@ -253,30 +250,36 @@ class InteractiveAuthorStory:
         first word; None for an event no scene tells."""
         if event.story_word_range is None:
             return None
-        first_word = event.story_word_range.first_word
         story_words = StoryWordsIterator(self.document)
-        cell_ids = [word.cell_id for word in story_words if word.number == first_word]
-        if not cell_ids:
+        spans = story_words.spans(event.story_word_range)
+        if not spans:
             return None
-        cell_id, *_ = cell_ids
-        cell = self.document.cell_with_id(cell_id)
+        first_span, *_ = spans
+        cell = self.document.cell_with_id(first_span.cell_id)
         if not isinstance(cell, MarkdownCell):
             return None
         scene = InteractiveScene(cell)
         return scene
 
     def events_of(self, scene: InteractiveScene) -> list[PlotNode]:
-        """The events the scene tells: every event whose first word is in its cell,
-        in the order of the plots."""
-        story_words = StoryWordsIterator(self.document)
-        numbers = {word.number for word in story_words if word.cell_id == scene.markdown_cell_id}
-        events = [
-            event
-            for plot in self.document.plots()
-            for event in plot.nodes
-            if event.story_word_range is not None and event.story_word_range.first_word in numbers
-        ]
+        """The events the scene tells: every event whose scene it is, in the order of
+        the plots."""
+        told = [(event, self.scene_of(event)) for plot in self.document.plots() for event in plot.nodes]
+        events = [event for event, told_in in told if told_in is not None and told_in.markdown_cell_id == scene.markdown_cell_id]
         return events
+
+    def written_world_events(self, but: str) -> str:
+        """Every plot's events, each plot under its title, one event a line as its
+        moment, place and what happens, but those of the plot titled `but`."""
+        tables = []
+        for plot in self.document.plots():
+            if plot.title == but:
+                continue
+            lines = [SEPARATOR.join((event.timestamp, event.location, event.summary)) for event in plot.nodes]
+            table = "\n".join(lines)
+            tables.append(f"### {plot.title}\n{table}")
+        written = "\n\n".join(tables) or "None yet."
+        return written
 
     @property
     def arcs(self) -> list[StoryArc]:

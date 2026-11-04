@@ -28,6 +28,7 @@ from uuid import uuid4
 from authordoc.cells.plot_cell import PlotCell, PlotEdge, PlotNode
 from authordoc.cells.salient_concept_cell import SalientConceptCell
 from authordoc.storydoc import Document
+from fabula_bench.interactive_author_story import InteractiveAuthorStory
 from fabula_bench.players.agent_player import CompletionModel
 from story_generator.stage import Confidence, DraftingStage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
@@ -109,19 +110,6 @@ def chained(events: Sequence[PlotNode], edges_before: Sequence[PlotEdge]) -> lis
         edge = PlotEdge(edge_id, cause.node_id, effect.node_id)
         edges.append(edge)
     return edges
-
-
-def written_world_events(document: Document, but: str) -> str:
-    """Every plot's events, each plot under its title, but those of the plot
-    titled `but`."""
-    tables = []
-    for plot in document.plots():
-        if plot.title == but:
-            continue
-        table = written_events(plot.nodes)
-        tables.append(f"### {plot.title}\n{table}")
-    written = "\n\n".join(tables) or "None yet."
-    return written
 
 
 class PlotEnds(DraftingStage):
@@ -207,7 +195,8 @@ class PlotEnds(DraftingStage):
         draft under review revised to answer them."""
         concepts = document.salient_concepts()
         written = written_concepts(concepts)
-        world = written_world_events(document, self.concept)
+        story = InteractiveAuthorStory(document)
+        world = story.written_world_events(self.concept)
         request = (
             f"The story's concepts:\n{written}\n\n"
             f"The plots written so far:\n{world}\n\n"

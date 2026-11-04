@@ -39,12 +39,13 @@ from authordoc.cells.story_word_range import StoryWordRange
 from authordoc.iterators.story_words_iterator import StoryWord, StoryWordsIterator
 from authordoc.storydoc import Document
 from fabula_bench.benchmark_document import GAP, get_choices, get_place, get_scene_text, get_tag, tags_meet, written_scene
+from fabula_bench.interactive_author_story import InteractiveAuthorStory
 from fabula_bench.players.agent_player import CompletionModel
 from story_generator.stage import Confidence, DraftingStage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 from story_generator.stages.concept_arcs import get_arcs
 from story_generator.stages.concepts import written_concepts
-from story_generator.stages.plot_ends import get_illustrated, written_world_events
+from story_generator.stages.plot_ends import get_illustrated
 
 VERSION_INSTRUCTIONS = """You write one version of a scene of an interactive story, dedicated to one salient concept: the scene's event, told wholly through that concept, so that every sentence of the version shows the concept's idea, though it never names it. A later pass merges this version with the versions dedicated to the scene's other concepts, and adds what a scene needs beyond them.
 
@@ -481,7 +482,8 @@ class Scenes(DraftingStage):
         plots, and where the scene takes place."""
         concepts = document.salient_concepts()
         written_story_concepts = written_concepts(concepts)
-        plots = written_world_events(document, "")
+        story = InteractiveAuthorStory(document)
+        plots = story.written_world_events("")
         context = (
             f"The story's concepts:\n{written_story_concepts}\n\n"
             f"The story's plots:\n{plots}\n\n"
