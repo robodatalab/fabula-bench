@@ -1,11 +1,11 @@
 import random
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from authordoc.cells.plot_cell import PlotCell, PlotNode
 from authordoc.storydoc import Document
 from parameterized import parameterized
-from story_generator.review import Review, ReviewResult
+from story_generator.review import TerminalReview
 from story_generator.stages.mesh import Mesh, build_round_robin_plot_matrix, matrix_to_connectivity_trajectory
 
 
@@ -120,12 +120,12 @@ class MeshRunTest(unittest.TestCase):
         model = Mock()
         model.complete.return_value = "intersection location | intersection"
         self.mesh = Mesh(model)
-        author = Mock()
-        author.review.return_value = ReviewResult.success()
         chance = random.Random(0)
-        self.reviews = Review(author, 0.0, chance)
+        self.reviews = TerminalReview(0.0, chance)
 
-    def test_meshing_rewrites_the_events_that_meet(self):
+    # The author accepts every result shown.
+    @patch("builtins.input", return_value="a")
+    def test_meshing_rewrites_the_events_that_meet(self, _):
         first_step, second_step, third_step, fourth_step = self.mesh.run(self.document)
 
         _, first_document = first_step(self.document, self.reviews, "")

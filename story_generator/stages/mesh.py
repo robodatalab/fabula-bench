@@ -13,7 +13,7 @@ from collections.abc import Sequence
 
 from authordoc.storydoc import Document, SalientConceptCell
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.review import Review, ReviewResult
+from story_generator.review import ReviewResult, TerminalReview
 from story_generator.stage import Stage, StageStep
 
 INSTRUCTIONS = """You help an author mesh the plots of an interactive story into one world. The story is built from its salient concepts: every concept has a plot that illustrates it, and every plot respects every concept, so that a character who is a mother acts as a mother in whichever plot she appears.
@@ -94,7 +94,7 @@ class MeshStep(StageStep):
         self._step_index = step_index
         self._model = model
 
-    def __call__(self, document: Document, reviews: Review, reviewer_instruction: str) -> tuple[ReviewResult, Document]:
+    def __call__(self, document: Document, reviews: TerminalReview, reviewer_instruction: str) -> tuple[ReviewResult, Document]:
         plots = document.plots()
         first_plot = plots[self._first_plot_idx]
         second_plot = plots[self._second_plot_idx]

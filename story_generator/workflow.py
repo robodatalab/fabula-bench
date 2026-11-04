@@ -36,7 +36,7 @@ from tqdm import tqdm
 from authordoc.cells.unknown_cell import UnknownCell
 from authordoc.storydoc import Document
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.review import Author, Review, ReviewResult
+from story_generator.review import ReviewResult, TerminalReview
 from story_generator.stage import Stage
 from story_generator.stages.choices import Choices
 from story_generator.stages.concept_arcs import ConceptArcs
@@ -124,11 +124,9 @@ class Workflow:
         self,
         path: Path,
         model: CompletionModel,
-        renderer: Author,
         handler: logging.Handler,
         chance: random.Random | None = None,
     ) -> None:
-        self._renderer = renderer
         self._handler = handler
         # What draws the results the author reviews.
         self._chance = chance if chance is not None else random.Random()
@@ -157,7 +155,7 @@ class Workflow:
         while stage_name and not stage_aborted:
             stage = self.stages[stage_name]
             initial_confidence = self._document.confidence.get(stage_name, 0.0)
-            reviews = Review(self._renderer, initial_confidence, self._chance)
+            reviews = TerminalReview(initial_confidence, self._chance)
 
             with _logged_as(stage_name, self._handler):
                 logger.info("started")

@@ -14,7 +14,6 @@ import logging
 from pathlib import Path
 
 from fabula_bench.models.claude_model import ClaudeModel
-from story_generator.visitors.terminal_renderer import TerminalRenderer
 from story_generator.workflow import Workflow
 
 WRITING_MODEL = "claude-opus-5-5"
@@ -31,11 +30,10 @@ def main() -> None:
     if not story.exists():
         story.write_text("", encoding="utf-8")
     model = ClaudeModel(WRITING_MODEL, WRITING_EFFORT)
-    renderer = TerminalRenderer()
     handler = logging.StreamHandler()
     formatter = logging.Formatter("   [%(stage)s] %(message)s")
     handler.setFormatter(formatter)
-    workflow = Workflow(story, model, renderer, handler)
+    workflow = Workflow(story, model, handler)
     workflow.run()
 
 

@@ -1,12 +1,12 @@
-"""The author's review of what the stages' steps produce: shown to the author by
-chance, the less often the more the author trusts the stage, and answered with a
-pass, or with a fail that says how to do it again."""
+"""The author's review of what the stages' steps produce, in a terminal: shown to
+the author by chance, the less often the more the author trusts the stage, and
+answered from the keyboard with a pass, a fail that says how to do it again, or
+a stop."""
 
 from __future__ import annotations
 
 import logging
 import random
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 
@@ -17,6 +17,8 @@ RISE = 0.2
 # The most confidence there can be in a stage: at least one result in ten is
 # still reviewed, so that a drift in the results is caught.
 CAP = 0.9
+
+STOP = "q"
 
 
 class Verdict(Enum):
@@ -55,27 +57,19 @@ class ReviewResult:
         return self.verdict == Verdict.STOP
 
 
-class Author(ABC):
-    """Whoever reviews the results: shown them, answers."""
+class TerminalReview:
+    """The review of one stage's results, in a terminal, and the author's
+    confidence in the stage: rising a fifth of the way towards certainty with
+    every result the author approves, and halving with every result the author
+    has done again; never above `CAP`."""
 
-    @abstractmethod
-    def review(self, *results: object) -> ReviewResult: ...
-
-
-class Review:
-    """The review of one stage's results, and the author's confidence in the
-    stage: rising a fifth of the way towards certainty with every result the
-    author approves, and halving with every result the author has done again;
-    never above `CAP`."""
-
-    def __init__(self, author: Author, initial_confidence: float, chance: random.Random) -> None:
-        self._author = author
+    def __init__(self, initial_confidence: float, chance: random.Random) -> None:
         self.confidence = initial_confidence
         self._chance = chance
 
     def __call__(self, *results: object) -> ReviewResult:
-        """Whether the results pass. They are shown to the author by chance, the
-        more likely the less the confidence, and pass unseen, and logged,
+        """Whether the results pass. They are printed for the author by chance,
+        the more likely the less the confidence, and pass unseen, and logged,
         otherwise."""
         logger = logging.getLogger(__name__)
         drawn = self._chance.random()
@@ -83,7 +77,10 @@ class Review:
             logger.info("passed unreviewed, at confidence %.2f", self.confidence)
             unreviewed = ReviewResult.success()
             return unreviewed
-        review_result = self._author.review(*results)
+        written_results = [f"{result}" for result in results]
+        shown = "\n".join(written_results)
+        print(f"\n{shown}\n")
+        review_result = _answer()
         if review_result.is_failed():
             self.confidence = self.confidence / 2
             logger.info("confidence: %.2f", self.confidence)
@@ -92,3 +89,22 @@ class Review:
             self.confidence = min(risen, CAP)
             logger.info("confidence: %.2f", self.confidence)
         return review_result
+
+
+def _answer() -> ReviewResult:
+    """The author's answer to a result, and what to change when it is to be done
+    again."""
+    typed = input(f"[a]ccept  [r]evise  [{STOP}] stop > ")
+    choice = typed.strip().lower()
+    while choice not in ("a", "r", STOP):
+        typed = input(f"a, r or {STOP} > ")
+        choice = typed.strip().lower()
+    if choice == "a":
+        accepted = ReviewResult.success()
+        return accepted
+    if choice == STOP:
+        stopped = ReviewResult.abort()
+        return stopped
+    comment = input("What should change? > ")
+    revised = ReviewResult.failed(comment)
+    return revised
