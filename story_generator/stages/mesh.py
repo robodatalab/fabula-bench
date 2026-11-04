@@ -9,15 +9,12 @@ author reviews every meeting."""
 
 from __future__ import annotations
 
-from dataclasses import replace
-from pathlib import Path
-from typing import Any, Sequence
+from collections.abc import Sequence
 
-from authordoc.cells.plot_cell import PlotCell
 from authordoc.storydoc import Document, SalientConceptCell
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import DraftingStage
-from story_generator.stage_visitor import Review, StageVisitor
+from story_generator.review import Review, ReviewResult
+from story_generator.stage import Stage, StageStep
 
 INSTRUCTIONS = """You help an author mesh the plots of an interactive story into one world. The story is built from its salient concepts: every concept has a plot that illustrates it, and every plot respects every concept, so that a character who is a mother acts as a mother in whichever plot she appears.
 
@@ -39,8 +36,8 @@ When you are also given your draft and the author's comments on it, rewrite the 
 
 Write two lines, the first plot's event and then the second's, each as: moment | place | what happens. Write the lines and nothing else."""
 
-# Room for the two events of a meeting.
-MAX_MEETING_TOKENS = 600
+# Room for the merged event.
+MAX_MEETING_TOKENS = 4096
 
 
 PlotMatrix = list[list[int]]
@@ -88,75 +85,95 @@ def matrix_to_connectivity_trajectory(matrix: PlotMatrix) -> ConnectivityTraject
     return events_to_merge
 
 
-class Mesh(DraftingStage):
+class MeshStep(StageStep):
+    """One meeting: the events of two plots at one step, merged into one."""
 
-    def __init__(self, model: CompletionModel) -> None:
-        super().__init__()
+    def __init__(self, first_plot_idx: int, second_plot_idx: int, step_index: int, model: CompletionModel) -> None:
+        self._first_plot_idx = first_plot_idx
+        self._second_plot_idx = second_plot_idx
+        self._step_index = step_index
         self._model = model
 
+    def __call__(self, document: Document, reviews: Review, reviewer_instruction: str) -> tuple[ReviewResult, Document]:
+        plots = document.plots()
+        first_plot = plots[self._first_plot_idx]
+        second_plot = plots[self._second_plot_idx]
 
-    def run(self, **params: Any) -> None:
-        story: Path = params["story"]
+        first_event = first_plot.nodes[self._step_index]
+        second_event = second_plot.nodes[self._step_index]
 
-        document = Document.load(story)
+        first_concepts = first_plot.concepts(document)
+        second_concepts = second_plot.concepts(document)
+        first_written = _concepts_str(first_concepts)
+        second_written = _concepts_str(second_concepts)
+        user = f"The author asks you to do it again: {reviewer_instruction}" if reviewer_instruction else ""
+        merged_event_str = self._model.complete(
+            system=f"""
+Two story plot events meet, and we need to unify them.
+Event 1, at {first_event.location}:
+{first_event.summary}
+
+Event 2, at {second_event.location}:
+{second_event.summary}
+
+The events are a part of two plots that attempt to detail salient concepts:
+Concept 1:
+{first_written}
+Concept 2:
+{second_written}
+
+Merge the events so that they stay close to their original, but represent a single event
+that provides the same information about the concepts as the original events did.
+
+Write one line: the place where the merged event happens, from the broadest to the most
+specific, as in "earth, Varn's house", then " | ", then what happens. Write the line and
+nothing else.
+""",
+            user=user,
+            max_new_tokens=MAX_MEETING_TOKENS,
+        )
+
+        merged_event_desc, merged_event_location = _parse_event_str(merged_event_str)
+
+        review_result = reviews(merged_event_desc, merged_event_location)
+        if not review_result.is_passed():
+            return review_result, document
+
+        first_meshed = first_event.with_summary(merged_event_desc)
+        first_meshed = first_meshed.with_location(merged_event_location)
+        second_meshed = second_event.with_summary(merged_event_desc)
+        second_meshed = second_meshed.with_location(merged_event_location)
+
+        first_plot_meshed = first_plot.with_node(first_meshed)
+        second_plot_meshed = second_plot.with_node(second_meshed)
+        document = document.with_cell(first_plot_meshed)
+        document = document.with_cell(second_plot_meshed)
+
+        return review_result, document
+
+
+class Mesh(Stage):
+
+    def __init__(self, model: CompletionModel) -> None:
+        self._model = model
+
+    def run(self, document: Document) -> list[StageStep]:
         plots_at_the_start = document.plots()
         if not plots_at_the_start:
-            return
+            return []
         n_plots = len(plots_at_the_start)
         lengths = [len(plot.nodes) for plot in plots_at_the_start]
         steps = max(lengths)
         matrix = build_round_robin_plot_matrix(n_plots, steps)
         trajectory = matrix_to_connectivity_trajectory(matrix)
 
+        mesh_steps: list[StageStep] = []
         for step_index, changes_at_step in enumerate(trajectory):
             for first_plot_idx, second_plot_idx in changes_at_step:
-                plots = document.plots()
-                first_plot = plots[first_plot_idx]
-                second_plot = plots[second_plot_idx]
+                mesh_step = MeshStep(first_plot_idx, second_plot_idx, step_index, self._model)
+                mesh_steps.append(mesh_step)
 
-                first_event = first_plot.nodes[step_index]
-                second_event = second_plot.nodes[step_index]
-
-                merged_event_str = self._model.complete(
-                    system=f"""
-Two story plot events meet, and we need to unify them.
-Event 1:
-{first_event.summary}
-
-Event 2:
-{second_event.summary}
-
-The events are a part of two plots that attempt to detail salient concepts:
-Concept 1:
-{_concepts_str(first_plot.concepts(document))}
-Concept 2:
-{_concepts_str(second_plot.concepts(document))}
-
-Merge the events so that they stay close to their original, but represent a single event
-that provides the same information about the concepts as the original events did.
-""",
-                    user="",
-                    max_new_tokens=4096,
-                )
-
-            merged_event_desc, merged_event_location = _parse_event_str(merged_event_str)
-
-            first_meshed = first_event.with_summary(merged_event_desc)
-            first_meshed = first_meshed.with_location(merged_event_location)
-            second_meshed = second_event.with_summary(merged_event_desc)
-            second_meshed = second_meshed.with_location(merged_event_location)
-
-            first_plot_meshed = first_plot.with_node(first_meshed)
-            second_plot_meshed = second_plot.with_node(second_meshed)
-            document = document.with_cell(first_plot_meshed)
-            document = document.with_cell(second_plot_meshed)
-        
-        story.write_text(document.text, encoding="utf-8")
-
-
-    def accept(self, visitor: StageVisitor) -> Review:
-        review = visitor.visit_mesh(self)
-        return review
+        return mesh_steps
 
 
 def _concepts_str(concepts: Sequence[SalientConceptCell]) -> str:

@@ -24,10 +24,6 @@ WRITING_EFFORT = "high"
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Write a story with its author, stage by stage.")
-    parser.add_argument("--back-to", help="the stage to go back to")
-    arguments = parser.parse_args()
-
     answer = input("The story's .author file, to create or to resume: ")
     name = answer.strip()
     story = Path(name)
@@ -40,11 +36,7 @@ def main() -> None:
     formatter = logging.Formatter("   [%(stage)s] %(message)s")
     handler.setFormatter(formatter)
     workflow = Workflow(story, model, renderer, handler)
-    finished = workflow.finished()
-    for name in workflow.stages:
-        mark = "x" if name in finished else " "
-        print(f"[{mark}] {name}")
-    workflow.run(arguments.back_to)
+    workflow.run()
 
 
 if __name__ == "__main__":

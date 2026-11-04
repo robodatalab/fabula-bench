@@ -1,11 +1,11 @@
-import tempfile
+import random
 import unittest
-from pathlib import Path
 from unittest.mock import Mock
 
 from authordoc.cells.plot_cell import PlotCell, PlotNode
 from authordoc.storydoc import Document
 from parameterized import parameterized
+from story_generator.review import Review, ReviewResult
 from story_generator.stages.mesh import Mesh, build_round_robin_plot_matrix, matrix_to_connectivity_trajectory
 
 
@@ -116,23 +116,24 @@ class MeshRunTest(unittest.TestCase):
             None,
             "plot-2",
         )
-        document = Document.from_cells([first_plot, second_plot])
-        self.directory = tempfile.TemporaryDirectory()
-        self.story = Path(self.directory.name) / "story.author"
-        self.story.write_text(document.text, encoding="utf-8")
-
-    def tearDown(self):
-        self.directory.cleanup()
-
-    def test_meshing_rewrites_the_events_that_meet(self):
+        self.document = Document.from_cells([first_plot, second_plot])
         model = Mock()
         model.complete.return_value = "intersection location | intersection"
-        mesh = Mesh(model)
+        self.mesh = Mesh(model)
+        author = Mock()
+        author.review.return_value = ReviewResult.success()
+        chance = random.Random(0)
+        self.reviews = Review(author, 0.0, chance)
 
-        mesh.run(story=self.story)
+    def test_meshing_rewrites_the_events_that_meet(self):
+        first_step, second_step, third_step, fourth_step = self.mesh.run(self.document)
 
-        meshed = Document.load(self.story)
-        meshed_first, meshed_second = meshed.plots()
+        _, first_document = first_step(self.document, self.reviews, "")
+        _, second_document = second_step(first_document, self.reviews, "")
+        _, third_document = third_step(second_document, self.reviews, "")
+        _, fourth_document = fourth_step(third_document, self.reviews, "")
+
+        meshed_first, meshed_second = fourth_document.plots()
         self.assertSequenceEqual(
             meshed_first.nodes,
             [

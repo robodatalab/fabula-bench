@@ -12,13 +12,12 @@ merged between the concepts' markers; and the choices that end the scenes come
 after them. Last, the story is played as the benchmark plays it, to check that
 it does what the benchmark needs of it.
 
-Every time a stage writes the story, after every stage, and when the author
-stops, the workflow checkpoints which stages are finished, one a line, and the
-author's confidence in every kind of draft, in a cell of its own last in the
-story, of a kind the format does not know and keeps as it is: stopped in a
-stage, or killed in it, it resumes at that stage, as confident as it was when
-the stage last wrote the story. Going back to a stage runs it again, and every stage after
-it.
+A stage only plans its work as steps. Everything else happens here: the steps
+run one after another, each done again with the author's instruction until its
+result passes its review; after every step, the story is saved, with the
+checkpoint of where the generation stands; and the stage's progress is shown.
+Stopped in a stage, or killed in it, the workflow resumes at that stage, from its
+first step, as confident in the stage as it was.
 
 While a stage runs, whatever is logged under this package goes to the
 workflow's handler as that stage's; the workflow logs when the stage starts, and
@@ -26,17 +25,19 @@ when it finishes or the author stops in it."""
 
 from __future__ import annotations
 
-from collections.abc import Generator
-from contextlib import contextmanager
 import logging
 import random
+from collections.abc import Generator
+from contextlib import contextmanager
 from pathlib import Path
+
+from tqdm import tqdm
 
 from authordoc.cells.unknown_cell import UnknownCell
 from authordoc.storydoc import Document
 from fabula_bench.players.agent_player import CompletionModel
-from story_generator.stage import AuthorStopped, Confidence, Stage
-from story_generator.stage_visitor import StageVisitor
+from story_generator.review import Author, Review, ReviewResult
+from story_generator.stage import Stage
 from story_generator.stages.choices import Choices
 from story_generator.stages.concept_arcs import ConceptArcs
 from story_generator.stages.concepts import Concepts
@@ -47,36 +48,89 @@ from story_generator.stages.validity import Validity
 
 STAGES = ["concepts", "plot ends", "mesh", "concept arcs", "scenes", "choices", "validity"]
 
-# The kind of the cell the workflow checkpoints in.
-CHECKPOINT = "workflow-checkpoint"
+# The kind of the cell the checkpoint is kept in.
+CHECKPOINT = "GeneratedDocumentCheckpoint"
 
-# Opens a line of the checkpoint that keeps the confidence in a kind of draft, as
-# in "confidence in scene versions: 0.672".
+# Open the lines of the checkpoint, as in "stage: mesh: True" and
+# "confidence in mesh: 0.360".
+STAGE = "stage: "
 CONFIDENCE = "confidence in "
 
 
-def get_checkpoint(document: Document) -> UnknownCell | None:
-    """The cell the workflow checkpoints in; None before its first checkpoint."""
-    checkpoint = next(
-        (cell for cell in document.cells if isinstance(cell, UnknownCell) and cell.kind == CHECKPOINT),
-        None,
-    )
-    return checkpoint
+class GeneratedDocument:
+    """A story being generated: the story, kept in its .author file, and where its
+    generation stands, kept in the checkpoint, a cell of its own last in the
+    story, of a kind the format does not know and keeps as it is: which stages
+    are finished, and the author's confidence in every stage."""
 
+    def __init__(self, path: Path) -> None:
+        self._path = path
+        self.document = Document.load(self._path)
+        self.stages: dict[str, bool] = {name: False for name in STAGES}
+        self.confidence: dict[str, float] = {name: 0.0 for name in STAGES}
+
+    def load(self) -> None:
+        """Reads the story from its file, and where its generation stands from its
+        checkpoint."""
+        self.document = Document.load(self._path)
+        checkpoint = self.document.get_cell(UnknownCell, CHECKPOINT)
+        lines = checkpoint.source.splitlines() if checkpoint is not None else []
+
+        self.stages = {name: False for name in STAGES}
+        self.confidence = {name: 0.0 for name in STAGES}
+
+        for line in lines:
+            if line.startswith(STAGE):
+                value = line.removeprefix(STAGE)
+                stage, _, is_done = value.rpartition(": ")
+                self.stages[stage] = is_done == "True"
+
+            elif line.startswith(CONFIDENCE):
+                value = line.removeprefix(CONFIDENCE)
+                stage, _, level = value.rpartition(": ")
+                self.confidence[stage] = float(level)
+
+    def save(self) -> None:
+        """Writes the story into its file, with the checkpoint as its last cell: a
+        stage may have added cells after the one it was kept in before."""
+        lines = []
+
+        for stage, is_done in self.stages.items():
+            lines.append(f"{STAGE}{stage}: {is_done}")
+
+        for stage, level in sorted(self.confidence.items()):
+            lines.append(f"{CONFIDENCE}{stage}: {level:.3f}")
+
+        source = "\n".join(lines)
+
+        held = self.document.get_cell(UnknownCell, CHECKPOINT)
+        checkpoint = UnknownCell(CHECKPOINT, source=source) if held is None else held.with_source(source)
+        others = [cell for cell in self.document.cells if cell.unique_id != checkpoint.unique_id]
+        self.document = Document.from_cells([*others, checkpoint], self._path)
+        self.document.save()
+
+    def next_stage(self) -> str | None:
+        for stage_name in STAGES:
+            if not self.stages[stage_name]:
+                return stage_name
+        return None
+
+    def mark_stage_done(self, stage_name: str) -> None:
+        self.stages[stage_name] = True
+    
 
 class Workflow:
     def __init__(
         self,
-        story: Path,
+        path: Path,
         model: CompletionModel,
-        renderer: StageVisitor,
+        renderer: Author,
         handler: logging.Handler,
         chance: random.Random | None = None,
     ) -> None:
-        self._story = story
         self._renderer = renderer
         self._handler = handler
-        # What draws the drafts the author reviews.
+        # What draws the results the author reviews.
         self._chance = chance if chance is not None else random.Random()
         self.stages: dict[str, Stage] = {
             "concepts": Concepts(model),
@@ -88,81 +142,47 @@ class Workflow:
             "validity": Validity(),
         }
 
-    def finished(self) -> list[str]:
-        """The stages finished so far, as last checkpointed."""
-        lines = self._checkpointed()
-        finished = [line for line in lines if not line.startswith(CONFIDENCE)]
-        return finished
+        self._document = GeneratedDocument(path)
 
-    def confidence(self) -> Confidence:
-        """The author's confidence in every kind of draft, as last checkpointed."""
-        lines = self._checkpointed()
-        levels = {}
-        for line in lines:
-            if not line.startswith(CONFIDENCE):
-                continue
-            written = line.removeprefix(CONFIDENCE)
-            kind, _, written_level = written.rpartition(": ")
-            levels[kind] = float(written_level)
-        confidence = Confidence(levels, self._chance)
-        return confidence
 
-    def run(self, going_back_to: str | None = None) -> None:
+    def run(self) -> None:
         """Runs every stage not finished yet, in order, until the last is finished
         or the author stops in one."""
         logger = logging.getLogger(__name__)
-        finished = self.finished()
-        confidence = self.confidence()
-        if going_back_to is not None:
-            at = STAGES.index(going_back_to)
-            again = STAGES[at:]
-            finished = [name for name in finished if name not in again]
-            self._checkpoint(finished, confidence)
 
-        def checkpoint() -> None:
-            self._checkpoint(finished, confidence)
+        self._document.load()
+        
+        stage_name = self._document.next_stage()
+        stage_aborted = False
+        while stage_name and not stage_aborted:
+            stage = self.stages[stage_name]
+            initial_confidence = self._document.confidence.get(stage_name, 0.0)
+            reviews = Review(self._renderer, initial_confidence, self._chance)
 
-        for name in STAGES:
-            if name in finished:
-                continue
-            stage = self.stages[name]
-            with _logged_as(name, self._handler):
+            with _logged_as(stage_name, self._handler):
                 logger.info("started")
-                try:
-                    stage.run(
-                        story=self._story, renderer=self._renderer, confidence=confidence, checkpoint=checkpoint
-                    )
-                except AuthorStopped:
-                    logger.info("stopped")
-                    self._checkpoint(finished, confidence)
-                    return
+                steps = stage.run(self._document.document)
+
+                for step in tqdm(steps, desc=stage_name):
+                    review_result = ReviewResult.failed()
+                    document = self._document.document
+                    while review_result.is_failed():
+                        review_result, document = step(self._document.document, reviews, review_result.comment)
+
+                    if review_result.is_passed():
+                        self._document.document = document
+                        self._document.confidence[stage_name] = reviews.confidence
+                        self._document.save()
+                    else:
+                        stage_aborted = True
+                        break
+
                 logger.info("finished")
-            finished.append(name)
-            self._checkpoint(finished, confidence)
 
-    def _checkpointed(self) -> list[str]:
-        """The lines of the checkpoint; none before the first."""
-        document = Document.load(self._story)
-        checkpoint = get_checkpoint(document)
-        if checkpoint is None:
-            return []
-        lines = checkpoint.source.splitlines()
-        return lines
-
-    def _checkpoint(self, finished: list[str], confidence: Confidence) -> None:
-        """Writes down which stages are finished, and the confidence in every kind
-        of draft, in the story's last cell: a stage may have added cells after the
-        one checkpointed in before."""
-        document = Document.load(self._story)
-        held = get_checkpoint(document)
-        levels = sorted(confidence.levels.items())
-        confident = [f"{CONFIDENCE}{kind}: {level:.3f}" for kind, level in levels]
-        source = "\n".join([*finished, *confident])
-        checkpoint = UnknownCell(CHECKPOINT, source=source) if held is None else held.with_source(source)
-        others = [cell for cell in document.cells if cell.unique_id != checkpoint.unique_id]
-        cells = [*others, checkpoint]
-        written = Document.from_cells(cells, document.path)
-        self._story.write_text(written.text, encoding="utf-8")
+            if not stage_aborted:
+                self._document.mark_stage_done(stage_name)
+                self._document.save()
+                stage_name =  self._document.next_stage()
 
 
 @contextmanager
