@@ -90,6 +90,18 @@ class TerminalReview:
             logger.info("confidence: %.2f", self.confidence)
         return review_result
 
+    def ask(self, question: str) -> str:
+        """The author's answer to the question, as typed: line after line, until an
+        empty line. Always asked, however confident the author is in the stage."""
+        print(f"\n{question}\n")
+        lines = []
+        line = input("> ")
+        while line:
+            lines.append(line)
+            line = input("> ")
+        answer = "\n".join(lines)
+        return answer
+
 
 def _answer() -> ReviewResult:
     """The author's answer to a result, and what to change when it is to be done

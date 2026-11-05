@@ -281,6 +281,12 @@ class InteractiveAuthorStory:
         written = "\n\n".join(tables) or "None yet."
         return written
 
+    def written_concepts(self) -> str:
+        """Every concept, each under its title, with its description."""
+        described = [f"### {concept.title}\n{concept.source}" for concept in self.document.salient_concepts()]
+        written = "\n\n".join(described) or "None yet."
+        return written
+
     @property
     def arcs(self) -> list[StoryArc]:
         """Every plot's arc, in the order of the plots; a plot without one has none."""
