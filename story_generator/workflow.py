@@ -2,12 +2,11 @@
 
 The stages run one after another, each on what the ones before it wrote:
 
-    concepts → plot ends → mesh → concept arcs → scenes → choices → validity
+    concepts → plot ends → mesh → scenes → choices → validity
 
 The story is built from its concepts: every concept gets a plot, begun as its
-start and its goal; the mesh fills every plot in between, so that the plots meet;
-the concept arcs say how every concept shows at every event of its plot; every
-scene is built from versions dedicated to the concepts that show at its events,
+start and its goal; the mesh fills every plot in between, so that the plots meet; every
+scene is built from versions dedicated to the concepts of its events' plots,
 merged between the concepts' markers; and the choices that end the scenes come
 after them. Last, the story is played as the benchmark plays it, to check that
 it does what the benchmark needs of it.
@@ -38,7 +37,6 @@ from story_generator.generated_doc import GeneratedDocument
 from story_generator.review import ReviewResult, TerminalReview
 from story_generator.stage import Stage
 from story_generator.stages.choices import Choices
-from story_generator.stages.concept_arcs import ConceptArcs
 from story_generator.stages.concepts import Concepts
 from story_generator.stages.mesh import Mesh
 from story_generator.stages.plot_ends import PlotEnds
@@ -61,7 +59,6 @@ class Workflow:
             "concepts": Concepts(model),
             "plot ends": PlotEnds(model),
             "mesh": Mesh(model),
-            "concept arcs": ConceptArcs(model),
             "scenes": Scenes(model),
             "choices": Choices(model),
             "validity": Validity(),

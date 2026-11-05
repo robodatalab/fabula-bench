@@ -19,24 +19,16 @@ events, written as a list that names the edge each choice follows:
     <li edge="x2">as she watched the gripper close on the object.</li>
     </ol>
 
-A plot references the salient concepts it illustrates, and keeps how each of them
-shows at each of its events, its concept arcs, in a note after it:
-
-    0.1 The politician meets Captain Varn, and starts pretending to like her.
-      Classical romance: —
-      Good beats evil: the evil side: he courts her only for what she can tell him.
+A plot references the salient concepts it illustrates.
 """
 
 from __future__ import annotations
 
 import re
 from collections.abc import Sequence
-from dataclasses import replace
-from uuid import NAMESPACE_URL, uuid5
 
 from authordoc.cells.markdown_cell import MarkdownCell
-from authordoc.cells.note_cell import NoteCell
-from authordoc.cells.plot_cell import PlotCell, PlotNode
+from authordoc.cells.plot_cell import PlotNode
 from authordoc.iterators.story_words_iterator import StoryWordsIterator
 from authordoc.storydoc import Document
 from authordoc.written_attributes import attributes_in, written_attribute_value
@@ -49,12 +41,6 @@ _CHOICES_OPENED = '<ol title="choices">'
 _CHOICE = re.compile(rf"^<li{_ATTRIBUTES}>(.*)</li>$")
 _CHOICES_CLOSED = "</ol>"
 _EDGE = "edge"
-
-# Stands for a concept that does not show at an event.
-ABSENT = "—"
-
-# Heads the note a plot's arc is kept in, before the plot's title.
-HEADING = "## Concept arcs of "
 
 # Parts the moment, the place and what happens of an event written out for the model.
 SEPARATOR = " | "
@@ -148,73 +134,6 @@ class InteractiveScene:
         return scene
 
 
-class StoryArc:
-    """How each concept a plot illustrates shows at each of its events, kept in a
-    note cell: under a heading that names the plot, every event's moment and what
-    happens, and under it, for every concept, how the concept shows there, or
-    ABSENT where it does not."""
-
-    def __init__(self, note_cell: NoteCell) -> None:
-        self.note_cell = note_cell
-
-    @property
-    def notes_cell_id(self) -> str:
-        return self.note_cell.unique_id
-
-    @property
-    def shows(self) -> list[dict[str, str]]:
-        """For every event the arc lists, in order, how each concept that shows
-        there shows, by the concept's title."""
-        shows: list[dict[str, str]] = []
-        for line in self._lines():
-            if not line.startswith(" "):
-                shows.append({})
-                continue
-            if not shows:
-                continue
-            written_title, _, how = line.partition(":")
-            title = written_title.strip()
-            shown = how.strip()
-            if shown and shown not in (ABSENT, "-", "–"):
-                shows[-1][title] = shown
-        return shows
-
-    @property
-    def titles(self) -> list[str]:
-        """The titles of the concepts the arc lists, in the order it first lists
-        them, whether they show or not."""
-        titles: list[str] = []
-        for line in self._lines():
-            if not line.startswith(" "):
-                continue
-            written_title, _, _ = line.partition(":")
-            title = written_title.strip()
-            if title not in titles:
-                titles.append(title)
-        return titles
-
-    def with_shows(self, plot: PlotCell, titles: Sequence[str], shows: Sequence[dict[str, str]]) -> StoryArc:
-        """The arc written for the plot: for every event, how each of the concepts
-        shows there, ABSENT where it does not."""
-        lines = [f"{HEADING}{plot.title}", ""]
-        for event, shown in zip(plot.nodes, shows):
-            lines.append(f"{event.timestamp} {event.summary}")
-            for title in titles:
-                how = shown.get(title) or ABSENT
-                lines.append(f"  {title}: {how}")
-        source = "\n".join(lines)
-        cell = self.note_cell.with_source(source)
-        arc = StoryArc(cell)
-        return arc
-
-    def _lines(self) -> list[str]:
-        """The note's lines that list the events and the concepts: not its heading,
-        nor its blank lines."""
-        lines = self.note_cell.source.splitlines()
-        listed = [line for line in lines if line.strip() and not line.startswith("#")]
-        return listed
-
-
 class InteractiveAuthorStory:
     """An interactive story, kept in `document`."""
 
@@ -286,48 +205,3 @@ class InteractiveAuthorStory:
         described = [f"### {concept.title}\n{concept.source}" for concept in self.document.salient_concepts()]
         written = "\n\n".join(described) or "None yet."
         return written
-
-    @property
-    def arcs(self) -> list[StoryArc]:
-        """Every plot's arc, in the order of the plots; a plot without one has none."""
-        arcs = []
-        for plot in self.document.plots():
-            arc = self.arc_of(plot)
-            if arc is not None:
-                arcs.append(arc)
-        return arcs
-
-    def arc_of(self, plot: PlotCell) -> StoryArc | None:
-        """The plot's arc: the note whose id the plot's own id gives; None for a plot
-        without one."""
-        note_id = self._arc_id(plot)
-        note = self.document.cell_with_id(note_id)
-        if not isinstance(note, NoteCell):
-            return None
-        arc = StoryArc(note)
-        return arc
-
-    def with_arc(self, plot: PlotCell, arc: StoryArc) -> InteractiveAuthorStory:
-        """The story with the arc as the plot's: in place of the plot's arc, or right
-        after the plot when it has none."""
-        note_id = self._arc_id(plot)
-        note = replace(arc.note_cell, _unique_id=note_id)
-        held = self.document.cell_with_id(note_id)
-        cells = []
-        for cell in self.document.cells:
-            if cell.unique_id == note_id:
-                cells.append(note)
-                continue
-            cells.append(cell)
-            if held is None and cell.unique_id == plot.unique_id:
-                cells.append(note)
-        document = self.document.with_cells(cells)
-        story = InteractiveAuthorStory(document)
-        return story
-
-    def _arc_id(self, plot: PlotCell) -> str:
-        """The id of the note the plot's arc is kept in: the same for the plot every
-        time, so that the arc is found again."""
-        arc_uuid = uuid5(NAMESPACE_URL, f"fabula-bench/concept arcs/{plot.unique_id}")
-        note_id = str(arc_uuid)
-        return note_id
