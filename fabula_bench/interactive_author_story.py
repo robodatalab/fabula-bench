@@ -241,7 +241,7 @@ class InteractiveAuthorStory:
         ids_held = {cell.unique_id for cell in self.document.cells}
         cells = [cell_of_id.get(cell.unique_id, cell) for cell in self.document.cells]
         added = [scene.markdown_cell for scene in scenes if scene.markdown_cell_id not in ids_held]
-        document = Document.from_cells([*cells, *added], self.document.path)
+        document = self.document.with_cells([*cells, *added])
         story = InteractiveAuthorStory(document)
         return story
 
@@ -315,7 +315,7 @@ class InteractiveAuthorStory:
             cells.append(cell)
             if held is None and cell.unique_id == plot.unique_id:
                 cells.append(note)
-        document = Document.from_cells(cells, self.document.path)
+        document = self.document.with_cells(cells)
         story = InteractiveAuthorStory(document)
         return story
 

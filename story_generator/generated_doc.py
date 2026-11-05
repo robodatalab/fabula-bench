@@ -68,7 +68,7 @@ class GeneratedDocument:
         held = self.document.get_cell(UnknownCell, CHECKPOINT)
         checkpoint = UnknownCell(CHECKPOINT, source=source) if held is None else held.with_source(source)
         others = [cell for cell in self.document.cells if cell.unique_id != checkpoint.unique_id]
-        self.document = Document.from_cells([*others, checkpoint], self._path)
+        self.document = self.document.with_cells([*others, checkpoint])
         self.document.save()
 
     def next_stage(self) -> str | None:
