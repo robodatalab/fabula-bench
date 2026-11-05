@@ -6,7 +6,7 @@ from authordoc.cells.salient_concept_cell import SalientConceptCell
 from authordoc.storydoc import Document
 from fabula_bench.interactive_author_story import InteractiveAuthorStory
 from story_generator.review import ReviewResult, TerminalReview
-from story_generator.stages.concepts import GENERATION_INSTRUCTIONS, AskForConceptsStep, GenerateConceptsStep
+from story_generator.stages.concepts import DESCRIPTION_INSTRUCTIONS, AskForConceptsStep, DescribeConceptsStep
 
 
 class AskForConceptsStepCall(unittest.TestCase):
@@ -22,39 +22,34 @@ class AskForConceptsStepCall(unittest.TestCase):
         self.assertEqual(written, "### Motherhood\n\n\n### War\n")
 
 
-class GenerateConceptsStepCall(unittest.TestCase):
-    # The author has the first concepts done again, then accepts the second.
-    @patch("builtins.input", side_effect=["r", "make the father brutal, add social help", "a"])
-    def test_generates_again_with_the_authors_feedback_until_the_author_accepts(self, _) -> None:
+class DescribeConceptsStepCall(unittest.TestCase):
+    # The author has the descriptions done again, then accepts the second.
+    @patch("builtins.input", side_effect=["r", "say what it costs her", "a"])
+    def test_describes_only_the_authors_concepts_again_with_the_authors_feedback_until_accepted(self, _) -> None:
         document = Document.from_cells([SalientConceptCell("Motherhood", [], "", False, None, "k1")])
         chance = random.Random(0)
         reviews = TerminalReview(0.0, chance)
         model = Mock()
         model.complete.side_effect = [
-            "### Motherhood\nA mother's care.\n\n### Father\nA father.",
-            "### Motherhood\nA mother's care.\n\n### Brutal father\nA father who rules by fear.\n\n### Social help\nThe help a community gives.",
+            "### Motherhood\nA mother's care.",
+            "### Motherhood\nA mother's care, at what it costs her.\n\n### Brutal father\nA father who rules by fear.",
         ]
-        generate = GenerateConceptsStep(model)
+        describe = DescribeConceptsStep(model)
 
-        first_result, first_document = generate(document, reviews, "")
-        _, second_document = generate(first_document, reviews, first_result.comment)
+        first_result, first_document = describe(document, reviews, "")
+        _, second_document = describe(first_document, reviews, first_result.comment)
 
-        self.assertEqual(first_result, ReviewResult.failed("make the father brutal, add social help"))
+        self.assertEqual(first_result, ReviewResult.failed("say what it costs her"))
         self.assertEqual(
             model.complete.call_args_list,
             [
-                call(GENERATION_INSTRUCTIONS, "The concepts so far:\n### Motherhood\n", 1500),
+                call(DESCRIPTION_INSTRUCTIONS, "The author's concepts:\n### Motherhood\n", 1500),
                 call(
-                    GENERATION_INSTRUCTIONS,
-                    "The concepts so far:\n### Motherhood\n\n\nThe author asks you to do it again: make the father brutal, add social help",
+                    DESCRIPTION_INSTRUCTIONS,
+                    "The author's concepts:\n### Motherhood\n\n\nThe author asks you to do it again: say what it costs her",
                     1500,
                 ),
             ],
         )
         written = InteractiveAuthorStory(second_document).written_concepts()
-        self.assertEqual(
-            written,
-            "### Motherhood\nA mother's care.\n\n"
-            "### Brutal father\nA father who rules by fear.\n\n"
-            "### Social help\nThe help a community gives.",
-        )
+        self.assertEqual(written, "### Motherhood\nA mother's care, at what it costs her.")

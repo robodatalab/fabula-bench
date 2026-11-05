@@ -1,9 +1,9 @@
 """The story's salient concepts: what the story is about, kept as its salient
-concept cells, first in the story. The author is asked first for the concepts of
-their choosing; then the model writes every concept the story needs, the
-author's and the ones that complement or augment them, each described as what it
-is really about and in what light the story shows it. The author reviews the
-whole set.
+concept cells, first in the story. The author is asked for the concepts of
+their choosing; then the model describes every one of them, in the light of the
+others, as what it is really about and in what light the story shows it. The
+model adds no concept: the story is about what the author chose. The author
+reviews the descriptions together.
 
 A concept is an idea, not a thing that appears in the story: a general theme the
 story is built on, such as motherhood or war, or a story-specific hook, such as
@@ -31,15 +31,13 @@ from story_generator.stage import Stage, StageStep
 
 QUESTION = "Which concepts should the story be about? One a line, an empty line to finish."
 
-GENERATION_INSTRUCTIONS = """You help an author decide what an interactive story is about: its salient concepts, the ideas a reader should come away understanding, though the story never states them.
+DESCRIPTION_INSTRUCTIONS = """You help an author describe what an interactive story is about: its salient concepts, the ideas a reader should come away understanding, though the story never states them.
 
-A concept is either a general theme the story is built on, such as motherhood, war or justice, or a story-specific hook that keeps a reader wanting to learn more, such as a stranger stranded under the surface of Mars. Every concept will get a plot of its own that illustrates it. A character is not a concept, nor is an event, nor a place or a thing that merely appears in the story.
+A concept is either a general theme the story is built on, such as motherhood, war or justice, or a story-specific hook that keeps a reader wanting to learn more, such as a stranger stranded under the surface of Mars. Every concept will get a plot of its own that illustrates it.
 
-You are given the concepts the author has chosen so far, each under its title, some with a description. Keep every one of them, and add the concepts they call for: ones that complement them, as a brutal father complements motherhood, and ones that augment them, as social help augments motherhood. Choose each from what the others are really about.
+You are given the concepts the author has chosen, each under its title. Describe every one of them, in the light of the others: in one to three sentences, what it is really about, and in what light the story shows it. A general theme is defined the way an encyclopedia defines the idea, narrowed to how this story uses it. A story-specific hook is described by its role in the story: what it is, what drives it, and why a reader wants to learn more. Describe none as a list of events. Add no concept, and keep every title exactly as it is given.
 
-Describe every concept as an idea, in one to three sentences: what it is really about, and in what light the story shows it. A general theme is defined the way an encyclopedia defines the idea, narrowed to how this story uses it. A story-specific hook is described by its role in the story: what it is, what drives it, and why a reader wants to learn more. Describe none as a list of events.
-
-When you are also given the author's comment on the concepts you wrote before, answer it.
+When you are also given the author's comment on the descriptions you wrote before, answer it.
 
 Write every concept as its title on a line of its own, opened with "### ", followed by its description, and nothing else."""
 
@@ -83,9 +81,7 @@ class AskForConceptsStep(StageStep):
         for title in titles:
             if title in held_titles:
                 continue
-            identifier = uuid4()
-            concept_id = str(identifier)
-            concept = SalientConceptCell(title=title, references=[], source="", _unique_id=concept_id)
+            concept = SalientConceptCell(title=title, references=[], source="", _unique_id=str(uuid4()))
             chosen.append(concept)
 
         others = [cell for cell in document.cells if not isinstance(cell, SalientConceptCell)]
@@ -94,9 +90,9 @@ class AskForConceptsStep(StageStep):
         return review_result, document
 
 
-class GenerateConceptsStep(StageStep):
-    """Every concept the story needs: the author's, described, and the ones that
-    complement or augment them."""
+class DescribeConceptsStep(StageStep):
+    """The description of every concept the author chose, each written in the
+    light of the others. No concept is added, and none taken out."""
 
     def __init__(self, model: CompletionModel) -> None:
         self._model = model
@@ -105,31 +101,22 @@ class GenerateConceptsStep(StageStep):
         story = InteractiveAuthorStory(document)
         chosen = story.written_concepts()
         asked = f"\n\nThe author asks you to do it again: {reviewer_instruction}" if reviewer_instruction else ""
-        request = f"The concepts so far:\n{chosen}{asked}"
-        written = self._model.complete(GENERATION_INSTRUCTIONS, request, MAX_CONCEPTS_TOKENS)
+        request = f"The author's concepts:\n{chosen}{asked}"
+        written = self._model.complete(DESCRIPTION_INSTRUCTIONS, request, MAX_CONCEPTS_TOKENS)
         concepts_written = written.strip()
 
         review_result = reviews(concepts_written)
         if not review_result.is_passed():
             return review_result, document
 
-        # The concepts stand first in the story, in the order written; one the
-        # story held keeps its cell, and one left out is gone.
-        held_of_title = {concept.title: concept for concept in document.salient_concepts()}
+        # A concept the model wrote no description for keeps the one it has; a
+        # concept the author did not choose is not added.
         read = _read_concepts(concepts_written)
-        concepts = []
-        for title, description in read:
-            held = held_of_title.get(title)
-            if held is None:
-                identifier = uuid4()
-                concept_id = str(identifier)
-                concept = SalientConceptCell(title=title, references=[], source=description, _unique_id=concept_id)
-            else:
-                concept = held.with_source(description)
-            concepts.append(concept)
-
-        others = [cell for cell in document.cells if not isinstance(cell, SalientConceptCell)]
-        document = document.with_cells([*concepts, *others])
+        description_of_title = dict(read)
+        for concept in document.salient_concepts():
+            description = description_of_title.get(concept.title, concept.source)
+            described = concept.with_source(description)
+            document = document.with_cell(described)
         return review_result, document
 
 
@@ -140,6 +127,6 @@ class Concepts(Stage):
 
     def run(self, document: Document) -> list[StageStep]:
         ask_step = AskForConceptsStep()
-        generate_step = GenerateConceptsStep(self._model)
-        concepts_steps: list[StageStep] = [ask_step, generate_step]
+        describe_step = DescribeConceptsStep(self._model)
+        concepts_steps: list[StageStep] = [ask_step, describe_step]
         return concepts_steps
