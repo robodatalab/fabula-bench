@@ -39,7 +39,7 @@ from story_generator.stage import Stage
 from story_generator.stages.choices import Choices
 from story_generator.stages.concepts import Concepts
 from story_generator.stages.mesh import Mesh
-from story_generator.stages.plot_ends import PlotEnds
+from story_generator.stages.plots import Plots
 from story_generator.stages.scenes import Scenes
 from story_generator.stages.validity import Validity
 
@@ -57,7 +57,7 @@ class Workflow:
         self._chance = chance if chance is not None else random.Random()
         self.stages: dict[str, Stage] = {
             "concepts": Concepts(model),
-            "plot ends": PlotEnds(model),
+            "plots": Plots(model),
             "mesh": Mesh(model),
             "scenes": Scenes(model),
             "choices": Choices(model),

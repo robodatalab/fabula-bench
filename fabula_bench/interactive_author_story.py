@@ -28,7 +28,8 @@ import re
 from collections.abc import Sequence
 
 from authordoc.cells.markdown_cell import MarkdownCell
-from authordoc.cells.plot_cell import PlotNode
+from authordoc.cells.plot_cell import PlotCell, PlotNode
+from authordoc.cells.salient_concept_cell import SalientConceptCell
 from authordoc.iterators.story_words_iterator import StoryWordsIterator
 from authordoc.storydoc import Document
 from authordoc.written_attributes import attributes_in, written_attribute_value
@@ -194,11 +195,31 @@ class InteractiveAuthorStory:
         for plot in self.document.plots():
             if plot.title == but:
                 continue
-            lines = [SEPARATOR.join((event.timestamp, event.location, event.summary)) for event in plot.nodes]
-            table = "\n".join(lines)
+            table = self.written_events(plot)
             tables.append(f"### {plot.title}\n{table}")
         written = "\n\n".join(tables) or "None yet."
         return written
+
+    def written_events(self, plot: PlotCell) -> str:
+        """The plot's events, one a line."""
+        lines = [self.written_event(event) for event in plot.nodes]
+        table = "\n".join(lines)
+        return table
+
+    def written_event(self, event: PlotNode) -> str:
+        """The event as its moment, place and what happens."""
+        line = SEPARATOR.join((event.timestamp, event.location, event.summary))
+        return line
+
+    def plots_of(self, concept: SalientConceptCell) -> list[PlotCell]:
+        """The plots that reference the concept, in the order of the plots."""
+        plots = []
+        for plot in self.document.plots():
+            shown = plot.concepts(self.document)
+            shown_ids = [shown_concept.unique_id for shown_concept in shown]
+            if concept.unique_id in shown_ids:
+                plots.append(plot)
+        return plots
 
     def written_concepts(self) -> str:
         """Every concept, each under its title, with its description."""

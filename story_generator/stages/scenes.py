@@ -45,7 +45,7 @@ from story_generator.stage import Confidence, DraftingStage, reviewed
 from story_generator.stage_visitor import Review, StageVisitor
 from story_generator.stages.concept_arcs import get_arcs
 from story_generator.stages.concepts import written_concepts
-from story_generator.stages.plot_ends import get_illustrated
+from story_generator.stages.plots import get_illustrated
 
 VERSION_INSTRUCTIONS = """You write one version of a scene of an interactive story, dedicated to one salient concept: the scene's event, told wholly through that concept, so that every sentence of the version shows the concept's idea, though it never names it. A later pass merges this version with the versions dedicated to the scene's other concepts, and adds what a scene needs beyond them.
 

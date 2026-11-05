@@ -41,7 +41,7 @@ from fabula_bench.metrics.plot_following import get_trajectories
 from fabula_bench.story_player.exposure_tracker import ExposureTracker
 from fabula_bench.story_player.story_player import StoryPlayer
 from story_generator.stage import Stage
-from story_generator.stages.plot_ends import get_illustrated
+from story_generator.stages.plots import get_illustrated
 from story_generator.stages.scenes import get_cell_of_event, get_scene_cell, get_scenes
 
 # How many times every plot is played from its start, taking each option every
