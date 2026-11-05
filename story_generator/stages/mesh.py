@@ -106,7 +106,10 @@ class MeshStep(StageStep):
         second_concepts = second_plot.concepts(document)
         first_written = _concepts_str(first_concepts)
         second_written = _concepts_str(second_concepts)
-        user = f"The author asks you to do it again: {reviewer_instruction}" if reviewer_instruction else ""
+        # The model takes no empty message: the request is said even when the
+        # author has nothing to add.
+        asked = f"\n\nThe author asks you to do it again: {reviewer_instruction}" if reviewer_instruction else ""
+        user = f"Merge the two events.{asked}"
         merged_event_str = self._model.complete(
             system=f"""
 Two story plot events meet, and we need to unify them.
