@@ -8,8 +8,6 @@ from pathlib import Path
 from authordoc.cells.unknown_cell import UnknownCell
 from authordoc.storydoc import Document
 
-STAGES = ["concepts", "plot ends", "mesh", "concept arcs", "scenes", "choices", "validity"]
-
 # The kind of the cell the checkpoint is kept in.
 CHECKPOINT = "GeneratedDocumentCheckpoint"
 
@@ -25,11 +23,13 @@ class GeneratedDocument:
     story, of a kind the format does not know and keeps as it is: which stages
     are finished, and the author's confidence in every stage."""
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, stage_names: list[str]) -> None:
         self._path = path
+        # The stages the story is generated in, in the order they run.
+        self._stage_names = stage_names
         self.document = Document.load(self._path)
-        self.stages: dict[str, bool] = {name: False for name in STAGES}
-        self.confidence: dict[str, float] = {name: 0.0 for name in STAGES}
+        self.stages: dict[str, bool] = {name: False for name in self._stage_names}
+        self.confidence: dict[str, float] = {name: 0.0 for name in self._stage_names}
 
     def load(self) -> None:
         """Reads the story from its file, and where its generation stands from its
@@ -38,8 +38,8 @@ class GeneratedDocument:
         checkpoint = self.document.get_cell(UnknownCell, CHECKPOINT)
         lines = checkpoint.source.splitlines() if checkpoint is not None else []
 
-        self.stages = {name: False for name in STAGES}
-        self.confidence = {name: 0.0 for name in STAGES}
+        self.stages = {name: False for name in self._stage_names}
+        self.confidence = {name: 0.0 for name in self._stage_names}
 
         for line in lines:
             if line.startswith(STAGE):
@@ -72,7 +72,7 @@ class GeneratedDocument:
         self.document.save()
 
     def next_stage(self) -> str | None:
-        for stage_name in STAGES:
+        for stage_name in self._stage_names:
             if not self.stages[stage_name]:
                 return stage_name
         return None

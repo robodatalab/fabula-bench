@@ -67,7 +67,7 @@ class Workflow:
             "validity": Validity(),
         }
 
-        self._document = GeneratedDocument(path)
+        self._document = GeneratedDocument(path, list(self.stages))
 
 
     def run(self) -> None:
