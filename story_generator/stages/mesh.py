@@ -143,6 +143,10 @@ nothing else.
         first_meshed = first_meshed.with_location(merged_event_location)
         second_meshed = second_event.with_summary(merged_event_desc)
         second_meshed = second_meshed.with_location(merged_event_location)
+        # Both events happen at the step's moment: the mesh's schedule is the world's clock.
+        moment = str(self._step_index + 1)
+        first_meshed = first_meshed.with_timestamp(moment)
+        second_meshed = second_meshed.with_timestamp(moment)
 
         first_plot_meshed = first_plot.with_node(first_meshed)
         second_plot_meshed = second_plot.with_node(second_meshed)

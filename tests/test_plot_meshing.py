@@ -105,10 +105,10 @@ class MeshRunTest(unittest.TestCase):
         second_plot = PlotCell(
             "plot 2",
             [
-                PlotNode("p2e1", None, "1", "earth, house 2", "Plot 2, event 1."),
-                PlotNode("p2e2", None, "2", "earth, house 2", "Plot 2, event 2."),
-                PlotNode("p2e3", None, "3", "earth, house 2", "Plot 2, event 3."),
-                PlotNode("p2e4", None, "4", "earth, house 2", "Plot 2, event 4."),
+                PlotNode("p2e1", None, "1.5", "earth, house 2", "Plot 2, event 1."),
+                PlotNode("p2e2", None, "2.5", "earth, house 2", "Plot 2, event 2."),
+                PlotNode("p2e3", None, "3.5", "earth, house 2", "Plot 2, event 3."),
+                PlotNode("p2e4", None, "4.5", "earth, house 2", "Plot 2, event 4."),
             ],
             [],
             "",
