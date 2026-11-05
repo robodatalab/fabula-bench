@@ -2,13 +2,11 @@ import random
 
 from tqdm import tqdm
 
-from fabula_bench.benchmark_document import get_choices, get_scene_at, get_scene_text
+from fabula_bench.interactive_author_story import InteractiveAuthorStory
 from fabula_bench.players.agent_player import AgentPlayer, CompletionModel
 from fabula_bench.story_player.exposure_tracker import ExposureTracker
-from authordoc.cells.cell import Cell
 from authordoc.cells.plot_cell import PlotEdge, PlotNode
 from authordoc.cells.salient_concept_cell import SalientConceptCell
-from authordoc.iterators.story_words_iterator import StoryWordsIterator
 from authordoc.storydoc import Document
 
 STORY_ENDS = "The story ends here."
@@ -49,28 +47,23 @@ class StoryPlayer:
         continuations fill, and those continuations, one for each edge leaving
         it, in a random order; where the story ends, the scene and no
         continuations. The scene's nodes count as seen by the exposure tracker."""
-        current_nodes, outgoing_edges = get_scene_at(self._doc, self._followed_plot, self._current_node)
+        story = InteractiveAuthorStory(self._doc)
+        scene = story.scene_of(self._current_node)
+        current_nodes = story.events_of(scene)
         self._exposure_tracker.see(current_nodes)
-        scene_cell = self._get_scene_cell()
-        description = get_scene_text(scene_cell.source)
-        # The edge continuing the followed plot comes first; shuffled, where a
-        # continuation stands says nothing of which plot it follows.
+        outgoing_edges: list[PlotEdge] = []
+        for node in current_nodes:
+            plot = self._doc.get_plot_of_node(node)
+            outbound = plot.outbound_edges(node)
+            outgoing_edges.extend(outbound)
+        # Where a continuation stands says nothing of which plot it follows.
         random.shuffle(outgoing_edges)
         self._offered_edges = outgoing_edges
         if not outgoing_edges:
-            return (f"{description}\n\n{STORY_ENDS}", [])
-        choices = get_choices(scene_cell.source)
+            return (f"{scene.text}\n\n{STORY_ENDS}", [])
+        choices = scene.options
         continuations = [choices[edge.edge_id] for edge in outgoing_edges]
-        return (description, continuations)
-
-    def _get_scene_cell(self) -> Cell:
-        """The cell that tells the current scene: the one the current node's words
-        are in."""
-        first_word = self._current_node.story_word_range.first_word
-        story_words = StoryWordsIterator(self._doc)
-        scene_word = next(word for word in story_words if word.number == first_word)
-        scene_cell = self._doc.cell_with_id(scene_word.cell_id)
-        return scene_cell
+        return (scene.text, continuations)
 
 
 def play_story(

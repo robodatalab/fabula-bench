@@ -19,9 +19,10 @@ def main() -> None:
 
     print("\nExposure to salient concepts:")
     for concept in exposure_tracker.concepts:
-        seen_references = exposure_tracker.get_seen_references(concept)
+        seen_events = exposure_tracker.get_seen_events(concept)
+        events = exposure_tracker.get_events(concept)
         exposure = exposure_tracker.get_exposure(concept)
-        print(f"  {concept.title}: {exposure:.0%} ({len(seen_references)} of {len(concept.references)} references)")
+        print(f"  {concept.title}: {exposure:.0%} ({len(seen_events)} of {len(events)} events)")
 
 
 
