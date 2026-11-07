@@ -101,7 +101,10 @@ class ScenesRun(unittest.TestCase):
             "\nWHERE: mars, the base\n"
             "WHEN: 1\n\n"
             "EVENTS:\n"
-            "- Motherhood, Brutal father: Dax takes the water from Varn and her son.\n\n"
+            '- the event of the plot "Motherhood":\n'
+            "  Dax takes the water from Varn and her son.\n"
+            '- the event of the plot "Brutal father":\n'
+            "  Dax takes the water from Varn and her son.\n\n"
             "SCENE:\n"
             "Dax took the water while Varn held her son close.\n"
         )

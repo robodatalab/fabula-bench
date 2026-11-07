@@ -43,16 +43,11 @@ class SceneStep(StageStep):
         scene = written.strip()
 
         # The author sees what the scene is written from apart from the scene: where
-        # and when it happens, and the events of every plot that meet there.
-        plots_of_summary: dict[str, list[str]] = {}
+        # and when it happens, and every event that meets there, each under its plot.
+        listed = []
         for meeting in self._events:
             plot = document.get_plot_of_node(meeting)
-            plot_titles = plots_of_summary.setdefault(meeting.summary, [])
-            plot_titles.append(plot.title)
-        listed = []
-        for summary, plot_titles in plots_of_summary.items():
-            written_plots = ", ".join(plot_titles)
-            listed.append(f"- {written_plots}: {summary}")
+            listed.append(f'- the event of the plot "{plot.title}":\n  {meeting.summary}')
         written_events = "\n".join(listed)
         shown = f"WHERE: {event.location}\nWHEN: {event.timestamp}\n\nEVENTS:\n{written_events}\n\nSCENE:\n{scene}"
         review_result = reviews(shown)
