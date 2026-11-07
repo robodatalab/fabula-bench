@@ -41,7 +41,21 @@ class SceneStep(StageStep):
         event, *_ = self._events
         written = self._model.complete(SCENE_INSTRUCTIONS, f"Where: {event.location}\n\nWhat happens:\n{event.summary}\n\n{reviewer_instruction}", MAX_SCENE_TOKENS)
         scene = written.strip()
-        review_result = reviews(event.location, event.summary, scene)
+
+        # The author sees what the scene is written from apart from the scene: where
+        # and when it happens, and the events of every plot that meet there.
+        plots_of_summary: dict[str, list[str]] = {}
+        for meeting in self._events:
+            plot = document.get_plot_of_node(meeting)
+            plot_titles = plots_of_summary.setdefault(meeting.summary, [])
+            plot_titles.append(plot.title)
+        listed = []
+        for summary, plot_titles in plots_of_summary.items():
+            written_plots = ", ".join(plot_titles)
+            listed.append(f"- {written_plots}: {summary}")
+        written_events = "\n".join(listed)
+        shown = f"WHERE: {event.location}\nWHEN: {event.timestamp}\n\nEVENTS:\n{written_events}\n\nSCENE:\n{scene}"
+        review_result = reviews(shown)
         if not review_result.is_passed():
             return review_result, document
 

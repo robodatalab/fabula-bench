@@ -89,6 +89,23 @@ class ScenesRun(unittest.TestCase):
         self.assertEqual(story_words.text(varns_room.story_word_range), "Varn gave her son the last cup.\n\nHe drank it slowly.")
         self.assertEqual(story_words.text(dax_drinks.story_word_range), "Dax drank in front of them.")
 
+    # The author accepts the scene shown.
+    @patch("builtins.input", return_value="a")
+    @patch("builtins.print")
+    def test_shows_the_author_where_and_when_the_scene_happens_and_its_events_apart_from_the_scene(self, shown: Mock, _) -> None:
+        where_they_meet, _, _ = Scenes(self.model).run(self.document)
+
+        where_they_meet(self.document, self.reviews, "")
+
+        shown.assert_called_once_with(
+            "\nWHERE: mars, the base\n"
+            "WHEN: 1\n\n"
+            "EVENTS:\n"
+            "- Motherhood, Brutal father: Dax takes the water from Varn and her son.\n\n"
+            "SCENE:\n"
+            "Dax took the water while Varn held her son close.\n"
+        )
+
     @patch("builtins.input", return_value="a")
     def test_asks_for_the_scene_once_where_events_intersect(self, _) -> None:
         where_they_meet, _, _ = Scenes(self.model).run(self.document)
