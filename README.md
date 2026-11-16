@@ -6,6 +6,12 @@ fabula-bench tests whether a model understands what it reads: whether it can mod
 
 *Since 2026-10-28. How the thinking got here, and why, is in the [research log](#research-log).*
 
+The benchmark tests for 3 types of tasks/errors:
+- hallucinations - the benchmark asks questions about factual information, or attempts to retrieve factual information, and we measure the accuracy and recall of the process
+- omissions - we ask for summaries on topics and measure how much of the relevant information the model missed
+- understanding - we ask the model to play an interactive story (a large one) and score its ability to describe the key concepts it was exposed to. In order to be able to understand the concepts and answer the question, the model needs to follow one of the plots as closely as possible. Each story has many overlapping plots, so the model needs to understand what the plot is about and follow it in order to maximize the reward.
+
+A bit more on the plot following in the understanding task:
 The model plays an interactive story, and the stories are vast. One interactive story holds many full-fledged plots that mesh in a single world: a starship captain who gives her life for her daughter, the daughter left behind on Earth, a watcher on the Moon, but also a detective on Earth looking into a killing, a lawyer fighting a case, a boy who has fallen in love. Every scene ends with an unfinished sentence and a choice of endings, which lead on in the story being read or across into another one.
 
 - **Following.** A model that does not understand what it reads jumps from scene to scene, and so from story to story. A model that understands follows the story it started reading, and when it strays from it by mistake, it tries to get back to it. The endings are offered in a random order in every scene, so that where an ending stands says nothing of where it leads: when the ending that went on in the story being read always came first, a model that answered 1 every time followed that story from its beginning to its end without understanding any of it.
