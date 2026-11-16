@@ -10,7 +10,7 @@ from fabula_bench.metrics.salient_concept_comprehension import score_comprehensi
 from fabula_bench.story_player.story_player import play_story
 from authordoc.storydoc import Document
 
-STORY = Path("fabula_bench/stories/space_opera.author")
+STORY = Path("fabula_bench/stories/love_story.author")
 
 EVALUATED_MODEL = "claude-opus-5-5"
 
@@ -51,7 +51,8 @@ def main(manager: InferenceModelResourceManager) -> None:
     RUNS.mkdir(exist_ok=True)
     run_name = started.strftime("%Y-%m-%d_%H-%M-%S")
     run_path = RUNS / f"{run_name}.txt"
-    run_path.write_text(results, encoding="utf-8")
+    run_summary = f"model: {EVALUATED_MODEL}\n\n{results}"
+    run_path.write_text(run_summary, encoding="utf-8")
     print(f"\nsaved to {run_path}")
 
 
