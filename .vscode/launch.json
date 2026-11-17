@@ -5,18 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "story_player",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "fabula_bench.story_player",
-            "console": "integratedTerminal",
-            "justMyCode": false
-        },
-        {
             "name": "benchmark",
             "type": "debugpy",
             "request": "launch",
             "module": "fabula_bench",
+            "args": ["agents/claude_opus_5_5.yaml"],
             "console": "integratedTerminal",
             "justMyCode": false
         },

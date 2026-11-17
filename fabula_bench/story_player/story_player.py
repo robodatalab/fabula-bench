@@ -1,13 +1,19 @@
+from __future__ import annotations
+
 import random
+from typing import TYPE_CHECKING
 
 from tqdm import tqdm
 
 from fabula_bench.interactive_author_story import InteractiveAuthorStory
-from fabula_bench.players.agent_player import AgentPlayer, CompletionModel
 from fabula_bench.story_player.exposure_tracker import ExposureTracker
 from authordoc.cells.plot_cell import PlotEdge, PlotNode
 from authordoc.cells.salient_concept_cell import SalientConceptCell
 from authordoc.storydoc import Document
+
+if TYPE_CHECKING:
+    from fabula_bench.players.agent_player import AgentPlayer
+    from fabula_bench.players.human_player import HumanPlayer
 
 STORY_ENDS = "The story ends here."
 
@@ -67,17 +73,16 @@ class StoryPlayer:
 
 
 def play_story(
-    story: Document, evaluated_model: CompletionModel, plot_index: int
+    story: Document, agent: AgentPlayer | HumanPlayer, plot_index: int
 ) -> tuple[list[SalientConceptCell], list[float], list[str], list[PlotNode]]:
-    """The evaluated model plays the story, scene by scene as the story tells it,
-    from the beginning of the plot at `plot_index` among the story's plots, then
-    explains every salient concept the play showed it, asked by the concept's
-    title. Returns those concepts, how much of each the play showed, and the
-    model's explanations, in the same order, then every event the play showed, in
-    the order it showed them."""
+    """The agent plays the story, scene by scene as the story tells it, from the
+    beginning of the plot at `plot_index` among the story's plots, then explains
+    every salient concept the play showed it, asked by the concept's title.
+    Returns those concepts, how much of each the play showed, and the agent's
+    explanations, in the same order, then every event the play showed, in the
+    order it showed them."""
     exposure_tracker = ExposureTracker(story)
     player = StoryPlayer(story, exposure_tracker, plot_index)
-    agent = AgentPlayer(evaluated_model)
     agent.play(player)
 
     concepts = [concept for concept in exposure_tracker.concepts if exposure_tracker.get_exposure(concept) > 0]

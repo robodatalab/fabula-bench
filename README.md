@@ -59,16 +59,10 @@ The more plots one interactive story holds, and the more misleading edges, the e
 You need [uv](https://docs.astral.sh/uv/) and an Anthropic API key in a `.env` file at the root of the repository (`ANTHROPIC_API_KEY=...`). The embedding model runs locally, through vramen.
 
 ```
-uv run --env-file .env python -m fabula_bench
+uv run --env-file .env python -m fabula_bench agents/claude_opus_5_5.yaml
 ```
 
-Claude Opus 5.5, at low effort, plays `fabula_bench/stories/space_opera.author` once from the beginning of each of its plots; all three are set at the top of `fabula_bench/__main__.py`. Progress bars count the scenes played and the concepts asked. For every play, the plot it started from, its salient concept comprehension and plot following scores, and every concept it was shown, with how much of it was shown and the model's explanation, are printed and saved to `runs/<when the run started>.txt`.
-
-To play a story yourself, from the plot you choose:
-
-```
-uv run python -m fabula_bench.story_player
-```
+The agent config, a YAML file in `agents/`, says who plays: Claude (`agent: claude`, with its `model` and `effort`), a local model vramen serves (`agent: vramen`, with its `model`, vramen `prompt` formatter and `memory_gb`), or you (`agent: human`, in `agents/human.yaml`), on a terminal screen showing the story, its continuations and the keys. The agent plays the stories listed at the top of `fabula_bench/__main__.py`, once from the beginning of each of their plots. Progress bars count the scenes played and the concepts asked. For every play, the plot it started from, its salient concept comprehension and plot following scores, and every concept it was shown, with how much of it was shown and the agent's explanation, are printed and saved to `runs/<when the run started>.txt`.
 
 To write a story, or go on writing one, with the story generator:
 

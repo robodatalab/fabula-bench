@@ -1,0 +1,4 @@
+agent: vramen
+model: Qwen/Qwen3-8B
+prompt: qwen_chat_prompt
+memory_gb: 18
