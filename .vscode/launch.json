@@ -14,6 +14,15 @@
             "justMyCode": false
         },
         {
+            "name": "benchmark (human)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fabula_bench",
+            "args": ["agents/human.yaml"],
+            "console": "externalTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "story_generator",
             "type": "debugpy",
             "request": "launch",
