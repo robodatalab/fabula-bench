@@ -69,9 +69,9 @@ def main(manager: InferenceModelResourceManager, config: dict, stories: list[Pat
 
 if __name__ == "__main__":
     argsparse = argparse.ArgumentParser()
-    argsparse.add_argument("story", type=str)
-    argsparse.add_argument("config", type=str)
-    args = argsparse.parse_args(sys.argv)
+    argsparse.add_argument("--story", type=str)
+    argsparse.add_argument("--config", type=str)
+    args = argsparse.parse_args()
     
     config_path = Path(args.config)
     config_text = config_path.read_text()
