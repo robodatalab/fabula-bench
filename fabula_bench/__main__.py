@@ -1,3 +1,4 @@
+import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -17,8 +18,6 @@ from fabula_bench.results import ConceptExplanation, RunResults, StoryUnderstand
 from fabula_bench.story_player.story_player import play_story
 from authordoc.storydoc import Document
 
-STORIES = [Path("fabula_bench/stories/love_story.author")]
-
 
 def make_agent(config: dict, manager: InferenceModelResourceManager) -> AgentPlayer | HumanPlayer:
     """The player an agent config describes: Claude, a local model vramen
@@ -36,7 +35,7 @@ def make_agent(config: dict, manager: InferenceModelResourceManager) -> AgentPla
     return agent
 
 
-def main(manager: InferenceModelResourceManager, config: dict) -> None:
+def main(manager: InferenceModelResourceManager, config: dict, stories: list[Path]) -> None:
     started = datetime.now()
     agent = make_agent(config, manager)
     embedder = DescriptionEmbedder(manager)
@@ -45,7 +44,7 @@ def main(manager: InferenceModelResourceManager, config: dict) -> None:
     # comprehended the salient concepts it was shown, how closely it followed the
     # plot it started from, and what it explained of every concept.
     understanding = []
-    for story_path in STORIES:
+    for story_path in stories:
         story = Document.load(story_path)
         plays = []
         plots = story.plots()
@@ -69,13 +68,21 @@ def main(manager: InferenceModelResourceManager, config: dict) -> None:
 
 
 if __name__ == "__main__":
-    config_path = Path(sys.argv[1])
+    argsparse = argparse.ArgumentParser()
+    argsparse.add_argument("story", type=str)
+    argsparse.add_argument("config", type=str)
+    args = argsparse.parse_args(sys.argv)
+    
+    config_path = Path(args.config)
     config_text = config_path.read_text()
+
+    stories = [Path(args.story)]
+
     agent_config = yaml.safe_load(config_text)
     # A local model is served beside the embedding model.
     quota_gb = EMBEDDING_MODEL_MEMORY_GB + agent_config.get("memory_gb", 0)
     res_mgr = InferenceModelResourceManager(quota_gb=quota_gb)
     try:
-        main(res_mgr, agent_config)
+        main(res_mgr, agent_config, stories)
     finally:
         res_mgr.shutdown()

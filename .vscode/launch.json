@@ -9,7 +9,12 @@
             "type": "debugpy",
             "request": "launch",
             "module": "fabula_bench",
-            "args": ["agents/claude_opus_5_5.yaml"],
+            "args": [
+                "--config",
+                "agents/claude_opus_5_5.yaml",
+                "--story",
+                "fabula_bench/stories/space_opera.author"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -18,7 +23,12 @@
             "type": "debugpy",
             "request": "launch",
             "module": "fabula_bench",
-            "args": ["agents/human.yaml"],
+            "args": [
+                "--config",
+                "agents/human.yaml",
+                "--story",
+                "fabula_bench/stories/space_opera.author"
+            ],
             "console": "externalTerminal",
             "justMyCode": false
         },
