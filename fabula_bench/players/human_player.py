@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
@@ -12,6 +14,10 @@ from fabula_bench.story_player.story_player import StoryPlayer
 
 BLUE = "#8fb4ff"
 YELLOW = "#f0d080"
+
+# The return code of a screen quit with ctrl+q, which ends the whole run: the
+# code a run interrupted with ctrl+c ends with.
+QUIT = 130
 
 
 class Continuations(ListView):
@@ -52,6 +58,8 @@ class StoryScreen(App):
     BINDINGS = [
         Binding("pageup", "scroll_story_up", "Scroll story up", priority=True),
         Binding("pagedown", "scroll_story_down", "Scroll story down", priority=True),
+        # Replaces Textual's ctrl+q, which quits only this screen.
+        Binding("ctrl+q", "quit_run", "Quit", show=False, priority=True),
     ]
 
     def __init__(self, transcript: list[Content]) -> None:
@@ -64,6 +72,9 @@ class StoryScreen(App):
 
     def action_scroll_story_down(self) -> None:
         self.query_one("#story").scroll_page_down()
+
+    def action_quit_run(self) -> None:
+        self.exit(return_code=QUIT)
 
 
 class PlayScreen(StoryScreen):
@@ -143,7 +154,7 @@ class AskScreen(StoryScreen):
 class HumanPlayer:
     """Plays the environment on a screen in the terminal, until the story ends
     and the human exits, then answers questions about it on a screen that
-    shows the play."""
+    shows the play. Quitting either screen with ctrl+q ends the whole run."""
 
     def __init__(self) -> None:
         self.transcript: list[Content] = []
@@ -152,10 +163,13 @@ class HumanPlayer:
         self.transcript = []
         screen = PlayScreen(env, self.transcript)
         screen.run()
+        if screen.return_code == QUIT:
+            sys.exit(QUIT)
 
     def ask(self, question: str) -> str:
         """The human's answer to a question about the story, asked after the play."""
         screen = AskScreen(self.transcript, question)
         answer = screen.run()
-        # Quitting with ctrl+q instead of answering answers nothing.
-        return answer or ""
+        if screen.return_code == QUIT:
+            sys.exit(QUIT)
+        return answer
